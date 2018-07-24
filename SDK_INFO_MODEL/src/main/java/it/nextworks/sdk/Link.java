@@ -168,4 +168,9 @@ public class Link {
 	}
 	
 	
+	public boolean isValid() {
+		//TODO
+		return true;
+	}
+	
 }

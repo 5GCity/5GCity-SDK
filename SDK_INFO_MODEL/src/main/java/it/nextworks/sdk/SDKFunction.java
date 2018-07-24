@@ -234,4 +234,9 @@ public class SDKFunction {
 		return uuid;
 	}
 	
+	public boolean isValid() {
+		//TODO
+		return true;
+	}
+	
 }

@@ -204,7 +204,7 @@ public class SDKService {
 		this.version = version;
 	}
 
-	@JsonProperty("function")
+	@JsonProperty("functions")
 	public List<SDKFunction> getFunctions() {
 		return functions;
 	}
@@ -290,6 +290,24 @@ public class SDKService {
 		this.uuid = uuid;
 	}
 
-	
-	
+	public boolean isValid() {
+		//TODO To be completed
+		if(this.name == null || this.name == "")
+			return false;
+		if(this.designer == null || this.designer == "")
+			return false;
+		if(this.version == null || this.version == "")
+			return false;
+		if(this.functions == null || this.functions.size() == 0)
+			return false;
+		for(SDKFunction function : this.functions) {
+			if(!function.isValid())
+				return false;
+		}
+		for(Link link : this.topologyList) {
+			if(link.isValid())
+				return false;
+		}
+		return true;
+	}
 }
