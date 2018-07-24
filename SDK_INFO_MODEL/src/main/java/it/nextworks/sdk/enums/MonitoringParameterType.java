@@ -13,14 +13,14 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package it.nextworks.fivegcity.sdk.enums;
+package it.nextworks.sdk.enums;
 
 /**
- * Defines the operand 
+ * Defines the name of the parameter
  * @version v0.1
  *
  */
-public enum DirectionType {
-	GREATER_THAN,
-	LOWER_THAN
+public enum MonitoringParameterType {
+
+	AVERAGE_MEMORY_UTILIZATION
 }

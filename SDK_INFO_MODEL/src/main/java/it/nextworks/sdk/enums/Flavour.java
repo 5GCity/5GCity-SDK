@@ -13,14 +13,16 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package it.nextworks.fivegcity.sdk.enums;
+package it.nextworks.sdk.enums;
 
 /**
- * Defines the connection point type 
+ * Defines the flavour type of the SDKFunction
  * @version v0.1
  *
  */
-public enum ConnectionPointType {
-	INTERNAL,
-	EXTERNAL
+public enum Flavour {
+
+	SMALL,
+	MEDIUM,
+	LARGE
 }

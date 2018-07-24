@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package it.nextworks.fivegcity.sdk;
+package it.nextworks.sdk;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,77 +35,85 @@ import org.hibernate.annotations.OnDeleteAction;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import it.nextworks.fivegcity.sdk.enums.ActionType;
-
 /**
- * 
- * The class creates a ScalingAspect entity. It is used to define a scaling strategy based on the monitoring parameters
+ * The Link class defines the interconnectivity between functions, over the 
+ * 	connection points and connectivity rules, over L3ConnectivityProperties.
  * 
  * @version v0.1
  *
  */
 @Entity
-public class ScalingAspect {
-	
+public class Link {
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long id;
-
-	/**
-	 * Unique identifier of the ScalingAspect entity
-	 */
+	
+	/** 
+	 * Unique identifier of the link
+	*/
 	private UUID uuid;
 	
 	/**
-	 * Human readable identifier of the ScalingAspect
+	 * Human readable name that identifies the link
+	 * 
 	 */
 	private String name;
 	
-	
 	/**
-	 * List of parameters to be monitored, in order to enable scaling
+	 * List of the L3 connectivity properties
+	 * 
 	 */
-	@OneToMany(mappedBy = "scalingAspect", cascade=CascadeType.ALL)
+	@OneToMany(mappedBy = "link", cascade=CascadeType.ALL)
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	@LazyCollection(LazyCollectionOption.FALSE)
-	@JsonProperty("monitoring_parameter")
-	private List<MonitoringParameter> monitoringParameters = new ArrayList<MonitoringParameter>();
+	@JsonProperty("l3_property")
+	private List<L3ConnectivityProperty> l3Properties = new ArrayList<L3ConnectivityProperty>();
 	
+
 	/**
-	 * Action to be taken in case thresholds are reached
+	 * List of the connection points related to the link
 	 */
-	private ActionType action;
+	@OneToMany(mappedBy = "link", cascade=CascadeType.ALL)
+	@OnDelete(action = OnDeleteAction.CASCADE)
+	@LazyCollection(LazyCollectionOption.FALSE)
+	@JsonProperty("connection_point")
+	private List<ConnectionPoint> connectionPoints = new ArrayList<ConnectionPoint>();
 	
 	@JsonIgnore
 	@ManyToOne
 	private SDKService service;
 	
 	/**
-	 * Constructor used by JPA
+	 * Default constructor used by JPA
 	 */
-	public ScalingAspect() {
-		//JPA Purpose
+	public Link() {
+		//JPA purpose
 	}
 	
+	
 	/**
-	 * Construction of a ScalingAspect entity
-	 * @param name Human readable identifier of the scaling policy
-	 * @param monitoringParameters List of parameters to be monitored for scaling purposes. 
-	 *                All the elements of this list must have a threshold grater that 0 and a DirectionType defined (not null)
-	 * @param action Scaling type
+	 * 
+	 * @param name Human readable name that identifies the link
+	 * @param l3Properties List of the L3 connectivity properties
+	 * @param cps List of the connection points related to the link
 	 * @param service
 	 */
-	public ScalingAspect(String name, ArrayList<MonitoringParameter> monitoringParameters, ActionType action, SDKService service) {
+	public Link(String name, ArrayList<L3ConnectivityProperty> l3Properties, ArrayList<ConnectionPoint> cps, SDKService service) {
 		this.uuid = UUID.randomUUID();
 		this.name = name;
-		for(MonitoringParameter monitoringParameter : monitoringParameters)
-			if(monitoringParameter.isValidForScalingPurpose()) {
-				this.monitoringParameters.add(monitoringParameter);
+		if(l3Properties != null) {
+			for (L3ConnectivityProperty l3Property : l3Properties) {
+				this.l3Properties.add(l3Property);
 			}
+		}
+		if (cps != null) {
+			for (ConnectionPoint cp : cps) {
+				this.connectionPoints.add(cp);
+			}
+		}
 		this.service = service;
-		this.action = action;
 	}
-
 
 	@JsonProperty("name")
 	public String getName() {
@@ -118,25 +126,24 @@ public class ScalingAspect {
 	}
 
 
-	@JsonProperty("monitoring_parameter")
-	public List<MonitoringParameter> getMonitoringParameters() {
-		return monitoringParameters;
+	@JsonProperty("l3_property")
+	public List<L3ConnectivityProperty> getL3Properties() {
+		return l3Properties;
 	}
 
 
-	public void setMonitoringParameters(List<MonitoringParameter> monitoringParameters) {
-		this.monitoringParameters = monitoringParameters;
+	public void setL3Properties(List<L3ConnectivityProperty> l3Properties) {
+		this.l3Properties = l3Properties;
+	}
+
+	@JsonProperty("connection_point")
+	public List<ConnectionPoint> getConnectionPoints() {
+		return connectionPoints;
 	}
 
 
-	@JsonProperty("action")
-	public ActionType getAction() {
-		return action;
-	}
-
-
-	public void setAction(ActionType action) {
-		this.action = action;
+	public void setConnectionPoints(List<ConnectionPoint> connectionPoints) {
+		this.connectionPoints = connectionPoints;
 	}
 
 
@@ -144,12 +151,7 @@ public class ScalingAspect {
 	public Long getId() {
 		return id;
 	}
-	
-	@JsonProperty("uuid")
-	public UUID getUuid() {
-		return uuid;
-	}
-	
+
 
 	public SDKService getService() {
 		return service;
@@ -159,5 +161,11 @@ public class ScalingAspect {
 	public void setService(SDKService service) {
 		this.service = service;
 	}
+	
+	@JsonProperty("uuid")
+	public UUID getUuid() {
+		return uuid;
+	}
+	
 	
 }

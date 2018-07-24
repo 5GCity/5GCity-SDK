@@ -13,14 +13,15 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package it.nextworks.fivegcity.sdk.enums;
+package it.nextworks.sdk.enums;
 
 /**
- * Defines the name of the parameter
+ * Defines the status of the SDKService
  * @version v0.1
  *
  */
-public enum MonitoringParameterType {
+public enum StatusType {
 
-	AVERAGE_MEMORY_UTILIZATION
+	SAVED,
+	COMMITTED
 }

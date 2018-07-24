@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package it.nextworks.fivegcity.sdk.exceptions;
+package it.nextworks.sdk.exceptions;
 
 
 /**

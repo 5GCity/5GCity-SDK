@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package it.nextworks.fivegcity.sdk;
+package it.nextworks.sdk;
 
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -29,8 +29,8 @@ import javax.persistence.ManyToOne;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import it.nextworks.fivegcity.sdk.enums.Protocol;
-import it.nextworks.fivegcity.sdk.exceptions.MalformattedElementException;
+import it.nextworks.sdk.enums.Protocol;
+import it.nextworks.sdk.exceptions.MalformattedElementException;
 
 /**
  * 

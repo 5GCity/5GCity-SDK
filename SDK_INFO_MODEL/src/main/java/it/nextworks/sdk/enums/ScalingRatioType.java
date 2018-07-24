@@ -13,14 +13,14 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package it.nextworks.fivegcity.sdk.enums;
+package it.nextworks.sdk.enums;
 
 /**
- * Defines the flavour type of the SDKFunction
+ * Defines the scaling ratio of the SDKService
  * @version v0.1
  *
  */
-public enum Flavour {
+public enum ScalingRatioType {
 
 	SMALL,
 	MEDIUM,

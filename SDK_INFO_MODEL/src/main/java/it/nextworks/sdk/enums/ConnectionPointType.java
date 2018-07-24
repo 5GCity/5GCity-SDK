@@ -13,17 +13,14 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package it.nextworks.fivegcity.sdk.enums;
+package it.nextworks.sdk.enums;
 
 /**
- * Defines the Scaling Action
+ * Defines the connection point type 
  * @version v0.1
  *
  */
-public enum ActionType {
-
-	SCALE_UP,
-	SCALE_DOWN,
-	SCALE_IN,
-	SCALE_OUT
+public enum ConnectionPointType {
+	INTERNAL,
+	EXTERNAL
 }

@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package it.nextworks.fivegcity.sdk;
+package it.nextworks.sdk;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,8 +34,8 @@ import org.hibernate.annotations.OnDeleteAction;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import it.nextworks.fivegcity.sdk.enums.ScalingRatioType;
-import it.nextworks.fivegcity.sdk.enums.StatusType;
+import it.nextworks.sdk.enums.ScalingRatioType;
+import it.nextworks.sdk.enums.StatusType;
 /**
  * 
  * @version v0.1

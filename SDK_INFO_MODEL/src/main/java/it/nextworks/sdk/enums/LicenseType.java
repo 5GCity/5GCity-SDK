@@ -13,15 +13,15 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package it.nextworks.fivegcity.sdk.enums;
+package it.nextworks.sdk.enums;
 
 /**
- * Defines protocol of the Layer3 rule
+ * Defines the license type of the SDKService
  * @version v0.1
  *
  */
-public enum Protocol {
-	UDP,
-	TCP,
-	ICMP
+public enum LicenseType {
+
+	PRIVATE,
+	PUBLIC
 }

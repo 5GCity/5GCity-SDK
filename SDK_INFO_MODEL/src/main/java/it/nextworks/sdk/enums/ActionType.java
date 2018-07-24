@@ -13,15 +13,17 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package it.nextworks.fivegcity.sdk.enums;
+package it.nextworks.sdk.enums;
 
 /**
- * Defines the license type of the SDKService
+ * Defines the Scaling Action
  * @version v0.1
  *
  */
-public enum LicenseType {
+public enum ActionType {
 
-	PRIVATE,
-	PUBLIC
+	SCALE_UP,
+	SCALE_DOWN,
+	SCALE_IN,
+	SCALE_OUT
 }
