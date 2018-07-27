@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.hibernate.cfg.NotYetImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,8 +30,11 @@ import it.nextworks.composer.executor.interfaces.ServiceManagerProviderInterface
 import it.nextworks.composer.executor.repositories.SDKServiceRepository;
 import it.nextworks.sdk.SDKFunction;
 import it.nextworks.sdk.SDKService;
+import it.nextworks.sdk.enums.StatusType;
+import it.nextworks.sdk.exceptions.AlreadyPublishedServiceException;
 import it.nextworks.sdk.exceptions.ExistingEntityException;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
+import it.nextworks.sdk.exceptions.NotPublishedServiceException;
 
 @Service
 public class ServiceManager implements ServiceManagerProviderInterface{
@@ -95,7 +99,7 @@ public class ServiceManager implements ServiceManagerProviderInterface{
 		//TODO Check if is valid
 		log.debug("Storing into database service with id: " + service.getId());
 		serviceRepository.saveAndFlush(service);
-		return new String("" + service.getId());
+		return service.getId().toString();
 	}
 
 	@Override
@@ -110,7 +114,7 @@ public class ServiceManager implements ServiceManagerProviderInterface{
 		//TODO Check if is valid
 		log.debug("Updating into database service with id: " + service.getId());
 		serviceRepository.saveAndFlush(service);
-		return new String("" + service.getId());
+		return service.getId().toString();
 	}
 
 
@@ -136,6 +140,53 @@ public class ServiceManager implements ServiceManagerProviderInterface{
 		} else {
 			log.error("Service with UUID " + serviceId + " not found");
 			throw new NotExistingEntityException("Service with ID " + serviceId + " not found");
+		}
+	}
+
+
+	@Override
+	public void publishService(UUID serviceId) throws NotExistingEntityException, AlreadyPublishedServiceException {
+		log.info("Request for publication of service with uuid: " + serviceId);
+		//Check if service exists
+		Optional<SDKService> optService = serviceRepository.findByUuid(serviceId);
+		if(!optService.isPresent()) {
+			log.error("The Service with UUID: " + serviceId + " is not present in database");
+			throw new NotExistingEntityException("The Service with UUID: " + serviceId + " is not present in database");
+		} else {
+			//Check if is already published
+			SDKService service = optService.get();
+			if(service.getStatus() == StatusType.COMMITTED) {
+				log.error("The service identified by UUID: " + serviceId + " has been already published");
+				throw new AlreadyPublishedServiceException("The service identified by UUID: " + serviceId + " has been already published");
+			} else {
+				//A thread will be created to handle this request in order to perform it asynchronously.
+				service.setStatus(StatusType.COMMITTED);
+				serviceRepository.saveAndFlush(service);
+				throw new NotYetImplementedException("Method not yet implemented");
+			}
+		}
+	}
+
+
+	@Override
+	public void unPublishService(UUID serviceId) throws NotExistingEntityException, NotPublishedServiceException {
+		log.info("Request for delete the publication of service with uuid: " + serviceId);
+		Optional<SDKService> optService = serviceRepository.findByUuid(serviceId);
+		if(!optService.isPresent()) {
+			log.error("The Service with UUID: " + serviceId + " is not present in database");
+			throw new NotExistingEntityException("The Service with UUID: " + serviceId + " is not present in database");
+		} else {
+			//Check if is already published
+			SDKService service = optService.get();
+			if(service.getStatus() == StatusType.SAVED) {
+				log.error("The service identified by UUID: " + serviceId + " has not been published yet");
+				throw new NotPublishedServiceException("The service identified by UUID: " + serviceId + " has been already published");
+			} else {
+				//A thread will be created to handle this request in order to perform it asynchronously.
+				service.setStatus(StatusType.SAVED);
+				serviceRepository.saveAndFlush(service);
+				throw new NotYetImplementedException("Method not yet implemented");
+			}
 		}
 	}
 

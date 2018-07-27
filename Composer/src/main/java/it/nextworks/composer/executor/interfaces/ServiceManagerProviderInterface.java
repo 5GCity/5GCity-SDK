@@ -19,8 +19,10 @@ import java.util.List;
 import java.util.UUID;
 
 import it.nextworks.sdk.SDKService;
+import it.nextworks.sdk.exceptions.AlreadyPublishedServiceException;
 import it.nextworks.sdk.exceptions.ExistingEntityException;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
+import it.nextworks.sdk.exceptions.NotPublishedServiceException;
 
 public interface ServiceManagerProviderInterface {
 
@@ -38,5 +40,8 @@ public interface ServiceManagerProviderInterface {
 	
 	public void deleteService(UUID serviceId) throws NotExistingEntityException;
 	
+	public void publishService(UUID serviceId) throws NotExistingEntityException, AlreadyPublishedServiceException;
+	
+	public void unPublishService(UUID serviceId) throws NotExistingEntityException, NotPublishedServiceException;
 
 }

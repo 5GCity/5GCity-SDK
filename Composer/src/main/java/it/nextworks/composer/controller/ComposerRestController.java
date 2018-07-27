@@ -39,8 +39,10 @@ import it.nextworks.composer.executor.FunctionManager;
 import it.nextworks.composer.executor.ServiceManager;
 import it.nextworks.sdk.SDKFunction;
 import it.nextworks.sdk.SDKService;
+import it.nextworks.sdk.exceptions.AlreadyPublishedServiceException;
 import it.nextworks.sdk.exceptions.ExistingEntityException;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
+import it.nextworks.sdk.exceptions.NotPublishedServiceException;
 
 @RestController
 @CrossOrigin
@@ -55,6 +57,7 @@ public class ComposerRestController {
 	
 	@Autowired
 	private ServiceManager serviceManager;
+	
 	
 	public ComposerRestController() {
 		
@@ -223,4 +226,59 @@ public class ComposerRestController {
 		}
 	}
 	
+	
+	@ApiOperation(value = "Publish Service to Public Catalogue")
+	@ApiResponses(value = {
+		      @ApiResponse(code = 202, message = "The service will be published to the public catalogue"),
+		      @ApiResponse(code = 404, message = "Entity to be published not found"),
+		      @ApiResponse(code = 400, message = "Publication request without parameter serviceId or already published service")
+	})
+	@RequestMapping(value = "/service/{serviceId}/publish", method = RequestMethod.PUT)
+	public ResponseEntity<?> publishService(@PathVariable UUID serviceId){
+		log.info("Request to publish the service " + serviceId + " to the public catalogue");
+		if(serviceId == null) {
+			log.error("Publishing request without parameter serviceId");
+			return new ResponseEntity<String>("Publishing request without parameter serviceId", HttpStatus.BAD_REQUEST);
+		} else {
+			try {
+				serviceManager.publishService(serviceId);
+				return new ResponseEntity<>(HttpStatus.ACCEPTED);
+			} catch(NotExistingEntityException e1) {
+				log.error("Requested publication for an entity which doesn't exist");
+				return new ResponseEntity<String>("Requested publication for an entity which doesn't exist", HttpStatus.NOT_FOUND);
+			} catch(AlreadyPublishedServiceException e2) {
+				log.error("Requested publication for an entity already has been published");
+				return new ResponseEntity<String>("Requested publication for an entity already has been published", HttpStatus.BAD_REQUEST);
+			}
+		}
+		
+	}
+	
+	
+	@ApiOperation(value = "Unpublish Service from Public Catalogue")
+	@ApiResponses(value = {
+		      @ApiResponse(code = 202, message = "The service will be removed from the public catalogue"),
+		      @ApiResponse(code = 404, message = "Entity to be unpublished not found"),
+		      @ApiResponse(code = 400, message = "Request without parameter serviceId or not yet published service")
+	})
+	@RequestMapping(value = "/service/{serviceId}/unpublish", method = RequestMethod.PUT)
+	public ResponseEntity<?> unPublishService(@PathVariable UUID serviceId){
+		log.info("Request to unpublish the service " + serviceId + " from the public catalogue");
+		if(serviceId == null) {
+			log.error("Request without parameter serviceId");
+			return new ResponseEntity<String>("Request without parameter serviceId", HttpStatus.BAD_REQUEST);
+		} else {
+			try {
+				serviceManager.unPublishService(serviceId);
+				return new ResponseEntity<>(HttpStatus.ACCEPTED);
+			} catch(NotExistingEntityException e1) {
+				log.error("Requested deletion of publication for an entity which doesn't exist");
+				return new ResponseEntity<String>("Requested deletion of publication for an entity which doesn't exist", HttpStatus.NOT_FOUND);
+			} catch(NotPublishedServiceException e2) {
+				log.error("Requested publication for an entity that has not been published yet");
+				return new ResponseEntity<String>("Requested publication for an entity that has not been published yet", HttpStatus.BAD_REQUEST);
+			}
+		}
+		
+	}
 }
