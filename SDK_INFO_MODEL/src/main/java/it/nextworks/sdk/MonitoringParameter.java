@@ -75,6 +75,10 @@ public class MonitoringParameter {
 	
 	@JsonIgnore
 	@ManyToOne
+	private SDKFunctionInstance functionInstance;
+	
+	@JsonIgnore
+	@ManyToOne
 	private SDKService service;
 	
 	@JsonIgnore
@@ -98,7 +102,7 @@ public class MonitoringParameter {
 		this.uuid = UUID.randomUUID();
 		this.name = name;
 		this.function = function;
-		
+		this.functionInstance = null;
 		this.threshold = 0;
 		this.service = null;
 		this.scalingAspect = null;
@@ -138,6 +142,27 @@ public class MonitoringParameter {
 		this.function = null;
 		this.service = null;
 	}
+
+	
+	/**
+	 * Constructor to be used when the monitoring parameter is combined with a SDKFunction
+	 * @param name Parameter type to be monitored
+	 * @param function Function where the parameter is used
+	 */
+	public MonitoringParameter(MonitoringParameterType name, SDKFunctionInstance functionInstance) {
+		this.uuid = UUID.randomUUID();
+		this.name = name;
+		this.function = null;
+		this.functionInstance = functionInstance;
+		this.functionInstance = null;
+		this.threshold = 0;
+		this.service = null;
+		this.scalingAspect = null;
+		this.direction = null;
+	}
+	
+	
+
 
 	@JsonProperty("name")
 	public MonitoringParameterType getName() {
@@ -180,6 +205,14 @@ public class MonitoringParameter {
 
 	public void setService(SDKService service) {
 		this.service = service;
+	}
+	
+	public SDKFunctionInstance getFunctionInstance() {
+		return functionInstance;
+	}
+
+	public void setFunctionInstance(SDKFunctionInstance functionInstance) {
+		this.functionInstance = functionInstance;
 	}
 
 

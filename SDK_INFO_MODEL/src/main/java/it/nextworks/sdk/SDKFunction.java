@@ -24,7 +24,6 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
 import org.hibernate.annotations.LazyCollection;
@@ -32,7 +31,6 @@ import org.hibernate.annotations.LazyCollectionOption;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import it.nextworks.sdk.enums.Flavour;
@@ -72,9 +70,9 @@ public class SDKFunction {
 	private List<ConnectionPoint> connectionPoints = new ArrayList<ConnectionPoint>();
 	
 	/**
-	 * Flavor of the SDKFunction. It defines the ammount of resources necessary to run it
+	 * List of Flavors of the SDKFunction. It defines the amount of resources necessary to run it
 	 */
-	private Flavour flavour;
+	private List<Flavour> flavour = new ArrayList<Flavour>();
 	
 	/**
 	 * Current version of the SDKFunction
@@ -96,11 +94,7 @@ public class SDKFunction {
 	 * Short description of the SDKFunction
 	 */
 	private String description;
-	
-	
-	@JsonIgnore
-	@ManyToOne
-	private SDKService service;
+
 	
 	
 	/**
@@ -123,7 +117,7 @@ public class SDKFunction {
 	 * @param description A short description of the function.
 	 * @param service 
 	 */
-	public SDKFunction(String name, List<ConnectionPoint> connectionPoints, Flavour flavour, String version, 
+	public SDKFunction(String name, List<ConnectionPoint> connectionPoints, List<Flavour> flavour, String version, 
 				String vendor, List<MonitoringParameter> monitoringParameters, String description, SDKService service) {
 		
 		this.uuid = UUID.randomUUID();
@@ -132,24 +126,15 @@ public class SDKFunction {
 			for(ConnectionPoint cp : connectionPoints)
 				this.connectionPoints.add(cp);
 		}
+		if(flavour != null && flavour.size() > 0)
+			
 		this.flavour = flavour;
 		this.version = version;
 		if(monitoringParameters != null) {
 			for(MonitoringParameter mon : monitoringParameters)
 				this.monitoringParameters.add(mon);
 		}
-		this.service = service;
 	}
-
-	public SDKService getService() {
-		return service;
-	}
-
-
-	public void setService(SDKService service) {
-		this.service = service;
-	}
-
 
 	@JsonProperty("name")
 	public String getName() {
@@ -173,13 +158,13 @@ public class SDKFunction {
 
 
 	@JsonProperty("flavour")
-	public Flavour getFlavour() {
+	public List<Flavour> getFlavour() {
 		return flavour;
 	}
 
 
 	public void setFlavour(Flavour flavour) {
-		this.flavour = flavour;
+		this.flavour.add(flavour);
 	}
 
 	@JsonProperty("version")
