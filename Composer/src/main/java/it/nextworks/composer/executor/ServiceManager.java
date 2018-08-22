@@ -43,6 +43,7 @@ public class ServiceManager implements ServiceManagerProviderInterface{
 	
 	@Autowired
 	private SDKServiceRepository serviceRepository;
+
 	
 	
 	public ServiceManager() {}

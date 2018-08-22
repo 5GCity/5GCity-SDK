@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import it.nextworks.composer.executor.interfaces.FunctionManagerProviderInterface;
+import it.nextworks.composer.executor.repositories.SDKFunctionInstanceRepository;
 import it.nextworks.composer.executor.repositories.SDKFunctionRepository;
 import it.nextworks.sdk.SDKFunction;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
@@ -37,6 +38,10 @@ public class FunctionManager implements FunctionManagerProviderInterface{
 			
 	@Autowired
 	private SDKFunctionRepository SDKFunctionRepository;
+	
+
+	@Autowired
+	private SDKFunctionInstanceRepository functionInstanceRepository;
 	
 	public FunctionManager() {}
 	
@@ -51,6 +56,10 @@ public class FunctionManager implements FunctionManagerProviderInterface{
 		}
 	}
 
+	
+	
+	
+	
 	@Override
 	public List<SDKFunction> getFunctions() {
 		List<SDKFunction> functionList = SDKFunctionRepository.findAll();
@@ -59,22 +68,6 @@ public class FunctionManager implements FunctionManagerProviderInterface{
 		} else 
 			log.debug("SDK Functions present in DB: " + functionList.size());
 		return functionList;
-	}
-
-	@Override
-	public List<SDKFunction> getFunctionsOnService(UUID serviceId) {
-		List<SDKFunction> functionsList = SDKFunctionRepository.findAll();
-		List<SDKFunction> filteredList = new ArrayList<>();
-		if(functionsList.size() == 0) {
-			log.debug("No functions are available");
-		} else {
-			for (SDKFunction function : functionsList) {
-				if (serviceId.equals(function.getService().getUuid())){
-					filteredList.add(function);
-				}
-			}
-		}
-		return filteredList;
 	}
 
 }

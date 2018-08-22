@@ -13,32 +13,19 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package it.nextworks.composer.executor.interfaces;
+package it.nextworks.composer.executor.repositories;
 
-import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
-import it.nextworks.sdk.SDKFunction;
-import it.nextworks.sdk.exceptions.NotExistingEntityException;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface FunctionManagerProviderInterface {
-	
-	
-	/**
-	 * 
-	 * @param id
-	 * @return
-	 * @throws NotExistingEntityException 
-	 */
-	public SDKFunction getFunction(UUID id) throws NotExistingEntityException;
-	
-	
-	/**
-	 * 
-	 * @return
-	 */
-	public List<SDKFunction> getFunctions();
-	
+import it.nextworks.sdk.SDKFunctionInstance;
+
+public interface SDKFunctionInstanceRepository extends JpaRepository<SDKFunctionInstance, Long>{
+
+	Optional<SDKFunctionInstance> findByUuid(UUID id);
+	Optional<SDKFunctionInstance> findById(Long id);
 	
 	
 }
