@@ -15,11 +15,11 @@
 */
 package it.nextworks.sdk;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import javax.persistence.CascadeType;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -67,12 +67,11 @@ public class SDKFunction {
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	@LazyCollection(LazyCollectionOption.FALSE)
 	@JsonProperty("connection_point")
-	private List<ConnectionPoint> connectionPoints = new ArrayList<ConnectionPoint>();
+	private List<ConnectionPoint> connectionPoints;
 	
-	/**
-	 * List of Flavors of the SDKFunction. It defines the amount of resources necessary to run it
-	 */
-	private List<Flavour> flavour = new ArrayList<Flavour>();
+	@JsonProperty("flavour")
+	@ElementCollection(targetClass=Flavour.class)
+	private List<Flavour> flavour;
 	
 	/**
 	 * Current version of the SDKFunction
@@ -88,7 +87,7 @@ public class SDKFunction {
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	@LazyCollection(LazyCollectionOption.FALSE)
 	@JsonProperty("monitoring_parameters")
-	private List<MonitoringParameter> monitoringParameters = new ArrayList<MonitoringParameter>();
+	private List<MonitoringParameter> monitoringParameters;
 	
 	/**
 	 * Short description of the SDKFunction
@@ -127,8 +126,7 @@ public class SDKFunction {
 				this.connectionPoints.add(cp);
 		}
 		if(flavour != null && flavour.size() > 0)
-			
-		this.flavour = flavour;
+			this.flavour = flavour;
 		this.version = version;
 		if(monitoringParameters != null) {
 			for(MonitoringParameter mon : monitoringParameters)

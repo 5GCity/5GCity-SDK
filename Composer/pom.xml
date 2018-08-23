@@ -5,7 +5,7 @@
 
 	<groupId>it.nextworks</groupId>
 	<artifactId>composer</artifactId>
-	<version>0.0.1</version>
+	<version>0.0.2</version>
 	<packaging>jar</packaging>
 
 	<name>Composer</name>
@@ -57,7 +57,7 @@
 		<dependency>
 		    <groupId>it.nextworks</groupId>
 		    <artifactId>SDK_INFO_MODEL</artifactId>
-		    <version>0.0.3</version>
+		    <version>0.0.4</version>
 		</dependency>
 		
 		<dependency>

@@ -252,4 +252,8 @@ public class MonitoringParameter {
 		return false;
 	}
 	
+	
+	public boolean isValid() {
+		return true;
+	}
 }

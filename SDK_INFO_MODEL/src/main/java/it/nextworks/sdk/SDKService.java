@@ -76,7 +76,7 @@ public class SDKService {
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	@LazyCollection(LazyCollectionOption.FALSE)
 	@JsonProperty("functions")
-	private List<SDKFunction> functions = new ArrayList<SDKFunction>();
+	private List<SDKFunctionInstance> functions = new ArrayList<SDKFunctionInstance>();
 	
 	/**
 	 * Scaling Ratio Type for the SDKService.
@@ -150,7 +150,7 @@ public class SDKService {
 	 * @param scalingAspects List of scaling aspects for the SDKService. For each of these, the service should scale.
 	 * @param topologyList List of the links composing the SDKService
 	 */
-	public SDKService(String name, String designer, String version, List<SDKFunction> functions, ScalingRatioType scalingRatio,
+	public SDKService(String name, String designer, String version, List<SDKFunctionInstance> functions, ScalingRatioType scalingRatio,
 			StatusType status, String description, License license, List<MonitoringParameter> monitoringParameters, 
 			List<ScalingAspect> scalingAspects, List<Link> topologyList) {
 		this.uuid = UUID.randomUUID();
@@ -158,7 +158,7 @@ public class SDKService {
 		this.designer = designer;
 		this.version = version;
 		if(functions != null) {
-			for(SDKFunction function : functions)
+			for(SDKFunctionInstance function : functions)
 				this.functions.add(function);
 		}
 		this.scalingRatio = scalingRatio;
@@ -205,11 +205,11 @@ public class SDKService {
 	}
 
 	@JsonProperty("functions")
-	public List<SDKFunction> getFunctions() {
+	public List<SDKFunctionInstance> getFunctions() {
 		return functions;
 	}
 
-	public void setFunctions(List<SDKFunction> functions) {
+	public void setFunctions(List<SDKFunctionInstance> functions) {
 		this.functions = functions;
 	}
 
@@ -300,7 +300,7 @@ public class SDKService {
 			return false;
 		if(this.functions == null || this.functions.size() == 0)
 			return false;
-		for(SDKFunction function : this.functions) {
+		for(SDKFunctionInstance function : this.functions) {
 			if(!function.isValid())
 				return false;
 		}
@@ -309,5 +309,22 @@ public class SDKService {
 				return false;
 		}
 		return true;
+	}
+	
+	
+	public void deleteScalingAspect(ScalingAspect scalingAspect) {
+		for(ScalingAspect scale : this.scalingAspects) {
+			if(scale.getUuid().equals(scalingAspect.getUuid())) {
+				this.scalingAspects.remove(scale);
+				break;
+			}
+		}
+	}
+	
+	public void deleteMonitoringParameter(MonitoringParameter parameter) {
+		for(MonitoringParameter param: this.monitoringParameters) {
+			if(param.getUuid().equals(parameter.getUuid()))
+				this.monitoringParameters.remove(param);
+		}
 	}
 }

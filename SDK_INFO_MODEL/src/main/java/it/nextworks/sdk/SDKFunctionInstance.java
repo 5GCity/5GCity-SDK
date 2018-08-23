@@ -15,7 +15,6 @@
 */
 package it.nextworks.sdk;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -77,7 +76,7 @@ public class SDKFunctionInstance {
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	@LazyCollection(LazyCollectionOption.FALSE)
 	@JsonProperty("monitoring_parameters")
-	private List<MonitoringParameter> monitoringParameters = new ArrayList<MonitoringParameter>();
+	private List<MonitoringParameter> monitoringParameters;
 	
 	
 	
@@ -196,7 +195,21 @@ public class SDKFunctionInstance {
 	
 	
 	
+	public boolean isValid() {
+		//TODO
+		return true;
+	}
 	
+	public void deleteMonitoringParameter(MonitoringParameter monitoringParameter) {
+		if(monitoringParameter.isValid()) {
+			for(MonitoringParameter param : this.monitoringParameters) {
+				if(param.getUuid().equals(monitoringParameter.getUuid())) {
+					this.monitoringParameters.remove(param);
+				}
+			}
+				
+		}
+	}
 	
 	
 }

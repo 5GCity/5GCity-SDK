@@ -15,7 +15,6 @@
 */
 package it.nextworks.composer.executor;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,7 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import it.nextworks.composer.executor.interfaces.FunctionManagerProviderInterface;
-import it.nextworks.composer.executor.repositories.SDKFunctionInstanceRepository;
 import it.nextworks.composer.executor.repositories.SDKFunctionRepository;
 import it.nextworks.sdk.SDKFunction;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
@@ -40,9 +38,6 @@ public class FunctionManager implements FunctionManagerProviderInterface{
 	private SDKFunctionRepository SDKFunctionRepository;
 	
 
-	@Autowired
-	private SDKFunctionInstanceRepository functionInstanceRepository;
-	
 	public FunctionManager() {}
 	
 	@Override

@@ -160,4 +160,8 @@ public class ScalingAspect {
 		this.service = service;
 	}
 	
+	public boolean isValid() {
+		return true;
+	}
+	
 }

@@ -18,9 +18,12 @@ package it.nextworks.composer.executor.interfaces;
 import java.util.List;
 import java.util.UUID;
 
+import it.nextworks.sdk.MonitoringParameter;
 import it.nextworks.sdk.SDKService;
+import it.nextworks.sdk.ScalingAspect;
 import it.nextworks.sdk.exceptions.AlreadyPublishedServiceException;
 import it.nextworks.sdk.exceptions.ExistingEntityException;
+import it.nextworks.sdk.exceptions.MalformattedElementException;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
 import it.nextworks.sdk.exceptions.NotPublishedServiceException;
 
@@ -43,5 +46,17 @@ public interface ServiceManagerProviderInterface {
 	public void publishService(UUID serviceId) throws NotExistingEntityException, AlreadyPublishedServiceException;
 	
 	public void unPublishService(UUID serviceId) throws NotExistingEntityException, NotPublishedServiceException;
+	
+	public void updateScalingAspect(UUID serviceId, List<ScalingAspect> scalingAspects) throws NotExistingEntityException, MalformattedElementException;
 
+	public void deleteScalingAspect(UUID serviceId, List<ScalingAspect> scalingAspects) throws NotExistingEntityException, MalformattedElementException;
+
+	public List<ScalingAspect> getScalingAspect(UUID serviceId) throws NotExistingEntityException;
+
+	public void updateMonitoringParameters(UUID serviceId, List<MonitoringParameter> monitoringParameters) throws NotExistingEntityException, MalformattedElementException;
+
+	public void deleteMonitoringParameters(UUID serviceId, List<MonitoringParameter> monitoringParameters) throws NotExistingEntityException, MalformattedElementException;
+
+	public List<MonitoringParameter> getMonitoringParameters(UUID serviceId) throws NotExistingEntityException;
+	
 }
