@@ -42,7 +42,7 @@ import it.nextworks.sdk.exceptions.NotExistingEntityException;
 @RestController
 @CrossOrigin
 @RequestMapping("/sdk/composer")
-@Api(value="SDK NBI", description="Operations on Composer Module")
+@Api(value="SDK NBI", description="Operations on Composer Module - SDKFunction APIs")
 public class FunctionRestController {
 
 	private static final Logger log = LoggerFactory.getLogger(FunctionRestController.class);

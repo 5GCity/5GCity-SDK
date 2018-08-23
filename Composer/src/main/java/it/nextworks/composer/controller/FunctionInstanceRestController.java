@@ -46,7 +46,7 @@ import it.nextworks.sdk.exceptions.NotExistingEntityException;
 @RestController
 @CrossOrigin
 @RequestMapping("/sdk/composer")
-@Api(value="SDK NBI", description="Operations on Composer Module")
+@Api(value="SDK NBI", description="Operations on Composer Module - SDKFunctionInstance APIs")
 public class FunctionInstanceRestController {
 
 	private static final Logger log = LoggerFactory.getLogger(FunctionInstanceRestController.class);
@@ -113,7 +113,7 @@ public class FunctionInstanceRestController {
 	@ApiResponses(value = {
 		      @ApiResponse(code = 200, message = "")
 	})
-	@RequestMapping(value = "/function/instances/{functionId}", method = RequestMethod.GET)
+	@RequestMapping(value = "/function/{functionId}/instances", method = RequestMethod.GET)
 	public ResponseEntity<?> getFunctionInstancesPerFunction(@PathVariable UUID functionId) {
 		log.info("Request for get FUNCTIONS");
 		List<SDKFunctionInstance> response = new ArrayList<>();

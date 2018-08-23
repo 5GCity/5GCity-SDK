@@ -47,7 +47,7 @@ import it.nextworks.sdk.exceptions.NotPublishedServiceException;
 @RestController
 @CrossOrigin
 @RequestMapping("/sdk/composer")
-@Api(value = "SDK NBI", description = "Operations on Composer Module")
+@Api(value = "SDK NBI", description = "Operations on Composer Module - SDKService APIs")
 public class ServiceRestController {
 
 	private static final Logger log = LoggerFactory.getLogger(ServiceRestController.class);
