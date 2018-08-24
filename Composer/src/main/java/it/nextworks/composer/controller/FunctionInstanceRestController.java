@@ -131,7 +131,7 @@ public class FunctionInstanceRestController {
 		      @ApiResponse(code = 204, message = "Monitoring Param list Updated")
 	})
 	@RequestMapping(value = "/function/instances/{functionId}/monitoringparams", method = RequestMethod.PUT)
-	public ResponseEntity<?> updateMonitoringParametersForFunction(@PathVariable UUID functionId, List<MonitoringParameter> monitoringParameters) {
+	public ResponseEntity<?> updateMonitoringParametersForFunction(@PathVariable UUID functionId, @PathVariable List<MonitoringParameter> monitoringParameters) {
 		log.info("Request for update of a monitoringParameter list");
 		for(MonitoringParameter param : monitoringParameters) {
 			if(!param.isValid()) {
@@ -182,7 +182,7 @@ public class FunctionInstanceRestController {
 		      @ApiResponse(code = 400, message = "Deletion request without parameter functionId")
 	})
 	@RequestMapping(value = "/function/instances/{functionId}/monitoringparams", method = RequestMethod.DELETE)
-	public ResponseEntity<?> deleteMonitoringParametersForFunction(@PathVariable UUID functionId, List<MonitoringParameter> monitoringParameters) {
+	public ResponseEntity<?> deleteMonitoringParametersForFunction(@PathVariable UUID functionId, @PathVariable List<MonitoringParameter> monitoringParameters) {
 		log.info("Request for deletion of a list of monitoring parameters from function identified by id: " + functionId.toString());
 		
 			try {

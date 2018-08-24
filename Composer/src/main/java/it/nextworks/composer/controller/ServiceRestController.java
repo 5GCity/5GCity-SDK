@@ -234,7 +234,7 @@ public class ServiceRestController {
 			@ApiResponse(code = 400, message = "Service not present in db or request cannot be validated"),
 			@ApiResponse(code = 204, message = "ScalingAspects Updated") })
 	@RequestMapping(value = "/service/{serviceId}/scalingaspects", method = RequestMethod.PUT)
-	public ResponseEntity<?> updateScalingAspects(@PathVariable UUID serviceId, List<ScalingAspect> scalingAspects) {
+	public ResponseEntity<?> updateScalingAspects(@PathVariable UUID serviceId, @PathVariable List<ScalingAspect> scalingAspects) {
 		log.info("Request for update of a scaling aspect list");
 		for (ScalingAspect scaleAspect : scalingAspects) {
 			if (!scaleAspect.isValid()) {
@@ -283,7 +283,7 @@ public class ServiceRestController {
 			@ApiResponse(code = 404, message = "Entity to be deleted not found"),
 			@ApiResponse(code = 400, message = "Deletion request without parameter serviceId") })
 	@RequestMapping(value = "/service/{serviceId}/scalingaspects", method = RequestMethod.DELETE)
-	public ResponseEntity<?> deleteScalingAspects(@PathVariable UUID serviceId, List<ScalingAspect> scalingAspects) {
+	public ResponseEntity<?> deleteScalingAspects(@PathVariable UUID serviceId, @PathVariable List<ScalingAspect> scalingAspects) {
 		log.info("Request for deletion of a list of scalingAspects from service identified by id: "
 				+ serviceId.toString());
 
@@ -307,7 +307,7 @@ public class ServiceRestController {
 			@ApiResponse(code = 204, message = "Monitoring Param list Updated") })
 	@RequestMapping(value = "/service/{serviceId}/monitoringparams", method = RequestMethod.PUT)
 	public ResponseEntity<?> updateMonitoringParametersForService(@PathVariable UUID serviceId,
-			List<MonitoringParameter> monitoringParameters) {
+			@PathVariable List<MonitoringParameter> monitoringParameters) {
 		log.info("Request for update of a monitoringParameter list");
 		for (MonitoringParameter param : monitoringParameters) {
 			if (!param.isValid()) {
@@ -360,7 +360,7 @@ public class ServiceRestController {
 			@ApiResponse(code = 400, message = "Deletion request without parameter serviceId") })
 	@RequestMapping(value = "/service/{serviceId}/monitoringparams", method = RequestMethod.DELETE)
 	public ResponseEntity<?> deleteMonitoringParametersForService(@PathVariable UUID serviceId,
-			List<MonitoringParameter> monitoringParameters) {
+			@PathVariable List<MonitoringParameter> monitoringParameters) {
 		log.info("Request for deletion of a list of monitoring parameters from service identified by id: "
 				+ serviceId.toString());
 
