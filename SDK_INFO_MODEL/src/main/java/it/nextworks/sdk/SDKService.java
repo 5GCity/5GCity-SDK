@@ -16,29 +16,33 @@
 package it.nextworks.sdk;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import javax.persistence.CascadeType;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import it.nextworks.sdk.enums.ScalingRatioType;
 import it.nextworks.sdk.enums.StatusType;
 /**
  * 
- * @version v0.1
+ * @version v0.4
  *
  */
 @Entity
@@ -46,6 +50,7 @@ public class SDKService {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
+	@JsonIgnore
 	private Long id;
 
 	/**
@@ -96,7 +101,7 @@ public class SDKService {
 	/**
 	 * License for the SDKService
 	 */
-	@ManyToOne
+	@ManyToOne(cascade=CascadeType.ALL)
 	private License license;
 	
 	
@@ -128,6 +133,11 @@ public class SDKService {
 	@JsonProperty("link")
 	private List<Link> topologyList = new ArrayList<Link>();
 	
+	
+	@JsonInclude(JsonInclude.Include.NON_EMPTY)
+	@ElementCollection
+	private Map<String, String> metadata = new HashMap<String, String>();
+	
 	/**
 	 * Constructor used by JPA
 	 */
@@ -152,7 +162,7 @@ public class SDKService {
 	 */
 	public SDKService(String name, String designer, String version, List<SDKFunctionInstance> functions, ScalingRatioType scalingRatio,
 			StatusType status, String description, License license, List<MonitoringParameter> monitoringParameters, 
-			List<ScalingAspect> scalingAspects, List<Link> topologyList) {
+			List<ScalingAspect> scalingAspects, List<Link> topologyList, Map<String, String> metadata) {
 		this.uuid = UUID.randomUUID();
 		this.name = name;
 		this.designer = designer;
@@ -175,7 +185,9 @@ public class SDKService {
 		}
 		for(Link link : topologyList)
 			this.topologyList.add(link);
+		if (metadata != null) this.metadata = metadata;
 	}
+
 
 	@JsonProperty("name")
 	public String getName() {
@@ -292,22 +304,30 @@ public class SDKService {
 
 	public boolean isValid() {
 		//TODO To be completed
+		System.out.println("Name check: " + this.name);
 		if(this.name == null || this.name == "")
 			return false;
+		System.out.println("Designer check: " + this.designer);
 		if(this.designer == null || this.designer == "")
 			return false;
+		System.out.println("Version check: " + this.version);
 		if(this.version == null || this.version == "")
 			return false;
+		System.out.println("Functions check: " + this.functions.size());
 		if(this.functions == null || this.functions.size() == 0)
 			return false;
 		for(SDKFunctionInstance function : this.functions) {
 			if(!function.isValid())
 				return false;
 		}
+		System.out.println("Links check" + this.topologyList.size());
+		if(this.topologyList == null || this.topologyList.size() == 0)
+			return false;
 		for(Link link : this.topologyList) {
-			if(link.isValid())
+			if(!link.isValid())
 				return false;
 		}
+		System.out.println("Ciaone .....");
 		return true;
 	}
 	
@@ -327,4 +347,15 @@ public class SDKService {
 				this.monitoringParameters.remove(param);
 		}
 	}
+	
+	@JsonProperty("metadata")
+	public Map<String, String> getMetadata() {
+		return this.metadata;
+	}
+
+
+	public void setMetadata(Map<String, String> metadata) {
+		this.metadata = metadata;
+	}
+
 }

@@ -15,12 +15,15 @@
 */
 package it.nextworks.sdk;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import javax.persistence.CascadeType;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -31,6 +34,8 @@ import org.hibernate.annotations.LazyCollectionOption;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import it.nextworks.sdk.enums.Flavour;
@@ -40,13 +45,14 @@ import it.nextworks.sdk.enums.Flavour;
  * The class SDKFunction defines a function entity. Functions are created by special users (admin or editor permission)
  * A function is part of the final service created by a normal user via the composer module
  *  
- * @version v0.1
+ * @version v0.4
  */
 @Entity
 public class SDKFunction {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
+	@JsonIgnore
 	private Long id;
 
 	/**
@@ -69,8 +75,9 @@ public class SDKFunction {
 	@JsonProperty("connection_point")
 	private List<ConnectionPoint> connectionPoints;
 	
-	@JsonProperty("flavour")
-	@ElementCollection(targetClass=Flavour.class)
+	
+	@ElementCollection(fetch=FetchType.EAGER)
+	@JsonProperty("flavours")
 	private List<Flavour> flavour;
 	
 	/**
@@ -94,6 +101,9 @@ public class SDKFunction {
 	 */
 	private String description;
 
+	@JsonInclude(JsonInclude.Include.NON_EMPTY)
+	@ElementCollection
+	private Map<String, String> metadata = new HashMap<String, String>();
 	
 	
 	/**
@@ -117,7 +127,7 @@ public class SDKFunction {
 	 * @param service 
 	 */
 	public SDKFunction(String name, List<ConnectionPoint> connectionPoints, List<Flavour> flavour, String version, 
-				String vendor, List<MonitoringParameter> monitoringParameters, String description, SDKService service) {
+				String vendor, List<MonitoringParameter> monitoringParameters, String description, Map<String, String> metadata) {
 		
 		this.uuid = UUID.randomUUID();
 		this.name = name;
@@ -132,7 +142,24 @@ public class SDKFunction {
 			for(MonitoringParameter mon : monitoringParameters)
 				this.monitoringParameters.add(mon);
 		}
+		if (metadata != null) this.metadata = metadata;
 	}
+
+	@JsonProperty("metadata")
+	public Map<String, String> getMetadata() {
+		return metadata;
+	}
+
+
+	public void setMetadata(Map<String, String> metadata) {
+		this.metadata = metadata;
+	}
+
+
+	public void setFlavour(List<Flavour> flavour) {
+		this.flavour = flavour;
+	}
+
 
 	@JsonProperty("name")
 	public String getName() {
@@ -155,14 +182,9 @@ public class SDKFunction {
 	}
 
 
-	@JsonProperty("flavour")
+	@JsonProperty("flavours")
 	public List<Flavour> getFlavour() {
 		return flavour;
-	}
-
-
-	public void setFlavour(Flavour flavour) {
-		this.flavour.add(flavour);
 	}
 
 	@JsonProperty("version")

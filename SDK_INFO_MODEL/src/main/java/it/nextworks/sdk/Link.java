@@ -39,7 +39,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * The Link class defines the interconnectivity between functions, over the 
  * 	connection points and connectivity rules, over L3ConnectivityProperties.
  * 
- * @version v0.1
+ * @version v0.4
  *
  */
 @Entity
@@ -47,6 +47,7 @@ public class Link {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
+	@JsonIgnore
 	private Long id;
 	
 	/** 

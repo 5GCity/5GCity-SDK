@@ -17,7 +17,7 @@ package it.nextworks.sdk.enums;
 
 /**
  * Defines the operand 
- * @version v0.1
+ * @version v0.4
  *
  */
 public enum DirectionType {

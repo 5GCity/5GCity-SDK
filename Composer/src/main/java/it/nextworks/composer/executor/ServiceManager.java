@@ -95,15 +95,15 @@ public class ServiceManager implements ServiceManagerProviderInterface{
 	@Override
 	public String createService(SDKService service) throws ExistingEntityException{
 		log.info("Storing into database a new service with ID: " + service.getId());
-		Optional<SDKService> srv = serviceRepository.findById(service.getId());
+		Optional<SDKService> srv = serviceRepository.findByUuid(service.getUuid());
 		if(srv.isPresent()) {
-			log.error("Service id " + service.getId()+ " already present in database");
-			throw new ExistingEntityException("Service id " + service.getId()+ " already present in database");
+			log.error("Service uuid " + service.getUuid()+ " already present in database");
+			throw new ExistingEntityException("Service uuid " + service.getUuid()+ " already present in database");
 		}
 		//TODO Check if is valid
-		log.debug("Storing into database service with id: " + service.getId());
+		log.debug("Storing into database service with uuid: " + service.getUuid());
 		serviceRepository.saveAndFlush(service);
-		return service.getId().toString();
+		return service.getUuid().toString();
 	}
 
 	@Override

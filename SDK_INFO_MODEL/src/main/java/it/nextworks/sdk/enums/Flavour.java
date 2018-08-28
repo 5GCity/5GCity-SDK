@@ -17,7 +17,7 @@ package it.nextworks.sdk.enums;
 
 /**
  * Defines the flavour type of the SDKFunction
- * @version v0.1
+ * @version v0.4
  *
  */
 public enum Flavour {

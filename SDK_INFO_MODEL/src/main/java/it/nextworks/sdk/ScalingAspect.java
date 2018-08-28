@@ -41,13 +41,14 @@ import it.nextworks.sdk.enums.ActionType;
  * 
  * The class creates a ScalingAspect entity. It is used to define a scaling strategy based on the monitoring parameters
  * 
- * @version v0.1
+ * @version v0.4
  *
  */
 @Entity
 public class ScalingAspect {
 	
 	@Id
+	@JsonIgnore
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long id;
 

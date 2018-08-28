@@ -17,7 +17,7 @@ package it.nextworks.sdk.enums;
 
 /**
  * Defines the connection point type 
- * @version v0.1
+ * @version v0.4
  *
  */
 public enum ConnectionPointType {

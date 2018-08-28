@@ -27,6 +27,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -131,7 +132,7 @@ public class FunctionInstanceRestController {
 		      @ApiResponse(code = 204, message = "Monitoring Param list Updated")
 	})
 	@RequestMapping(value = "/function/instances/{functionId}/monitoringparams", method = RequestMethod.PUT)
-	public ResponseEntity<?> updateMonitoringParametersForFunction(@PathVariable UUID functionId, @PathVariable List<MonitoringParameter> monitoringParameters) {
+	public ResponseEntity<?> updateMonitoringParametersForFunction(@PathVariable UUID functionId, @RequestBody List<MonitoringParameter> monitoringParameters) {
 		log.info("Request for update of a monitoringParameter list");
 		for(MonitoringParameter param : monitoringParameters) {
 			if(!param.isValid()) {
@@ -182,7 +183,7 @@ public class FunctionInstanceRestController {
 		      @ApiResponse(code = 400, message = "Deletion request without parameter functionId")
 	})
 	@RequestMapping(value = "/function/instances/{functionId}/monitoringparams", method = RequestMethod.DELETE)
-	public ResponseEntity<?> deleteMonitoringParametersForFunction(@PathVariable UUID functionId, @PathVariable List<MonitoringParameter> monitoringParameters) {
+	public ResponseEntity<?> deleteMonitoringParametersForFunction(@PathVariable UUID functionId, @RequestBody List<MonitoringParameter> monitoringParameters) {
 		log.info("Request for deletion of a list of monitoring parameters from function identified by id: " + functionId.toString());
 		
 			try {
@@ -204,7 +205,7 @@ public class FunctionInstanceRestController {
 		      @ApiResponse(code = 204, message = "Flavour Updated")
 	})
 	@RequestMapping(value = "/function/instances/{functionId}/flavour", method = RequestMethod.PUT)
-	public ResponseEntity<?> updateFlavourForFunction(@PathVariable UUID functionId, Flavour flavour) {
+	public ResponseEntity<?> updateFlavourForFunction(@PathVariable UUID functionId, @RequestBody Flavour flavour) {
 		log.info("Request for update the flavor for SDKFunctionInstance " + functionId.toString());
 		try {
 			functionInstanceManager.updateFlavor(functionId, flavour);

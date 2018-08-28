@@ -40,13 +40,14 @@ import it.nextworks.sdk.enums.Flavour;
  * The class SDKFunction defines a function entity. Functions are created by special users (admin or editor permission)
  * A function is part of the final service created by a normal user via the composer module
  *  
- * @version v0.1
+ * @version v0.4
  */
 @Entity
 public class SDKFunctionInstance {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
+	@JsonIgnore
 	private Long id;
 	
 	/**
@@ -58,8 +59,7 @@ public class SDKFunctionInstance {
 	/**
 	 * Function descriptor for the function instance
 	 */
-	@JsonIgnore
-	@ManyToOne
+	@ManyToOne(cascade=CascadeType.ALL)
 	private SDKFunction function;
 	
 	

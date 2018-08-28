@@ -32,7 +32,7 @@ import it.nextworks.sdk.enums.ConnectionPointType;
  * 
  * The class defines a connection point associated to a SDKFunction or to a Link
  * 
- * @version v0.1
+ * @version v0.4
  *
  */
 @Entity
@@ -40,6 +40,7 @@ public class ConnectionPoint {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
+	@JsonIgnore
 	private Long id;
 
 	/**

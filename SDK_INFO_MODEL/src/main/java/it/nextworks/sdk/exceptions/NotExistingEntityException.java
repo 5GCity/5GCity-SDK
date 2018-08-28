@@ -17,7 +17,7 @@ package it.nextworks.sdk.exceptions;
 
 /**
  * 
- * @version v0.1
+ * @version v0.4
  *
  */
 public class NotExistingEntityException extends Exception{

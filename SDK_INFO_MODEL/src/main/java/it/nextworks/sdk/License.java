@@ -32,7 +32,7 @@ import it.nextworks.sdk.enums.LicenseType;
  * 
  * The class License defines the license related to the Service.
  * 
- * @version v0.1
+ * @version v0.4
  *
  */
 @Entity
@@ -41,6 +41,7 @@ public class License {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
+	@JsonIgnore
 	private Long id;
 	
 	/**

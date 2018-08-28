@@ -36,7 +36,7 @@ import it.nextworks.sdk.exceptions.MalformattedElementException;
  * 
  * The class defines a Layer3 connectivity rule, to be associated to a Link
  * 
- * @version v0.1
+ * @version v0.4
  *
  */
 @Entity
@@ -44,6 +44,7 @@ public class L3ConnectivityProperty {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
+	@JsonIgnore
 	private Long id;
 
 	/**

@@ -38,7 +38,7 @@ import it.nextworks.sdk.enums.MonitoringParameterType;
  * 		# Services
  * 		# ScalingAspects
  * 
- * @version v0.1
+ * @version v0.4
  *
  */
 @Entity
@@ -46,6 +46,7 @@ public class MonitoringParameter {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
+	@JsonIgnore
 	private Long id;
 
 	/**
