@@ -50,18 +50,22 @@ public class ScalingAspect {
 	@Id
 	@JsonIgnore
 	@GeneratedValue(strategy = GenerationType.AUTO)
+	@JsonProperty("id")
 	private Long id;
 
 	/**
 	 * Unique identifier of the ScalingAspect entity
 	 */
-	private UUID uuid;
+	@JsonProperty("uuid")
+	private String uuid = UUID.randomUUID().toString();
 	
 	/**
 	 * Human readable identifier of the ScalingAspect
 	 */
+	@JsonProperty("name")
 	private String name;
 	
+
 	
 	/**
 	 * List of parameters to be monitored, in order to enable scaling
@@ -71,11 +75,14 @@ public class ScalingAspect {
 	@LazyCollection(LazyCollectionOption.FALSE)
 	@JsonProperty("monitoring_parameter")
 	private List<MonitoringParameter> monitoringParameters = new ArrayList<MonitoringParameter>();
+
 	
 	/**
 	 * Action to be taken in case thresholds are reached
 	 */
+	@JsonProperty("action")
 	private ActionType action;
+
 	
 	@JsonIgnore
 	@ManyToOne
@@ -96,19 +103,16 @@ public class ScalingAspect {
 	 * @param action Scaling type
 	 * @param service
 	 */
-	public ScalingAspect(String name, ArrayList<MonitoringParameter> monitoringParameters, ActionType action, SDKService service) {
-		this.uuid = UUID.randomUUID();
+	public ScalingAspect(String name, ArrayList<MonitoringParameter> monitoringParameters, ActionType action) {
 		this.name = name;
 		for(MonitoringParameter monitoringParameter : monitoringParameters)
 			if(monitoringParameter.isValidForScalingPurpose()) {
 				this.monitoringParameters.add(monitoringParameter);
 			}
-		this.service = service;
 		this.action = action;
 	}
 
 
-	@JsonProperty("name")
 	public String getName() {
 		return name;
 	}
@@ -119,7 +123,6 @@ public class ScalingAspect {
 	}
 
 
-	@JsonProperty("monitoring_parameter")
 	public List<MonitoringParameter> getMonitoringParameters() {
 		return monitoringParameters;
 	}
@@ -130,7 +133,6 @@ public class ScalingAspect {
 	}
 
 
-	@JsonProperty("action")
 	public ActionType getAction() {
 		return action;
 	}
@@ -141,13 +143,12 @@ public class ScalingAspect {
 	}
 
 
-	@JsonProperty("id")
 	public Long getId() {
 		return id;
 	}
 	
-	@JsonProperty("uuid")
-	public UUID getUuid() {
+
+	public String getUuid() {
 		return uuid;
 	}
 	
@@ -162,6 +163,12 @@ public class ScalingAspect {
 	}
 	
 	public boolean isValid() {
+	    if(this.action == null)
+	    	return false;
+	    if(this.monitoringParameters == null || this.monitoringParameters.size() == 0)
+	    	return false;
+	    if(this.name == null)
+	    	return false;
 		return true;
 	}
 	

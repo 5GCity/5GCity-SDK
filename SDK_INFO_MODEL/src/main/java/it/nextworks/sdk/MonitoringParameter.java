@@ -52,23 +52,27 @@ public class MonitoringParameter {
 	/**
 	 * Unique identifier of the entity
 	 */
-	private UUID uuid;
+	@JsonProperty("uuid")
+	private String uuid = UUID.randomUUID().toString();
 	
 	/**
 	 * Parameter Type
 	 */
+	@JsonProperty("name")
 	private MonitoringParameterType name;
 
 	/**
 	 * Comparing operand between current value and threshold.
 	 */
+	@JsonProperty("direction")
 	private DirectionType direction;
+
 	
 	/**
 	 * Threshold for the parameter
 	 */
+	@JsonProperty("threshold")
 	private float threshold;
-
 	
 	@JsonIgnore
 	@ManyToOne
@@ -94,32 +98,14 @@ public class MonitoringParameter {
 		//JPA Purpose
 	}
 	
-	/**
-	 * Constructor to be used when the monitoring parameter is combined with a SDKFunction
-	 * @param name Parameter type to be monitored
-	 * @param function Function where the parameter is used
-	 */
-	public MonitoringParameter(MonitoringParameterType name, SDKFunction function) {
-		this.uuid = UUID.randomUUID();
-		this.name = name;
-		this.function = function;
-		this.functionInstance = null;
-		this.threshold = 0;
-		this.service = null;
-		this.scalingAspect = null;
-		this.direction = null;
-	}
 	
 	/**
 	 * Constructor to be used when the monitoring parameter is combined with a SDKService
 	 * @param name Parameter type to be monitored
 	 * @param service Service where the parameter is used
 	 */
-	public MonitoringParameter(MonitoringParameterType name, SDKService service) {
-		this.uuid = UUID.randomUUID();
+	public MonitoringParameter(MonitoringParameterType name) {
 		this.name = name;
-		this.service = service;
-
 		this.function = null;
 		this.threshold = 0;
 		this.scalingAspect = null;
@@ -134,7 +120,6 @@ public class MonitoringParameter {
 	 * @param scalingAspect ScalingAspect where the object is associated
 	 */
 	public MonitoringParameter(MonitoringParameterType name, float threshold, DirectionType direction, ScalingAspect scalingAspect) {
-		this.uuid = UUID.randomUUID();
 		this.name = name;
 		this.threshold = threshold;
 		this.direction = direction;
@@ -151,7 +136,6 @@ public class MonitoringParameter {
 	 * @param function Function where the parameter is used
 	 */
 	public MonitoringParameter(MonitoringParameterType name, SDKFunctionInstance functionInstance) {
-		this.uuid = UUID.randomUUID();
 		this.name = name;
 		this.function = null;
 		this.functionInstance = functionInstance;
@@ -165,7 +149,6 @@ public class MonitoringParameter {
 	
 
 
-	@JsonProperty("name")
 	public MonitoringParameterType getName() {
 		return name;
 	}
@@ -174,7 +157,6 @@ public class MonitoringParameter {
 		this.name = name;
 	}
 
-	@JsonProperty("threshold")
 	public float getThreshold() {
 		return threshold;
 	}
@@ -226,13 +208,11 @@ public class MonitoringParameter {
 		this.scalingAspect = scalingAspect;
 	}
 
-	@JsonProperty("uuid")
-	public UUID getUuid() {
+	public String getUuid() {
 		return uuid;
 	}
 
 
-	@JsonProperty("direction")
 	public DirectionType getDirection() {
 		return direction;
 	}
@@ -248,13 +228,16 @@ public class MonitoringParameter {
 	 *         false otherwise
 	 */
 	public boolean isValidForScalingPurpose() {
-		if(this.threshold > 0 && this.direction != null)
+		if(this.isValid() && this.threshold > 0 && this.direction != null && this.scalingAspect != null)
 			return true;
 		return false;
 	}
 	
 	
 	public boolean isValid() {
+		if(this.name == null) {
+			return false;
+		}
 		return true;
 	}
 }

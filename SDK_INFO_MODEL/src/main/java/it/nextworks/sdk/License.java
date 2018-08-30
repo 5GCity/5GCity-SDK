@@ -42,21 +42,25 @@ public class License {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@JsonIgnore
+	@JsonProperty("id")
 	private Long id;
 	
 	/**
 	 * Unique identifier of the object
 	 */
-	private UUID uuid;
+	@JsonProperty("uuid")
+	private String uuid = UUID.randomUUID().toString();
 	
 	/**
 	 * Type of the license
 	 */
+	@JsonProperty("type")
 	private LicenseType type;
 
 	/**
 	 * URL related to the license
 	 */
+	@JsonProperty("URL")
 	private String URL;
 	
 	@JsonIgnore
@@ -77,12 +81,10 @@ public class License {
 	 * @param URL URL of the license
 	 */
 	public License(LicenseType type, String URL) {
-		this.uuid = UUID.randomUUID();
 		this.type = type;
 		this.URL = URL;
 	}
 
-	@JsonProperty("type")
 	public LicenseType getType() {
 		return type;
 	}
@@ -91,7 +93,6 @@ public class License {
 		this.type = type;
 	}
 
-	@JsonProperty("URL")
 	public String getURL() {
 		return URL;
 	}
@@ -100,14 +101,12 @@ public class License {
 		URL = uRL;
 	}
 	
-	@JsonProperty("id")
 	public Long getId() {
 		return this.id;
 	}
 	
 	
-	@JsonProperty("uuid")
-	public UUID getUuid() {
+	public String getUuid() {
 		return uuid;
 	}
 	
@@ -119,7 +118,13 @@ public class License {
 		this.service = service;
 	}
 
-
+	public boolean isValid() {
+		if(this.type == null) 
+			return false;		
+		if(this.URL == null || this.URL.length() == 0)
+			return false;
+		return true;
+	}
 
 	
 }

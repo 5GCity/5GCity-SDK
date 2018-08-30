@@ -18,7 +18,6 @@ package it.nextworks.composer.executor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.hibernate.cfg.NotYetImplementedException;
 import org.slf4j.Logger;
@@ -53,14 +52,14 @@ public class ServiceManager implements ServiceManagerProviderInterface{
 	
 	
 	@Override
-	public SDKService getServiceByUuid(UUID id) throws NotExistingEntityException {
-		log.info("Request for service with UUID: " + id.toString());
+	public SDKService getServiceByUuid(String id) throws NotExistingEntityException {
+		log.info("Request for service with UUID: " + id);
 		Optional<SDKService> service = serviceRepository.findByUuid(id);
 		if (service.isPresent()) {
 			return service.get();
 		} else {
-			log.error("Service with UUID " + id.toString() + " not found");
-			throw new NotExistingEntityException("Service with UUID " + id.toString() + " not found");
+			log.error("Service with UUID " + id + " not found");
+			throw new NotExistingEntityException("Service with UUID " + id + " not found");
 		}
 	}
 
@@ -77,8 +76,8 @@ public class ServiceManager implements ServiceManagerProviderInterface{
 	}
 
 	@Override
-	public List<SDKService> getServicesUsingFunction(UUID functionId) {
-		log.info("Request for all services which are using function with uuid: " + functionId.toString());
+	public List<SDKService> getServicesUsingFunction(String functionId) {
+		log.info("Request for all services which are using function with uuid: " + functionId);
 		List<SDKService> serviceList = new ArrayList<>();
 		List<SDKService> services = serviceRepository.findAll();
 		for(SDKService service : services) {
@@ -103,7 +102,7 @@ public class ServiceManager implements ServiceManagerProviderInterface{
 		//TODO Check if is valid
 		log.debug("Storing into database service with uuid: " + service.getUuid());
 		serviceRepository.saveAndFlush(service);
-		return service.getUuid().toString();
+		return service.getUuid();
 	}
 
 	@Override
@@ -136,32 +135,32 @@ public class ServiceManager implements ServiceManagerProviderInterface{
 
 
 	@Override
-	public void deleteService(UUID serviceId) throws NotExistingEntityException {
-		log.info("Request for deletion of service with uuid: " + serviceId.toString());
+	public void deleteService(String serviceId) throws NotExistingEntityException {
+		log.info("Request for deletion of service with uuid: " + serviceId);
 		Optional<SDKService> service = serviceRepository.findByUuid(serviceId);
 		if(service.isPresent()) {
 			serviceRepository.delete(service.get());
 		} else {
-			log.error("Service with UUID " + serviceId.toString() + " not found");
-			throw new NotExistingEntityException("Service with ID " + serviceId.toString() + " not found");
+			log.error("Service with UUID " + serviceId + " not found");
+			throw new NotExistingEntityException("Service with ID " + serviceId + " not found");
 		}
 	}
 
 
 	@Override
-	public void publishService(UUID serviceId) throws NotExistingEntityException, AlreadyPublishedServiceException {
-		log.info("Request for publication of service with uuid: " + serviceId.toString());
+	public void publishService(String serviceId) throws NotExistingEntityException, AlreadyPublishedServiceException {
+		log.info("Request for publication of service with uuid: " + serviceId);
 		//Check if service exists
 		Optional<SDKService> optService = serviceRepository.findByUuid(serviceId);
 		if(!optService.isPresent()) {
-			log.error("The Service with UUID: " + serviceId.toString() + " is not present in database");
-			throw new NotExistingEntityException("The Service with UUID: " + serviceId.toString() + " is not present in database");
+			log.error("The Service with UUID: " + serviceId + " is not present in database");
+			throw new NotExistingEntityException("The Service with UUID: " + serviceId + " is not present in database");
 		} else {
 			//Check if is already published
 			SDKService service = optService.get();
 			if(service.getStatus() == StatusType.COMMITTED) {
-				log.error("The service identified by UUID: " + serviceId.toString() + " has been already published");
-				throw new AlreadyPublishedServiceException("The service identified by UUID: " + serviceId.toString() + " has been already published");
+				log.error("The service identified by UUID: " + serviceId + " has been already published");
+				throw new AlreadyPublishedServiceException("The service identified by UUID: " + serviceId + " has been already published");
 			} else {
 				//A thread will be created to handle this request in order to perform it asynchronously.
 				service.setStatus(StatusType.COMMITTED);
@@ -173,18 +172,18 @@ public class ServiceManager implements ServiceManagerProviderInterface{
 
 
 	@Override
-	public void unPublishService(UUID serviceId) throws NotExistingEntityException, NotPublishedServiceException {
-		log.info("Request for delete the publication of service with uuid: " + serviceId.toString());
+	public void unPublishService(String serviceId) throws NotExistingEntityException, NotPublishedServiceException {
+		log.info("Request for delete the publication of service with uuid: " + serviceId);
 		Optional<SDKService> optService = serviceRepository.findByUuid(serviceId);
 		if(!optService.isPresent()) {
-			log.error("The Service with UUID: " + serviceId.toString() + " is not present in database");
-			throw new NotExistingEntityException("The Service with UUID: " + serviceId.toString() + " is not present in database");
+			log.error("The Service with UUID: " + serviceId + " is not present in database");
+			throw new NotExistingEntityException("The Service with UUID: " + serviceId + " is not present in database");
 		} else {
 			//Check if is already published
 			SDKService service = optService.get();
 			if(service.getStatus() == StatusType.SAVED) {
-				log.error("The service identified by UUID: " + serviceId.toString() + " has not been published yet");
-				throw new NotPublishedServiceException("The service identified by UUID: " + serviceId.toString() + " has been already published");
+				log.error("The service identified by UUID: " + serviceId + " has not been published yet");
+				throw new NotPublishedServiceException("The service identified by UUID: " + serviceId + " has been already published");
 			} else {
 				//A thread will be created to handle this request in order to perform it asynchronously.
 				service.setStatus(StatusType.SAVED);
@@ -196,13 +195,13 @@ public class ServiceManager implements ServiceManagerProviderInterface{
 
 
 	@Override
-	public void updateScalingAspect(UUID serviceId, List<ScalingAspect> scalingAspects)
+	public void updateScalingAspect(String serviceId, List<ScalingAspect> scalingAspects)
 			throws NotExistingEntityException, MalformattedElementException {
-		log.info("Request to update list of scalingAspects for a specific SDK Service " + serviceId.toString());
+		log.info("Request to update list of scalingAspects for a specific SDK Service " + serviceId);
 		Optional<SDKService> service = serviceRepository.findByUuid(serviceId);
 		if(!service.isPresent()) {
-			log.error("The Service with UUID: " + serviceId.toString() + " is not present in database");
-			throw new NotExistingEntityException("The Service with UUID: " + serviceId.toString() + " is not present in database");
+			log.error("The Service with UUID: " + serviceId + " is not present in database");
+			throw new NotExistingEntityException("The Service with UUID: " + serviceId + " is not present in database");
 		} 
 		for(ScalingAspect scale: scalingAspects) {
 			if(!scale.isValid()) {
@@ -218,13 +217,13 @@ public class ServiceManager implements ServiceManagerProviderInterface{
 
 
 	@Override
-	public void deleteScalingAspect(UUID serviceId, List<ScalingAspect> scalingAspects)
+	public void deleteScalingAspect(String serviceId, List<ScalingAspect> scalingAspects)
 			throws NotExistingEntityException, MalformattedElementException {
-		log.info("Request to delete a list of scalingAspects for a specific SDK Service " + serviceId.toString());
+		log.info("Request to delete a list of scalingAspects for a specific SDK Service " + serviceId);
 		Optional<SDKService> service = serviceRepository.findByUuid(serviceId);
 		if(!service.isPresent()) {
-			log.error("The Service with UUID: " + serviceId.toString() + " is not present in database");
-			throw new NotExistingEntityException("The Service with UUID: " + serviceId.toString() + " is not present in database");
+			log.error("The Service with UUID: " + serviceId + " is not present in database");
+			throw new NotExistingEntityException("The Service with UUID: " + serviceId + " is not present in database");
 		} 
 		for(ScalingAspect scale: scalingAspects) {
 			if(!scale.isValid()) {
@@ -243,13 +242,13 @@ public class ServiceManager implements ServiceManagerProviderInterface{
 
 
 	@Override
-	public List<ScalingAspect> getScalingAspect(UUID serviceId) throws NotExistingEntityException {
-		log.info("Request to get the list of scalingAspects for a specific SDK Service " + serviceId.toString());
+	public List<ScalingAspect> getScalingAspect(String serviceId) throws NotExistingEntityException {
+		log.info("Request to get the list of scalingAspects for a specific SDK Service " + serviceId);
 		Optional<SDKService> service = serviceRepository.findByUuid(serviceId);
 		List<ScalingAspect> list = new ArrayList<>();
 		if(!service.isPresent()) {
-			log.error("The Service with UUID: " + serviceId.toString() + " is not present in database");
-			throw new NotExistingEntityException("The Service with UUID: " + serviceId.toString() + " is not present in database");
+			log.error("The Service with UUID: " + serviceId + " is not present in database");
+			throw new NotExistingEntityException("The Service with UUID: " + serviceId + " is not present in database");
 		} else {
 			for(ScalingAspect scale : service.get().getScalingAspects())
 				list.add(scale);
@@ -259,13 +258,13 @@ public class ServiceManager implements ServiceManagerProviderInterface{
 
 
 	@Override
-	public void updateMonitoringParameters(UUID serviceId, List<MonitoringParameter> monitoringParameters)
+	public void updateMonitoringParameters(String serviceId, List<MonitoringParameter> monitoringParameters)
 			throws NotExistingEntityException, MalformattedElementException {
-		log.info("Request to update list of scalingAspects for a specific SDK Service " + serviceId.toString());
+		log.info("Request to update list of scalingAspects for a specific SDK Service " + serviceId);
 		Optional<SDKService> service = serviceRepository.findByUuid(serviceId);
 		if(!service.isPresent()) {
-			log.error("The Service with UUID: " + serviceId.toString() + " is not present in database");
-			throw new NotExistingEntityException("The Service with UUID: " + serviceId.toString() + " is not present in database");
+			log.error("The Service with UUID: " + serviceId + " is not present in database");
+			throw new NotExistingEntityException("The Service with UUID: " + serviceId + " is not present in database");
 		}
 		for(MonitoringParameter param: monitoringParameters) {
 			if(!param.isValid()) {
@@ -282,13 +281,13 @@ public class ServiceManager implements ServiceManagerProviderInterface{
 
 
 	@Override
-	public void deleteMonitoringParameters(UUID serviceId, List<MonitoringParameter> monitoringParameters)
+	public void deleteMonitoringParameters(String serviceId, List<MonitoringParameter> monitoringParameters)
 			throws NotExistingEntityException, MalformattedElementException {
-		log.info("Request to delete a list of monitoring parameters for a specific SDK Service " + serviceId.toString());
+		log.info("Request to delete a list of monitoring parameters for a specific SDK Service " + serviceId);
 		Optional<SDKService> service = serviceRepository.findByUuid(serviceId);
 		if(!service.isPresent()) {
-			log.error("The Service with UUID: " + serviceId.toString() + " is not present in database");
-			throw new NotExistingEntityException("The Service with UUID: " + serviceId.toString() + " is not present in database");
+			log.error("The Service with UUID: " + serviceId + " is not present in database");
+			throw new NotExistingEntityException("The Service with UUID: " + serviceId + " is not present in database");
 		} 
 		for(MonitoringParameter param: monitoringParameters) {
 			if(!param.isValid()) {
@@ -307,12 +306,12 @@ public class ServiceManager implements ServiceManagerProviderInterface{
 
 
 	@Override
-	public List<MonitoringParameter> getMonitoringParameters(UUID serviceId) throws NotExistingEntityException{
-		log.info("Request to get the list of monitoring parameters for a specific SDK Service " + serviceId.toString());
+	public List<MonitoringParameter> getMonitoringParameters(String serviceId) throws NotExistingEntityException{
+		log.info("Request to get the list of monitoring parameters for a specific SDK Service " + serviceId);
 		Optional<SDKService> service = serviceRepository.findByUuid(serviceId);
 		if(!service.isPresent()) {
-			log.error("The Service with UUID: " + serviceId.toString() + " is not present in database");
-			throw new NotExistingEntityException("The Service with UUID: " + serviceId.toString() + " is not present in database");
+			log.error("The Service with UUID: " + serviceId + " is not present in database");
+			throw new NotExistingEntityException("The Service with UUID: " + serviceId + " is not present in database");
 		} 
 		List<MonitoringParameter> list = new ArrayList<>();
 		for(MonitoringParameter param: service.get().getMonitoringParameters())

@@ -16,7 +16,6 @@
 package it.nextworks.composer.executor.interfaces;
 
 import java.util.List;
-import java.util.UUID;
 
 import it.nextworks.sdk.MonitoringParameter;
 import it.nextworks.sdk.SDKFunctionInstance;
@@ -33,7 +32,7 @@ public interface FunctionInstanceManagerProviderInterface {
 	 * @return
 	 * @throws NotExistingEntityException 
 	 */
-	public SDKFunctionInstance getFunction(UUID id) throws NotExistingEntityException;
+	public SDKFunctionInstance getFunction(String id) throws NotExistingEntityException;
 	
 	
 	/**
@@ -46,16 +45,16 @@ public interface FunctionInstanceManagerProviderInterface {
 	/**
 	 * 
 	 */
-	public List<SDKFunctionInstance> getFunctionInstancesForFunction(UUID functionId);
+	public List<SDKFunctionInstance> getFunctionInstancesForFunction(String functionId);
 	
 	
-	public void updateFlavor(UUID functionId, Flavour flavour) throws NotExistingEntityException;
+	public void updateFlavor(String functionId, Flavour flavour) throws NotExistingEntityException;
 	
-	public void updateMonitoringParameters(UUID functionId, List<MonitoringParameter> monitoringParameters) throws NotExistingEntityException, MalformattedElementException;
+	public void updateMonitoringParameters(String functionId, List<MonitoringParameter> monitoringParameters) throws NotExistingEntityException, MalformattedElementException;
 
-	public void deleteMonitoringParameters(UUID functionId, List<MonitoringParameter> monitoringParameters) throws NotExistingEntityException, MalformattedElementException;
+	public void deleteMonitoringParameters(String functionId, List<MonitoringParameter> monitoringParameters) throws NotExistingEntityException, MalformattedElementException;
 
-	public List<MonitoringParameter> getMonitoringParameters(UUID functionId) throws NotExistingEntityException;
+	public List<MonitoringParameter> getMonitoringParameters(String functionId) throws NotExistingEntityException;
 	
 	
 	

@@ -18,7 +18,6 @@ package it.nextworks.composer.controller;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,7 +72,7 @@ public class FunctionInstanceRestController {
 		      @ApiResponse(code = 200, message = "")
 	})
 	@RequestMapping(value = "/function/instance/{functionId}", method = RequestMethod.GET)
-	public ResponseEntity<?> getFunctionInstance(@PathVariable UUID functionId) {
+	public ResponseEntity<?> getFunctionInstance(@PathVariable String functionId) {
 		log.info("Receiving a request to get the functionInstance identified by id: " + functionId);
 		if(functionId == null) {
 			return new ResponseEntity<String>("Query without parameter functionId", HttpStatus.BAD_REQUEST);
@@ -115,7 +114,7 @@ public class FunctionInstanceRestController {
 		      @ApiResponse(code = 200, message = "")
 	})
 	@RequestMapping(value = "/function/{functionId}/instances", method = RequestMethod.GET)
-	public ResponseEntity<?> getFunctionInstancesPerFunction(@PathVariable UUID functionId) {
+	public ResponseEntity<?> getFunctionInstancesPerFunction(@PathVariable String functionId) {
 		log.info("Request for get FUNCTIONS");
 		List<SDKFunctionInstance> response = new ArrayList<>();
 		response = functionInstanceManager.getFunctionInstancesForFunction(functionId);
@@ -132,7 +131,7 @@ public class FunctionInstanceRestController {
 		      @ApiResponse(code = 204, message = "Monitoring Param list Updated")
 	})
 	@RequestMapping(value = "/function/instances/{functionId}/monitoringparams", method = RequestMethod.PUT)
-	public ResponseEntity<?> updateMonitoringParametersForFunction(@PathVariable UUID functionId, @RequestBody List<MonitoringParameter> monitoringParameters) {
+	public ResponseEntity<?> updateMonitoringParametersForFunction(@PathVariable String functionId, @RequestBody List<MonitoringParameter> monitoringParameters) {
 		log.info("Request for update of a monitoringParameter list");
 		for(MonitoringParameter param : monitoringParameters) {
 			if(!param.isValid()) {
@@ -162,7 +161,7 @@ public class FunctionInstanceRestController {
 		      @ApiResponse(code = 200, message = "OK")
 	})
 	@RequestMapping(value = "/function/instances/{functionId}/monitoringparams", method = RequestMethod.GET)
-	public ResponseEntity<?> getMonitoringParametersForFunction(@PathVariable UUID functionId) {
+	public ResponseEntity<?> getMonitoringParametersForFunction(@PathVariable String functionId) {
 		log.info("Request for get list of monitoringParams available on a specific function, identified by id: " + functionId.toString());
 		
 			try {
@@ -183,7 +182,7 @@ public class FunctionInstanceRestController {
 		      @ApiResponse(code = 400, message = "Deletion request without parameter functionId")
 	})
 	@RequestMapping(value = "/function/instances/{functionId}/monitoringparams", method = RequestMethod.DELETE)
-	public ResponseEntity<?> deleteMonitoringParametersForFunction(@PathVariable UUID functionId, @RequestBody List<MonitoringParameter> monitoringParameters) {
+	public ResponseEntity<?> deleteMonitoringParametersForFunction(@PathVariable String functionId, @RequestBody List<MonitoringParameter> monitoringParameters) {
 		log.info("Request for deletion of a list of monitoring parameters from function identified by id: " + functionId.toString());
 		
 			try {
@@ -205,7 +204,7 @@ public class FunctionInstanceRestController {
 		      @ApiResponse(code = 204, message = "Flavour Updated")
 	})
 	@RequestMapping(value = "/function/instances/{functionId}/flavour", method = RequestMethod.PUT)
-	public ResponseEntity<?> updateFlavourForFunction(@PathVariable UUID functionId, @RequestBody Flavour flavour) {
+	public ResponseEntity<?> updateFlavourForFunction(@PathVariable String functionId, @RequestBody Flavour flavour) {
 		log.info("Request for update the flavor for SDKFunctionInstance " + functionId.toString());
 		try {
 			functionInstanceManager.updateFlavor(functionId, flavour);

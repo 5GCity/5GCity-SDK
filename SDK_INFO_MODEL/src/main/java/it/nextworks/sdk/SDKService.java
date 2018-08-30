@@ -24,11 +24,16 @@ import java.util.UUID;
 import javax.persistence.CascadeType;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+
+import org.hibernate.annotations.Cascade;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 import org.hibernate.annotations.OnDelete;
@@ -51,31 +56,37 @@ public class SDKService {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@JsonIgnore
+	@JsonProperty("id")
 	private Long id;
 
 	/**
 	 * Unique identifier for the SDKService
 	 */
-	private UUID uuid;
+	@JsonProperty("uuid")
+	private String uuid = UUID.randomUUID().toString();
 	
 	/**
 	 * Human readable name that identifies the SDKService
 	 */
+	@JsonProperty("name")
 	private String name;
 	
 	
 	/**
 	 * Designer of the SDKService
 	 */
+	@JsonProperty("designer")
 	private String designer;
 	
 	/**
 	 * Current version of the SDKService
 	 */
+	@JsonProperty("version")
 	private String version;
 	
+	
 	/**
-	 * List of SDKFunctions related to the SDKService
+	 * List of SDKFunctionInstances related to the SDKService
 	 */
 	@OneToMany(mappedBy = "service", cascade=CascadeType.ALL)
 	@OnDelete(action = OnDeleteAction.CASCADE)
@@ -86,28 +97,37 @@ public class SDKService {
 	/**
 	 * Scaling Ratio Type for the SDKService.
 	 */
+	@JsonInclude(JsonInclude.Include.NON_EMPTY)
+	@JsonProperty("scaling_ratio")
 	private ScalingRatioType scalingRatio;
 	
 	/**
 	 * The Status Type of the SDKService. Determinates if the SDKService is stored in an external Catalogue or just locally stored
 	 */
-	private StatusType status;
+	@JsonProperty("status")
+	private StatusType status = StatusType.SAVED;
+	
 	
 	/**
 	 * A short description of the SDKService
 	 */
+	@JsonInclude(JsonInclude.Include.NON_EMPTY)
+	@JsonProperty("descriptor")
 	private String description;
+	
 	
 	/**
 	 * License for the SDKService
 	 */
 	@ManyToOne(cascade=CascadeType.ALL)
+	@JsonProperty("license")
 	private License license;
 	
 	
 	/**
 	 * List of parameters to be monitored for the SDKService
 	 */
+	@JsonInclude(JsonInclude.Include.NON_EMPTY)
 	@OneToMany(mappedBy = "service", cascade=CascadeType.ALL)
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	@LazyCollection(LazyCollectionOption.FALSE)
@@ -118,11 +138,13 @@ public class SDKService {
 	/**
 	 * List of scaling aspects for the SDKService. For each of these, the service should scale. 
 	 */
+	@JsonInclude(JsonInclude.Include.NON_EMPTY)
 	@OneToMany(mappedBy = "service", cascade=CascadeType.ALL)
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	@LazyCollection(LazyCollectionOption.FALSE)
 	@JsonProperty("scaling_aspect")
-	private List<ScalingAspect> scalingAspects = new ArrayList<ScalingAspect>();
+    private List<ScalingAspect> scalingAspects = new ArrayList<ScalingAspect>();
+	
 	
 	/**
 	 * List of the links composing the SDKService
@@ -132,10 +154,16 @@ public class SDKService {
 	@LazyCollection(LazyCollectionOption.FALSE)
 	@JsonProperty("link")
 	private List<Link> topologyList = new ArrayList<Link>();
+		
 	
-	
+	/**
+	 * Map of metadata composed by a key and a value
+	 */
 	@JsonInclude(JsonInclude.Include.NON_EMPTY)
-	@ElementCollection
+	@ElementCollection(fetch=FetchType.EAGER)
+	@Fetch(FetchMode.SELECT)
+	@Cascade(org.hibernate.annotations.CascadeType.ALL)
+	@JsonProperty("metadata")
 	private Map<String, String> metadata = new HashMap<String, String>();
 	
 	/**
@@ -151,90 +179,97 @@ public class SDKService {
 	 * @param name Human readable name that identifies the SDKService
 	 * @param designer Designer of the SDKService
 	 * @param version Current version of the SDKService
-	 * @param functions List of SDKFunctions composing the SDKService
+	 * @param functions List of SDKFunctionInstancess composing the SDKService
 	 * @param scalingRatio Scaling Ratio Type for the SDKService.
-	 * @param status The Status Type of the SDKService. Determinates if the SDKService is stored in an external Catalogue or just locally stored
 	 * @param description A short description of the SDKService
 	 * @param license License for the SDKService
 	 * @param monitoringParameters List of parameters to be monitored for the SDKService
 	 * @param scalingAspects List of scaling aspects for the SDKService. For each of these, the service should scale.
 	 * @param topologyList List of the links composing the SDKService
+	 * @param metadata Map of data composed by key and value
 	 */
 	public SDKService(String name, String designer, String version, List<SDKFunctionInstance> functions, ScalingRatioType scalingRatio,
-			StatusType status, String description, License license, List<MonitoringParameter> monitoringParameters, 
+			String description, License license, List<MonitoringParameter> monitoringParameters, 
 			List<ScalingAspect> scalingAspects, List<Link> topologyList, Map<String, String> metadata) {
-		this.uuid = UUID.randomUUID();
 		this.name = name;
 		this.designer = designer;
 		this.version = version;
 		if(functions != null) {
-			for(SDKFunctionInstance function : functions)
-				this.functions.add(function);
+			for(SDKFunctionInstance function : functions) {
+				if(function.isValid())
+					this.functions.add(function);
+			}
 		}
 		this.scalingRatio = scalingRatio;
-		this.status = status;
 		this.description = description;
 		this.license = license;
 		if(monitoringParameters !=  null) {
 			for(MonitoringParameter monitoringParameter: monitoringParameters)
-				this.monitoringParameters.add(monitoringParameter);
+				if(monitoringParameter.isValid())
+					this.monitoringParameters.add(monitoringParameter);
 		}
 		if(scalingAspects != null) {
 			for(ScalingAspect scalingAspect : scalingAspects)
-				this.scalingAspects.add(scalingAspect);
+				if(scalingAspect.isValid())
+					this.scalingAspects.add(scalingAspect);
 		}
 		for(Link link : topologyList)
-			this.topologyList.add(link);
+			if(link.isValid())
+				this.topologyList.add(link);
 		if (metadata != null) this.metadata = metadata;
 	}
 
 
-	@JsonProperty("name")
 	public String getName() {
 		return name;
 	}
 
+	
 	public void setName(String name) {
 		this.name = name;
 	}
 
-	@JsonProperty("designer")
+	
 	public String getDesigner() {
 		return designer;
 	}
 
+	
 	public void setDesigner(String designer) {
 		this.designer = designer;
 	}
 
-	@JsonProperty("version")
+	
 	public String getVersion() {
 		return version;
 	}
 
+	
 	public void setVersion(String version) {
 		this.version = version;
 	}
 
-	@JsonProperty("functions")
+	
 	public List<SDKFunctionInstance> getFunctions() {
 		return functions;
 	}
 
+	
 	public void setFunctions(List<SDKFunctionInstance> functions) {
 		this.functions = functions;
 	}
 
-	@JsonProperty("scaling_ratio")
+	
 	public ScalingRatioType getScalingRatio() {
 		return scalingRatio;
 	}
 
+	
 	public void setScalingRatio(ScalingRatioType scalingRatio) {
 		this.scalingRatio = scalingRatio;
 	}
+	
 
-	@JsonProperty("status")
 	public StatusType getStatus() {
 		return status;
 	}
@@ -243,67 +278,73 @@ public class SDKService {
 		this.status = status;
 	}
 
-	@JsonProperty("descriptor")
+
 	public String getDescription() {
 		return description;
 	}
 
+	
 	public void setDescription(String description) {
 		this.description = description;
 	}
 
-	@JsonProperty("license")
+
 	public License getLicense() {
 		return license;
 	}
+
 
 	public void setLicense(License license) {
 		this.license = license;
 	}
 
-	@JsonProperty("monitoring_parameters")
+	
 	public List<MonitoringParameter> getMonitoringParameters() {
 		return monitoringParameters;
 	}
+	
 
 	public void setMonitoringParameters(List<MonitoringParameter> monitoringParameters) {
 		this.monitoringParameters = monitoringParameters;
 	}
 
-	@JsonProperty("scaling_aspect")
+	
 	public List<ScalingAspect> getScalingAspects() {
 		return scalingAspects;
 	}
 
+	
 	public void setScalingAspects(List<ScalingAspect> scalingAspects) {
 		this.scalingAspects = scalingAspects;
 	}
 
-	@JsonProperty("link")
+	
 	public List<Link> getTopologyList() {
 		return topologyList;
 	}
 
+	
 	public void setTopologyList(List<Link> topologyList) {
 		this.topologyList = topologyList;
 	}
 
-	@JsonProperty("id")
+	
 	public Long getId() {
 		return id;
 	}
 	
-	@JsonProperty("uuid")
-	public UUID getUuid() {
+	
+	public String getUuid() {
 		return uuid;
 	}
 
-	public void setUuid(UUID uuid) {
-		this.uuid = uuid;
-	}
-
+	
+	/**
+	 * The method checks the validity of the object 
+	 * @return true in case all requirements are satisfied.
+	 *         false otherwise
+	 */
 	public boolean isValid() {
-		//TODO To be completed
 		System.out.println("Name check: " + this.name);
 		if(this.name == null || this.name == "")
 			return false;
@@ -313,28 +354,26 @@ public class SDKService {
 		System.out.println("Version check: " + this.version);
 		if(this.version == null || this.version == "")
 			return false;
-		System.out.println("Functions check: " + this.functions.size());
 		if(this.functions == null || this.functions.size() == 0)
 			return false;
 		for(SDKFunctionInstance function : this.functions) {
 			if(!function.isValid())
 				return false;
 		}
-		System.out.println("Links check" + this.topologyList.size());
 		if(this.topologyList == null || this.topologyList.size() == 0)
 			return false;
 		for(Link link : this.topologyList) {
 			if(!link.isValid())
 				return false;
 		}
-		System.out.println("Ciaone .....");
 		return true;
 	}
 	
 	
+	
 	public void deleteScalingAspect(ScalingAspect scalingAspect) {
 		for(ScalingAspect scale : this.scalingAspects) {
-			if(scale.getUuid().equals(scalingAspect.getUuid())) {
+			if(scale.getUuid().equalsIgnoreCase(scalingAspect.getUuid())) {
 				this.scalingAspects.remove(scale);
 				break;
 			}
@@ -343,12 +382,11 @@ public class SDKService {
 	
 	public void deleteMonitoringParameter(MonitoringParameter parameter) {
 		for(MonitoringParameter param: this.monitoringParameters) {
-			if(param.getUuid().equals(parameter.getUuid()))
+			if(param.getUuid().equalsIgnoreCase(parameter.getUuid()))
 				this.monitoringParameters.remove(param);
 		}
 	}
 	
-	@JsonProperty("metadata")
 	public Map<String, String> getMetadata() {
 		return this.metadata;
 	}

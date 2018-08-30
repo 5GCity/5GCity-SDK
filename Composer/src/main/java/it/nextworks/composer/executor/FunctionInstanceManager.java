@@ -18,7 +18,6 @@ package it.nextworks.composer.executor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +43,7 @@ public class FunctionInstanceManager implements FunctionInstanceManagerProviderI
 	public FunctionInstanceManager() {}
 	
 	@Override
-	public SDKFunctionInstance getFunction(UUID id) throws NotExistingEntityException {
+	public SDKFunctionInstance getFunction(String id) throws NotExistingEntityException {
 		Optional<SDKFunctionInstance> result = functionInstanceRepository.findByUuid(id);
 		if(result.isPresent()) {
 			return result.get();
@@ -68,11 +67,11 @@ public class FunctionInstanceManager implements FunctionInstanceManagerProviderI
 	}
 
 	@Override
-	public List<SDKFunctionInstance> getFunctionInstancesForFunction(UUID functionId) {
+	public List<SDKFunctionInstance> getFunctionInstancesForFunction(String functionId) {
 		List<SDKFunctionInstance> functionList = functionInstanceRepository.findAll();
 		List<SDKFunctionInstance> result = new ArrayList<>();
 		for(SDKFunctionInstance instance: functionList) {
-			if(instance.getFunction().getUuid().equals(functionId)) {
+			if(instance.getFunction().getUuid().equalsIgnoreCase(functionId)) {
 				result.add(instance);
 			}
 		}
@@ -80,25 +79,25 @@ public class FunctionInstanceManager implements FunctionInstanceManagerProviderI
 	}
 	
 	@Override
-	public void updateFlavor(UUID functionId, Flavour flavour) throws NotExistingEntityException {
-		log.info("Request to update the flavor for a specific SDK Service " + functionId.toString());
+	public void updateFlavor(String functionId, Flavour flavour) throws NotExistingEntityException {
+		log.info("Request to update the flavor for a specific SDK Service " + functionId);
 		Optional<SDKFunctionInstance> function = functionInstanceRepository.findByUuid(functionId);
 		if(!function.isPresent()) {
-			log.error("The Service with UUID: " + functionId.toString() + " is not present in database");
-			throw new NotExistingEntityException("The Service with UUID: " + functionId.toString() + " is not present in database");
+			log.error("The Service with UUID: " + functionId + " is not present in database");
+			throw new NotExistingEntityException("The Service with UUID: " + functionId + " is not present in database");
 		}
 		
 		
 	}
 
 	@Override
-	public void updateMonitoringParameters(UUID functionId, List<MonitoringParameter> monitoringParameters)
+	public void updateMonitoringParameters(String functionId, List<MonitoringParameter> monitoringParameters)
 			throws NotExistingEntityException, MalformattedElementException {
-		log.info("Request to update list of scalingAspects for a specific SDK FunctionInstance " + functionId.toString());
+		log.info("Request to update list of scalingAspects for a specific SDK FunctionInstance " + functionId);
 		Optional<SDKFunctionInstance> function = functionInstanceRepository.findByUuid(functionId);
 		if(!function.isPresent()) {
-			log.error("The Function with UUID: " + functionId.toString() + " is not present in database");
-			throw new NotExistingEntityException("The Function with UUID: " + functionId.toString() + " is not present in database");
+			log.error("The Function with UUID: " + functionId + " is not present in database");
+			throw new NotExistingEntityException("The Function with UUID: " + functionId + " is not present in database");
 		}
 		for(MonitoringParameter param: monitoringParameters) {
 			if(!param.isValid()) {
@@ -113,13 +112,13 @@ public class FunctionInstanceManager implements FunctionInstanceManagerProviderI
 	}
 
 	@Override
-	public void deleteMonitoringParameters(UUID functionId, List<MonitoringParameter> monitoringParameters)
+	public void deleteMonitoringParameters(String functionId, List<MonitoringParameter> monitoringParameters)
 			throws NotExistingEntityException, MalformattedElementException {
-		log.info("Request to delete a list of monitoring parameters for a specific SDK FunctionInstance " + functionId.toString());
+		log.info("Request to delete a list of monitoring parameters for a specific SDK FunctionInstance " + functionId);
 		Optional<SDKFunctionInstance> function = functionInstanceRepository.findByUuid(functionId);
 		if(!function.isPresent()) {
-			log.error("The Function with UUID: " + functionId.toString() + " is not present in database");
-			throw new NotExistingEntityException("The Function with UUID: " + functionId.toString() + " is not present in database");
+			log.error("The Function with UUID: " + functionId + " is not present in database");
+			throw new NotExistingEntityException("The Function with UUID: " + functionId + " is not present in database");
 		} 
 		for(MonitoringParameter param: monitoringParameters) {
 			if(!param.isValid()) {
@@ -137,12 +136,12 @@ public class FunctionInstanceManager implements FunctionInstanceManagerProviderI
 	}
 
 	@Override
-	public List<MonitoringParameter> getMonitoringParameters(UUID functionId) throws NotExistingEntityException {
-		log.info("Request to get the list of monitoring parameters for a specific SDK FunctionInstance " + functionId.toString());
+	public List<MonitoringParameter> getMonitoringParameters(String functionId) throws NotExistingEntityException {
+		log.info("Request to get the list of monitoring parameters for a specific SDK FunctionInstance " + functionId);
 		Optional<SDKFunctionInstance> function = functionInstanceRepository.findByUuid(functionId);
 		if(!function.isPresent()) {
-			log.error("The Function with UUID: " + functionId.toString() + " is not present in database");
-			throw new NotExistingEntityException("The Function with UUID: " + functionId.toString() + " is not present in database");
+			log.error("The Function with UUID: " + functionId + " is not present in database");
+			throw new NotExistingEntityException("The Function with UUID: " + functionId + " is not present in database");
 		} 
 		List<MonitoringParameter> list = new ArrayList<>();
 		for(MonitoringParameter param: function.get().getMonitoringParameters())

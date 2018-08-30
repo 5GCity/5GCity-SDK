@@ -48,24 +48,28 @@ public class SDKFunctionInstance {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@JsonIgnore
+	@JsonProperty("id")
 	private Long id;
 	
 	/**
 	 * Unique identifier for the SDKFunction
 	 */
-	private UUID uuid;
+	@JsonProperty("uuid")
+	private String uuid = UUID.randomUUID().toString();
 	
 	
 	/**
 	 * Function descriptor for the function instance
 	 */
 	@ManyToOne(cascade=CascadeType.ALL)
+	@JsonProperty("function")
 	private SDKFunction function;
 	
 	
 	/**
 	 * Flavor of the SDKFunction. It defines the amount of resources necessary to run it. It must chosen from the Flavours list in SDKFunction
 	 */
+	@JsonProperty("flavour")
 	private Flavour flavour;
 	
 	
@@ -79,10 +83,8 @@ public class SDKFunctionInstance {
 	private List<MonitoringParameter> monitoringParameters;
 	
 	
-	
-	
-	@JsonIgnore
 	@ManyToOne
+	@JsonIgnore
 	private SDKService service;
 
 
@@ -92,12 +94,12 @@ public class SDKFunctionInstance {
 	}
 	
 	
-	public SDKFunctionInstance(SDKFunction function, Flavour flavour, List<MonitoringParameter> monitoringParameters, SDKService service) {
-		this.uuid = UUID.randomUUID();
+	public SDKFunctionInstance(Flavour flavour, List<MonitoringParameter> monitoringParameters, SDKFunction function) {
 		this.flavour = flavour;
 		for(MonitoringParameter monitoringParameter : monitoringParameters)
-			this.monitoringParameters.add(monitoringParameter);
-		this.service = service;
+			if(monitoringParameter.isValid()) {
+				this.monitoringParameters.add(monitoringParameter);
+			}
 		this.function = function;
 	}
 
@@ -126,7 +128,6 @@ public class SDKFunctionInstance {
 	 * 
 	 * @return Flavor chose for the SDK Function Instance
 	 */
-	@JsonProperty("flavour")
 	public Flavour getFlavour() {
 		return flavour;
 	}
@@ -147,20 +148,11 @@ public class SDKFunctionInstance {
 	 * List of monitoring parameters to be checked in the SDKFunction Instance
 	 * @return List of monitoring parameters
 	 */
-	@JsonProperty("monitoring_parameters")
 	public List<MonitoringParameter> getMonitoringParameters() {
 		return monitoringParameters;
 	}
 
 
-	/**
-	 * 
-	 * @param monitoringParameters
-	 */
-	public void setMonitoringParameters(List<MonitoringParameter> monitoringParameters) {
-		for(MonitoringParameter monitoringParameter : monitoringParameters)
-			this.monitoringParameters.add(monitoringParameter);
-	}
 
 
 
@@ -189,16 +181,21 @@ public class SDKFunctionInstance {
 
 
 
-	public UUID getUuid() {
+	public String getUuid() {
 		return uuid;
 	}
 	
 	
 	
 	public boolean isValid() {
-		//TODO
+	    if(this.flavour == null)
+	    	return false;
+	    if(this.function == null || !this.function.isValid()) {
+	    	return false;
+	    }
 		return true;
 	}
+	
 	
 	public void deleteMonitoringParameter(MonitoringParameter monitoringParameter) {
 		if(monitoringParameter.isValid()) {
@@ -211,5 +208,13 @@ public class SDKFunctionInstance {
 		}
 	}
 	
-	
+
+	/**
+	 * 
+	 * @param monitoringParameters
+	 */
+	public void setMonitoringParameters(List<MonitoringParameter> monitoringParameters) {
+		for(MonitoringParameter monitoringParameter : monitoringParameters)
+			this.monitoringParameters.add(monitoringParameter);
+	}
 }

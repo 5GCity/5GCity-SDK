@@ -24,7 +24,7 @@ import it.nextworks.sdk.SDKFunction;
 
 public interface SDKFunctionRepository extends JpaRepository<SDKFunction, Long>{
 
-	Optional<SDKFunction> findByUuid(UUID id);
+	Optional<SDKFunction> findByUuid(String id);
 	Optional<SDKFunction> findById(Long id);
 	Optional<SDKFunction> findByName(String name);
 	

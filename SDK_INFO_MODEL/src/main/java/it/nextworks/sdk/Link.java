@@ -48,17 +48,20 @@ public class Link {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@JsonIgnore
+	@JsonProperty("id")
 	private Long id;
 	
 	/** 
 	 * Unique identifier of the link
 	*/
-	private UUID uuid;
+	@JsonProperty("uuid")
+	private String uuid = UUID.randomUUID().toString();
 	
 	/**
 	 * Human readable name that identifies the link
 	 * 
 	 */
+	@JsonProperty("name")
 	private String name;
 	
 	/**
@@ -80,6 +83,7 @@ public class Link {
 	@LazyCollection(LazyCollectionOption.FALSE)
 	@JsonProperty("connection_point")
 	private List<ConnectionPoint> connectionPoints = new ArrayList<ConnectionPoint>();
+
 	
 	@JsonIgnore
 	@ManyToOne
@@ -100,8 +104,7 @@ public class Link {
 	 * @param cps List of the connection points related to the link
 	 * @param service
 	 */
-	public Link(String name, ArrayList<L3ConnectivityProperty> l3Properties, ArrayList<ConnectionPoint> cps, SDKService service) {
-		this.uuid = UUID.randomUUID();
+	public Link(String name, ArrayList<L3ConnectivityProperty> l3Properties, ArrayList<ConnectionPoint> cps) {
 		this.name = name;
 		if(l3Properties != null) {
 			for (L3ConnectivityProperty l3Property : l3Properties) {
@@ -113,10 +116,9 @@ public class Link {
 				this.connectionPoints.add(cp);
 			}
 		}
-		this.service = service;
 	}
 
-	@JsonProperty("name")
+	
 	public String getName() {
 		return name;
 	}
@@ -127,7 +129,6 @@ public class Link {
 	}
 
 
-	@JsonProperty("l3_property")
 	public List<L3ConnectivityProperty> getL3Properties() {
 		return l3Properties;
 	}
@@ -137,7 +138,7 @@ public class Link {
 		this.l3Properties = l3Properties;
 	}
 
-	@JsonProperty("connection_point")
+
 	public List<ConnectionPoint> getConnectionPoints() {
 		return connectionPoints;
 	}
@@ -148,7 +149,6 @@ public class Link {
 	}
 
 
-	@JsonProperty("id")
 	public Long getId() {
 		return id;
 	}
@@ -163,14 +163,16 @@ public class Link {
 		this.service = service;
 	}
 	
-	@JsonProperty("uuid")
-	public UUID getUuid() {
+
+	public String getUuid() {
 		return uuid;
 	}
 	
 	
 	public boolean isValid() {
-		//TODO
+		if(this.name == null || this.name.length() == 0) {
+			return false;
+		}
 		return true;
 	}
 	

@@ -41,16 +41,19 @@ public class ConnectionPoint {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@JsonIgnore
+	@JsonProperty("id")
 	private Long id;
 
 	/**
 	 * UUID for the connection point
 	 */
-	private UUID uuid;
+	@JsonProperty("uuid")
+	private String uuid = UUID.randomUUID().toString();
 	
 	/**
 	 * Connection point type: {internal/external}
 	 */
+	@JsonProperty("type")
 	private ConnectionPointType type;
 	
 	
@@ -69,32 +72,14 @@ public class ConnectionPoint {
 		//JPA Purpose
 	}
 	
-	
+
 	/** 
-	 * Creates a new Connection point. A random UUID is generated on creation. This object is associated to a Link. 
-	 * 	In this case, function parameter must be null
-	 * @param type Type of the connection point
-	 * @param link Link associated to the connection point
-	 */
-	public ConnectionPoint(ConnectionPointType type, Link link) {
-		super();
-		this.uuid = UUID.randomUUID();
-		this.type = type;
-		this.link = link;
-		this.function = null;
-	}
-	
-	/** 
-	 * Creates a new Connection point. A random UUID is generated on creation. This object is associated to a SDKFunction
-	 * 	In this case, link parameter must be null
+	 * Creates a new Connection point. A random UUID is generated on creation.
+	 * 	
 	 * @param type Type of the connection point
 	 */
-	public ConnectionPoint(ConnectionPointType type, SDKFunction function) {
-		super();
-		this.uuid = UUID.randomUUID();
+	public ConnectionPoint(ConnectionPointType type) {
 		this.type = type;
-		this.link = null;
-		this.function = function;
 	}
 
 
@@ -112,20 +97,13 @@ public class ConnectionPoint {
 	 * 
 	 * @return unique identifier for the given connection point
 	 */
-	@JsonProperty("id")
 	public Long getId() {
 		return id;
 	}
 
 	
-	@JsonProperty("uuid")
-	public UUID getUuid() {
+	public String getUuid() {
 		return uuid;
-	}
-
-
-	public void setUuid(UUID uuid) {
-		this.uuid = uuid;
 	}
 
 
@@ -143,7 +121,6 @@ public class ConnectionPoint {
 	 * 
 	 * @return type for the given connection point
 	 */
-	@JsonProperty("type")
 	public ConnectionPointType getType() {
 		return type;
 	}
@@ -151,6 +128,12 @@ public class ConnectionPoint {
 	
 	public void setType(ConnectionPointType type) {
 		this.type = type;
+	}
+	
+	public boolean isValid() {
+		if(this.type == null)
+			return false;
+		return true;
 	}
 
 	

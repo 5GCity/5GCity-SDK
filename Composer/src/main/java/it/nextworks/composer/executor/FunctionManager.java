@@ -17,8 +17,6 @@ package it.nextworks.composer.executor;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +39,7 @@ public class FunctionManager implements FunctionManagerProviderInterface{
 	public FunctionManager() {}
 	
 	@Override
-	public SDKFunction getFunction(UUID id) throws NotExistingEntityException {
+	public SDKFunction getFunction(String id) throws NotExistingEntityException {
 		Optional<SDKFunction> result = SDKFunctionRepository.findByUuid(id);
 		if(result.isPresent()) {
 			return result.get();

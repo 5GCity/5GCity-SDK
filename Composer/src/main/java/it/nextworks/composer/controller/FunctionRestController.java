@@ -18,7 +18,6 @@ package it.nextworks.composer.controller;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +83,7 @@ public class FunctionRestController {
 		      @ApiResponse(code = 200, message = "")
 	})
 	@RequestMapping(value = "/function/{functionId}", method = RequestMethod.GET)
-	public ResponseEntity<?> getFunction(@PathVariable UUID functionId) {
+	public ResponseEntity<?> getFunction(@PathVariable String functionId) {
 		log.info("Receiving a request to get the function identified by id: " + functionId);
 		if(functionId == null) {
 			return new ResponseEntity<String>("Query without parameter functionId", HttpStatus.BAD_REQUEST);

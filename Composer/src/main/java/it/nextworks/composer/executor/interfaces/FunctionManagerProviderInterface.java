@@ -16,8 +16,6 @@
 package it.nextworks.composer.executor.interfaces;
 
 import java.util.List;
-import java.util.UUID;
-
 import it.nextworks.sdk.SDKFunction;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
 
@@ -30,7 +28,7 @@ public interface FunctionManagerProviderInterface {
 	 * @return
 	 * @throws NotExistingEntityException 
 	 */
-	public SDKFunction getFunction(UUID id) throws NotExistingEntityException;
+	public SDKFunction getFunction(String id) throws NotExistingEntityException;
 	
 	
 	/**

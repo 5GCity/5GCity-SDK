@@ -29,6 +29,9 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 
+import org.hibernate.annotations.Cascade;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 import org.hibernate.annotations.OnDelete;
@@ -53,17 +56,20 @@ public class SDKFunction {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@JsonIgnore
+	@JsonProperty("id")
 	private Long id;
 
 	/**
 	 * Unique identifier for the SDKFunction
 	 */
-	private UUID uuid;
+	@JsonProperty("uuid")
+	private String uuid = UUID.randomUUID().toString();
 	
 	
 	/**
 	 * Human readable identifier of the SDKFunction 
 	 */
+	@JsonProperty("name")
 	private String name;
 	
 	/**
@@ -83,13 +89,16 @@ public class SDKFunction {
 	/**
 	 * Current version of the SDKFunction
 	 */
+	@JsonProperty("version")
 	private String version;
 	
 	/**
 	 * Identifier of the vendor for the given SDKFunction
 	 */
+	@JsonProperty("vendor")
 	private String vendor;
 	
+	@JsonInclude(JsonInclude.Include.NON_EMPTY)
 	@OneToMany(mappedBy = "function", cascade=CascadeType.ALL)
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	@LazyCollection(LazyCollectionOption.FALSE)
@@ -99,10 +108,14 @@ public class SDKFunction {
 	/**
 	 * Short description of the SDKFunction
 	 */
+	@JsonProperty("description")
 	private String description;
 
 	@JsonInclude(JsonInclude.Include.NON_EMPTY)
-	@ElementCollection
+	@ElementCollection(fetch=FetchType.EAGER)
+	@Fetch(FetchMode.SELECT)
+	@Cascade(org.hibernate.annotations.CascadeType.ALL)
+	@JsonProperty("metadata")
 	private Map<String, String> metadata = new HashMap<String, String>();
 	
 	
@@ -129,7 +142,6 @@ public class SDKFunction {
 	public SDKFunction(String name, List<ConnectionPoint> connectionPoints, List<Flavour> flavour, String version, 
 				String vendor, List<MonitoringParameter> monitoringParameters, String description, Map<String, String> metadata) {
 		
-		this.uuid = UUID.randomUUID();
 		this.name = name;
 		if(connectionPoints != null) {
 			for(ConnectionPoint cp : connectionPoints)
@@ -145,7 +157,7 @@ public class SDKFunction {
 		if (metadata != null) this.metadata = metadata;
 	}
 
-	@JsonProperty("metadata")
+
 	public Map<String, String> getMetadata() {
 		return metadata;
 	}
@@ -161,7 +173,6 @@ public class SDKFunction {
 	}
 
 
-	@JsonProperty("name")
 	public String getName() {
 		return name;
 	}
@@ -171,7 +182,7 @@ public class SDKFunction {
 		this.name = name;
 	}
 
-	@JsonProperty("connection_point")
+
 	public List<ConnectionPoint> getConnectionPoints() {
 		return connectionPoints;
 	}
@@ -182,12 +193,11 @@ public class SDKFunction {
 	}
 
 
-	@JsonProperty("flavours")
 	public List<Flavour> getFlavour() {
 		return flavour;
 	}
 
-	@JsonProperty("version")
+	
 	public String getVersion() {
 		return version;
 	}
@@ -198,7 +208,6 @@ public class SDKFunction {
 	}
 
 
-	@JsonProperty("vendor")
 	public String getVendor() {
 		return vendor;
 	}
@@ -208,7 +217,6 @@ public class SDKFunction {
 		this.vendor = vendor;
 	}
 
-	@JsonProperty("monitoring_parameters")
 	public List<MonitoringParameter> getMonitoringParameters() {
 		return monitoringParameters;
 	}
@@ -219,7 +227,6 @@ public class SDKFunction {
 	}
 
 
-	@JsonProperty("description")
 	public String getDescription() {
 		return description;
 	}
@@ -229,18 +236,27 @@ public class SDKFunction {
 		this.description = description;
 	}
 
-	@JsonProperty("id")
+	
 	public Long getId() {
 		return id;
 	}
 
-	@JsonProperty("uuid")
-	public UUID getUuid() {
+
+	public String getUuid() {
 		return uuid;
 	}
 	
 	public boolean isValid() {
-		//TODO
+	    if(this.name == null || this.name.length() == 0)
+	    	return false;
+		if(this.connectionPoints == null || this.connectionPoints.size() == 0)
+			return false;
+		if(this.version == null || this.version.length() == 0)
+			return false;
+		if(this.vendor == null || this.vendor.length() == 0)
+			return false;
+		if(this.flavour == null || this.flavour.size() == 0)
+			return false;
 		return true;
 	}
 	
