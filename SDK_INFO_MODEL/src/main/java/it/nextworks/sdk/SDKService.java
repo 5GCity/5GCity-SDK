@@ -19,16 +19,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-
 import javax.persistence.CascadeType;
 import javax.persistence.ElementCollection;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
 import org.hibernate.annotations.Cascade;
@@ -58,12 +56,9 @@ public class SDKService {
 	@JsonIgnore
 	@JsonProperty("id")
 	private Long id;
-
-	/**
-	 * Unique identifier for the SDKService
-	 */
-	@JsonProperty("uuid")
-	private String uuid = UUID.randomUUID().toString();
+	
+	@JsonIgnore
+	private boolean valid;
 	
 	/**
 	 * Human readable name that identifies the SDKService
@@ -119,7 +114,9 @@ public class SDKService {
 	/**
 	 * License for the SDKService
 	 */
-	@ManyToOne(cascade=CascadeType.ALL)
+	@Embedded
+	@Fetch(FetchMode.SELECT)
+	@Cascade(org.hibernate.annotations.CascadeType.ALL)
 	@JsonProperty("license")
 	private License license;
 	
@@ -188,34 +185,14 @@ public class SDKService {
 	 * @param topologyList List of the links composing the SDKService
 	 * @param metadata Map of data composed by key and value
 	 */
-	public SDKService(String name, String designer, String version, List<SDKFunctionInstance> functions, ScalingRatioType scalingRatio,
-			String description, License license, List<MonitoringParameter> monitoringParameters, 
-			List<ScalingAspect> scalingAspects, List<Link> topologyList, Map<String, String> metadata) {
+	public SDKService(String name, String designer, String version, ScalingRatioType scalingRatio,
+			String description, License license, Map<String, String> metadata) {
 		this.name = name;
 		this.designer = designer;
 		this.version = version;
-		if(functions != null) {
-			for(SDKFunctionInstance function : functions) {
-				if(function.isValid())
-					this.functions.add(function);
-			}
-		}
 		this.scalingRatio = scalingRatio;
 		this.description = description;
 		this.license = license;
-		if(monitoringParameters !=  null) {
-			for(MonitoringParameter monitoringParameter: monitoringParameters)
-				if(monitoringParameter.isValid())
-					this.monitoringParameters.add(monitoringParameter);
-		}
-		if(scalingAspects != null) {
-			for(ScalingAspect scalingAspect : scalingAspects)
-				if(scalingAspect.isValid())
-					this.scalingAspects.add(scalingAspect);
-		}
-		for(Link link : topologyList)
-			if(link.isValid())
-				this.topologyList.add(link);
 		if (metadata != null) this.metadata = metadata;
 	}
 
@@ -256,7 +233,8 @@ public class SDKService {
 
 	
 	public void setFunctions(List<SDKFunctionInstance> functions) {
-		this.functions = functions;
+		for(SDKFunctionInstance instance: functions)
+			this.functions.add(instance);
 	}
 
 	
@@ -332,11 +310,6 @@ public class SDKService {
 	public Long getId() {
 		return id;
 	}
-	
-	
-	public String getUuid() {
-		return uuid;
-	}
 
 	
 	/**
@@ -345,13 +318,10 @@ public class SDKService {
 	 *         false otherwise
 	 */
 	public boolean isValid() {
-		System.out.println("Name check: " + this.name);
 		if(this.name == null || this.name == "")
 			return false;
-		System.out.println("Designer check: " + this.designer);
 		if(this.designer == null || this.designer == "")
 			return false;
-		System.out.println("Version check: " + this.version);
 		if(this.version == null || this.version == "")
 			return false;
 		if(this.functions == null || this.functions.size() == 0)
@@ -373,7 +343,7 @@ public class SDKService {
 	
 	public void deleteScalingAspect(ScalingAspect scalingAspect) {
 		for(ScalingAspect scale : this.scalingAspects) {
-			if(scale.getUuid().equalsIgnoreCase(scalingAspect.getUuid())) {
+			if(scale.getId().toString().equalsIgnoreCase(scalingAspect.getId().toString())) {
 				this.scalingAspects.remove(scale);
 				break;
 			}
@@ -382,7 +352,7 @@ public class SDKService {
 	
 	public void deleteMonitoringParameter(MonitoringParameter parameter) {
 		for(MonitoringParameter param: this.monitoringParameters) {
-			if(param.getUuid().equalsIgnoreCase(parameter.getUuid()))
+			if(param.getId().toString().equalsIgnoreCase(parameter.getId().toString()))
 				this.monitoringParameters.remove(param);
 		}
 	}

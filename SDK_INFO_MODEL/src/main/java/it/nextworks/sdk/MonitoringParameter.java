@@ -15,8 +15,6 @@
 */
 package it.nextworks.sdk;
 
-import java.util.UUID;
-
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -47,13 +45,13 @@ public class MonitoringParameter {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@JsonIgnore
+	@JsonProperty("id")
 	private Long id;
 
-	/**
-	 * Unique identifier of the entity
-	 */
-	@JsonProperty("uuid")
-	private String uuid = UUID.randomUUID().toString();
+	
+	
+	@JsonIgnore
+	private boolean valid;
 	
 	/**
 	 * Parameter Type
@@ -104,12 +102,15 @@ public class MonitoringParameter {
 	 * @param name Parameter type to be monitored
 	 * @param service Service where the parameter is used
 	 */
-	public MonitoringParameter(MonitoringParameterType name) {
+	public MonitoringParameter(MonitoringParameterType name, SDKService service, SDKFunction function, SDKFunctionInstance functionInstance) {
 		this.name = name;
 		this.function = null;
 		this.threshold = 0;
 		this.scalingAspect = null;
 		this.direction = null;
+		this.service = service;
+		this.function = function;
+		this.functionInstance = functionInstance;
 	}
 	
 	/**
@@ -127,6 +128,7 @@ public class MonitoringParameter {
 
 		this.function = null;
 		this.service = null;
+		this.functionInstance = null;
 	}
 
 	
@@ -165,7 +167,7 @@ public class MonitoringParameter {
 		this.threshold = threshold;
 	}
 
-	@JsonProperty("id")
+	
 	public Long getId() {
 		return id;
 	}
@@ -208,9 +210,6 @@ public class MonitoringParameter {
 		this.scalingAspect = scalingAspect;
 	}
 
-	public String getUuid() {
-		return uuid;
-	}
 
 
 	public DirectionType getDirection() {

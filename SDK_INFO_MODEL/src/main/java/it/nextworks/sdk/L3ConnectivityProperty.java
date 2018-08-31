@@ -15,14 +15,7 @@
 */
 package it.nextworks.sdk;
 
-import java.util.UUID;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import javax.persistence.Embeddable;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import it.nextworks.sdk.enums.Protocol;
@@ -34,20 +27,9 @@ import it.nextworks.sdk.enums.Protocol;
  * @version v0.4
  *
  */
-@Entity
+@Embeddable
 public class L3ConnectivityProperty {
 	
-	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	@JsonIgnore
-	@JsonProperty("id")
-	private Long id;
-
-	/**
-	 * Unique ID of the L3 connectivity property
-	 */
-	@JsonProperty("uuid")
-	private String uuid = UUID.randomUUID().toString();
 
 	/**
 	 * Source IP of the L3 connectivity property
@@ -78,11 +60,7 @@ public class L3ConnectivityProperty {
 	 */
 	@JsonProperty("protocol")
 	private Protocol protocol;
-	
-	
-	@JsonIgnore
-	@ManyToOne
-	private Link link;
+
 	
 	
 	/**
@@ -108,15 +86,6 @@ public class L3ConnectivityProperty {
 		if(dst_port > 0 && dst_port < 65535) {this.src_port = src_port;}
 	}
 	
-	
-	public Link getLink() {
-		return link;
-	}
-
-	public void setLink(Link link) {
-		this.link = link;
-	}
-
 	public String getSrc_ip() {
 		return src_ip;
 	}
@@ -149,20 +118,13 @@ public class L3ConnectivityProperty {
 		this.dst_port = dst_port;
 	}
 
-	public String getUuid() {
-		return uuid;
-	}
-	
+
 	public Protocol getProtocol() {
 		return protocol;
 	}
 
 	public void setProtocol(Protocol protocol) {
 		this.protocol = protocol;
-	}
-
-	public Long getId() {
-		return id;
 	}
 
 	public boolean isValid(){

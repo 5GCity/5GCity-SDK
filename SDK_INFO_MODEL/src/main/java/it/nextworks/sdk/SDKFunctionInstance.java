@@ -16,8 +16,6 @@
 package it.nextworks.sdk;
 
 import java.util.List;
-import java.util.UUID;
-
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -47,23 +45,10 @@ public class SDKFunctionInstance {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	@JsonIgnore
 	@JsonProperty("id")
 	private Long id;
 	
-	/**
-	 * Unique identifier for the SDKFunction
-	 */
-	@JsonProperty("uuid")
-	private String uuid = UUID.randomUUID().toString();
-	
-	
-	/**
-	 * Function descriptor for the function instance
-	 */
-	@ManyToOne(cascade=CascadeType.ALL)
-	@JsonProperty("function")
-	private SDKFunction function;
+
 	
 	
 	/**
@@ -71,6 +56,10 @@ public class SDKFunctionInstance {
 	 */
 	@JsonProperty("flavour")
 	private Flavour flavour;
+	
+	
+	@JsonIgnore
+	private boolean valid;
 	
 	
 	/**
@@ -88,19 +77,26 @@ public class SDKFunctionInstance {
 	private SDKService service;
 
 
+	/**
+	 * Function UUID for the function instance
+	 */
+	@JsonProperty("function")
+	private String function;
+	
 	
 	public SDKFunctionInstance() {
 		//JPA purpose
 	}
 	
 	
-	public SDKFunctionInstance(Flavour flavour, List<MonitoringParameter> monitoringParameters, SDKFunction function) {
+	public SDKFunctionInstance(Flavour flavour, String function, SDKService service) {
 		this.flavour = flavour;
 		for(MonitoringParameter monitoringParameter : monitoringParameters)
 			if(monitoringParameter.isValid()) {
 				this.monitoringParameters.add(monitoringParameter);
 			}
 		this.function = function;
+		this.service = service;
 	}
 
 	
@@ -109,7 +105,7 @@ public class SDKFunctionInstance {
 	 * 
 	 * @return function associated to the SDK Function Instance
 	 */
-	public SDKFunction getFunction() {
+	public String getFunction() {
 		return function;
 	}
 
@@ -118,7 +114,7 @@ public class SDKFunctionInstance {
 	 * Function associated to the SDK Function Instance
 	 * @param functionId 
 	 */
-	public void setFunctionId(SDKFunction function) {
+	public void setFunctionId(String function) {
 		this.function = function;
 	}
 
@@ -178,29 +174,28 @@ public class SDKFunctionInstance {
 		return id;
 	}
 
-
-
-
-	public String getUuid() {
-		return uuid;
-	}
 	
 	
 	
 	public boolean isValid() {
 	    if(this.flavour == null)
 	    	return false;
-	    if(this.function == null || !this.function.isValid()) {
+	    if(this.function == null) {
 	    	return false;
 	    }
 		return true;
 	}
 	
 	
+	public void setFunction(String function) {
+		this.function = function;
+	}
+
+
 	public void deleteMonitoringParameter(MonitoringParameter monitoringParameter) {
 		if(monitoringParameter.isValid()) {
 			for(MonitoringParameter param : this.monitoringParameters) {
-				if(param.getUuid().equals(monitoringParameter.getUuid())) {
+				if(param.getId().toString().equalsIgnoreCase(monitoringParameter.getId().toString())) {
 					this.monitoringParameters.remove(param);
 				}
 			}

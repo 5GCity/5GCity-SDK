@@ -15,6 +15,7 @@
 */
 package it.nextworks.composer.executor;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 import it.nextworks.composer.executor.interfaces.FunctionManagerProviderInterface;
 import it.nextworks.composer.executor.repositories.SDKFunctionRepository;
 import it.nextworks.sdk.SDKFunction;
+import it.nextworks.sdk.enums.Flavour;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
 
 @Service
@@ -33,14 +35,16 @@ public class FunctionManager implements FunctionManagerProviderInterface{
 	private static final Logger log = LoggerFactory.getLogger(FunctionManager.class);
 			
 	@Autowired
-	private SDKFunctionRepository SDKFunctionRepository;
+	private SDKFunctionRepository sdkFunctionRepository;
 	
 
-	public FunctionManager() {}
+	public FunctionManager() {
+		
+	}
 	
 	@Override
 	public SDKFunction getFunction(String id) throws NotExistingEntityException {
-		Optional<SDKFunction> result = SDKFunctionRepository.findByUuid(id);
+		Optional<SDKFunction> result = sdkFunctionRepository.findById(Long.parseLong(id));
 		if(result.isPresent()) {
 			return result.get();
 		} else {
@@ -50,17 +54,24 @@ public class FunctionManager implements FunctionManagerProviderInterface{
 	}
 
 	
-	
-	
-	
 	@Override
 	public List<SDKFunction> getFunctions() {
-		List<SDKFunction> functionList = SDKFunctionRepository.findAll();
+		List<SDKFunction> functionList = sdkFunctionRepository.findAll();
 		if(functionList.size() == 0) {
 			log.debug("No Functions are available");
 		} else 
 			log.debug("SDK Functions present in DB: " + functionList.size());
 		return functionList;
+	}
+
+	@Override
+	public String createFunction() {
+		List<Flavour> flavour = new ArrayList<>();
+		flavour.add(Flavour.SMALL);
+		flavour.add(Flavour.MEDIUM);
+		SDKFunction function = new SDKFunction("SDKTest1", flavour, "v0.0", "NestuoKD", "SDKTest1 descrt", null);
+		sdkFunctionRepository.saveAndFlush(function);
+		return function.getId().toString();
 	}
 
 }

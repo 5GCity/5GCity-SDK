@@ -15,15 +15,7 @@
 */
 package it.nextworks.sdk;
 
-import java.util.UUID;
-
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import javax.persistence.Embeddable;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import it.nextworks.sdk.enums.LicenseType;
@@ -35,22 +27,10 @@ import it.nextworks.sdk.enums.LicenseType;
  * @version v0.4
  *
  */
-@Entity
+@Embeddable
 public class License {
 
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	@JsonIgnore
-	@JsonProperty("id")
-	private Long id;
-	
-	/**
-	 * Unique identifier of the object
-	 */
-	@JsonProperty("uuid")
-	private String uuid = UUID.randomUUID().toString();
-	
 	/**
 	 * Type of the license
 	 */
@@ -63,11 +43,7 @@ public class License {
 	@JsonProperty("URL")
 	private String URL;
 	
-	@JsonIgnore
-	@ManyToOne
-	private SDKService service;
-	
-	
+
 	/**
 	 * Constructor used by JPA
 	 */
@@ -101,23 +77,7 @@ public class License {
 		URL = uRL;
 	}
 	
-	public Long getId() {
-		return this.id;
-	}
 	
-	
-	public String getUuid() {
-		return uuid;
-	}
-	
-	public SDKService getService() {
-		return service;
-	}
-
-	public void setService(SDKService service) {
-		this.service = service;
-	}
-
 	public boolean isValid() {
 		if(this.type == null) 
 			return false;		

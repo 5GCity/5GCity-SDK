@@ -16,8 +16,6 @@
 package it.nextworks.composer.executor.interfaces;
 
 import java.util.List;
-import java.util.UUID;
-
 import it.nextworks.sdk.MonitoringParameter;
 import it.nextworks.sdk.SDKService;
 import it.nextworks.sdk.ScalingAspect;
@@ -31,13 +29,13 @@ public interface ServiceManagerProviderInterface {
 
 	public SDKService getServiceByUuid(String id) throws NotExistingEntityException;
 	
-	public SDKService getServiceById(Long id) throws NotExistingEntityException;
+	public SDKService getServiceById(String id) throws NotExistingEntityException;
 	
 	public List<SDKService> getServices() throws NotExistingEntityException;
 	
 	public List<SDKService> getServicesUsingFunction(String functionId) throws NotExistingEntityException;
 		
-	public String createService(SDKService service) throws ExistingEntityException;
+	public String createService(SDKService service) throws ExistingEntityException, NotExistingEntityException, MalformattedElementException;
 	
 	public String updateService(SDKService service) throws NotExistingEntityException;
 	

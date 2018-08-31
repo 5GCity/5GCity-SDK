@@ -15,11 +15,10 @@
 */
 package it.nextworks.sdk;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-
 import javax.persistence.CascadeType;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
@@ -59,12 +58,6 @@ public class SDKFunction {
 	@JsonProperty("id")
 	private Long id;
 
-	/**
-	 * Unique identifier for the SDKFunction
-	 */
-	@JsonProperty("uuid")
-	private String uuid = UUID.randomUUID().toString();
-	
 	
 	/**
 	 * Human readable identifier of the SDKFunction 
@@ -85,6 +78,9 @@ public class SDKFunction {
 	@ElementCollection(fetch=FetchType.EAGER)
 	@JsonProperty("flavours")
 	private List<Flavour> flavour;
+	
+	@JsonIgnore
+	private boolean valid;
 	
 	/**
 	 * Current version of the SDKFunction
@@ -115,6 +111,13 @@ public class SDKFunction {
 	@ElementCollection(fetch=FetchType.EAGER)
 	@Fetch(FetchMode.SELECT)
 	@Cascade(org.hibernate.annotations.CascadeType.ALL)
+	@JsonProperty("functionInstances")
+	private List<SDKFunctionInstance> instances = new ArrayList<>();
+	
+	@JsonInclude(JsonInclude.Include.NON_EMPTY)
+	@ElementCollection(fetch=FetchType.EAGER)
+	@Fetch(FetchMode.SELECT)
+	@Cascade(org.hibernate.annotations.CascadeType.ALL)
 	@JsonProperty("metadata")
 	private Map<String, String> metadata = new HashMap<String, String>();
 	
@@ -131,29 +134,22 @@ public class SDKFunction {
 	 * SDKFunction constructor
 	 * 
 	 * @param name Name of the Function
-	 * @param connectionPoints List of connectionPoints related to the function
 	 * @param flavour Flavor of the function
 	 * @param version Current version of the function
 	 * @param vendor Vendor identifier of the function
-	 * @param monitoringParameters List of parameters to be monitored in the function
 	 * @param description A short description of the function.
-	 * @param service 
+	 * @param metadata Speific metadata
 	 */
-	public SDKFunction(String name, List<ConnectionPoint> connectionPoints, List<Flavour> flavour, String version, 
-				String vendor, List<MonitoringParameter> monitoringParameters, String description, Map<String, String> metadata) {
+	public SDKFunction(String name, List<Flavour> flavour, String version, 
+				String vendor, String description, Map<String, String> metadata) {
 		
 		this.name = name;
-		if(connectionPoints != null) {
-			for(ConnectionPoint cp : connectionPoints)
-				this.connectionPoints.add(cp);
-		}
 		if(flavour != null && flavour.size() > 0)
 			this.flavour = flavour;
 		this.version = version;
-		if(monitoringParameters != null) {
-			for(MonitoringParameter mon : monitoringParameters)
-				this.monitoringParameters.add(mon);
-		}
+		this.vendor = vendor;
+		this.description = description;
+				
 		if (metadata != null) this.metadata = metadata;
 	}
 
@@ -242,9 +238,6 @@ public class SDKFunction {
 	}
 
 
-	public String getUuid() {
-		return uuid;
-	}
 	
 	public boolean isValid() {
 	    if(this.name == null || this.name.length() == 0)

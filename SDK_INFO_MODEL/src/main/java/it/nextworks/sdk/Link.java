@@ -17,16 +17,19 @@ package it.nextworks.sdk;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-
 import javax.persistence.CascadeType;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
+import org.hibernate.annotations.Cascade;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 import org.hibernate.annotations.OnDelete;
@@ -51,11 +54,9 @@ public class Link {
 	@JsonProperty("id")
 	private Long id;
 	
-	/** 
-	 * Unique identifier of the link
-	*/
-	@JsonProperty("uuid")
-	private String uuid = UUID.randomUUID().toString();
+	@JsonIgnore
+	private boolean valid;
+	
 	
 	/**
 	 * Human readable name that identifies the link
@@ -68,9 +69,9 @@ public class Link {
 	 * List of the L3 connectivity properties
 	 * 
 	 */
-	@OneToMany(mappedBy = "link", cascade=CascadeType.ALL)
-	@OnDelete(action = OnDeleteAction.CASCADE)
-	@LazyCollection(LazyCollectionOption.FALSE)
+	@ElementCollection(fetch=FetchType.EAGER)
+	@Fetch(FetchMode.SELECT)
+	@Cascade(org.hibernate.annotations.CascadeType.ALL)
 	@JsonProperty("l3_property")
 	private List<L3ConnectivityProperty> l3Properties = new ArrayList<L3ConnectivityProperty>();
 	
@@ -104,18 +105,9 @@ public class Link {
 	 * @param cps List of the connection points related to the link
 	 * @param service
 	 */
-	public Link(String name, ArrayList<L3ConnectivityProperty> l3Properties, ArrayList<ConnectionPoint> cps) {
+	public Link(String name, SDKService service) {
 		this.name = name;
-		if(l3Properties != null) {
-			for (L3ConnectivityProperty l3Property : l3Properties) {
-				this.l3Properties.add(l3Property);
-			}
-		}
-		if (cps != null) {
-			for (ConnectionPoint cp : cps) {
-				this.connectionPoints.add(cp);
-			}
-		}
+		this.service = service;
 	}
 
 	
@@ -162,11 +154,7 @@ public class Link {
 	public void setService(SDKService service) {
 		this.service = service;
 	}
-	
 
-	public String getUuid() {
-		return uuid;
-	}
 	
 	
 	public boolean isValid() {

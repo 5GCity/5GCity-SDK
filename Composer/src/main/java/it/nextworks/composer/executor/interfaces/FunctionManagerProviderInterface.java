@@ -38,5 +38,8 @@ public interface FunctionManagerProviderInterface {
 	public List<SDKFunction> getFunctions();
 	
 	
+	public String createFunction();
+	
+	
 	
 }

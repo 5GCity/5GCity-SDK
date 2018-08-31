@@ -30,8 +30,9 @@ public class ComposerApplication {
 	
 	@Value("${crossorigin.origin}")
 	public static String crossOrigin;
-
+	
 	public static void main(String[] args) {
 		SpringApplication.run(ComposerApplication.class, args);
+		
 	}
 }

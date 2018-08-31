@@ -19,7 +19,9 @@ import java.util.List;
 
 import it.nextworks.sdk.MonitoringParameter;
 import it.nextworks.sdk.SDKFunctionInstance;
+import it.nextworks.sdk.SDKService;
 import it.nextworks.sdk.enums.Flavour;
+import it.nextworks.sdk.exceptions.ExistingEntityException;
 import it.nextworks.sdk.exceptions.MalformattedElementException;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
 
@@ -55,6 +57,8 @@ public interface FunctionInstanceManagerProviderInterface {
 	public void deleteMonitoringParameters(String functionId, List<MonitoringParameter> monitoringParameters) throws NotExistingEntityException, MalformattedElementException;
 
 	public List<MonitoringParameter> getMonitoringParameters(String functionId) throws NotExistingEntityException;
+	
+	public String createInstance(SDKFunctionInstance instance, SDKService service) throws ExistingEntityException, NotExistingEntityException, MalformattedElementException;
 	
 	
 	

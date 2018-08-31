@@ -17,8 +17,6 @@ package it.nextworks.sdk;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -53,11 +51,10 @@ public class ScalingAspect {
 	@JsonProperty("id")
 	private Long id;
 
-	/**
-	 * Unique identifier of the ScalingAspect entity
-	 */
-	@JsonProperty("uuid")
-	private String uuid = UUID.randomUUID().toString();
+	
+	@JsonIgnore
+	private boolean valid;
+	
 	
 	/**
 	 * Human readable identifier of the ScalingAspect
@@ -103,13 +100,10 @@ public class ScalingAspect {
 	 * @param action Scaling type
 	 * @param service
 	 */
-	public ScalingAspect(String name, ArrayList<MonitoringParameter> monitoringParameters, ActionType action) {
+	public ScalingAspect(String name, ActionType action, SDKService service) {
 		this.name = name;
-		for(MonitoringParameter monitoringParameter : monitoringParameters)
-			if(monitoringParameter.isValidForScalingPurpose()) {
-				this.monitoringParameters.add(monitoringParameter);
-			}
 		this.action = action;
+		this.service = service;
 	}
 
 
@@ -145,11 +139,6 @@ public class ScalingAspect {
 
 	public Long getId() {
 		return id;
-	}
-	
-
-	public String getUuid() {
-		return uuid;
 	}
 	
 

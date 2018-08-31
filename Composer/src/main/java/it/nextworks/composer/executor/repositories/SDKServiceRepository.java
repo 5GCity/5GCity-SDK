@@ -16,7 +16,6 @@
 package it.nextworks.composer.executor.repositories;
 
 import java.util.Optional;
-
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import it.nextworks.sdk.SDKService;
@@ -25,7 +24,6 @@ import it.nextworks.sdk.SDKService;
 public interface SDKServiceRepository extends JpaRepository<SDKService, Long> {
 
 	Optional<SDKService> findById(Long id);
-	Optional<SDKService> findByUuid(String uuid);
 
 	
 }

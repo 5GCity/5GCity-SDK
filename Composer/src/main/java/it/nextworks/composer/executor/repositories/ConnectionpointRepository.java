@@ -13,29 +13,17 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package it.nextworks.composer;
+package it.nextworks.composer.executor.repositories;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.context.web.WebAppConfiguration;
+import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
 
+import it.nextworks.sdk.ConnectionPoint;
 
 
-@RunWith(SpringRunner.class)
-@SpringBootTest
-@WebAppConfiguration
-public class ComposerApplicationTests {
+public interface ConnectionpointRepository extends JpaRepository<ConnectionPoint, Long> {
+
+	Optional<ConnectionPoint> findById(Long id);
 
 	
-	@Test
-	public void contextLoads() {
-		
-		
-	}
-	
-	
-
-
 }

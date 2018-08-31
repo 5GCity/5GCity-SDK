@@ -15,7 +15,6 @@
 */
 package it.nextworks.composer.controller;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -56,7 +55,7 @@ public class ServiceRestController {
 	private ServiceManager serviceManager;
 
 	public ServiceRestController() {
-
+		
 	}
 
 	/**
@@ -69,8 +68,7 @@ public class ServiceRestController {
 	@RequestMapping(value = "/services", method = RequestMethod.GET)
 	public ResponseEntity<?> getServices() {
 		log.info("Request for get SERVICES");
-		List<SDKService> response = new ArrayList<>();
-		response = serviceManager.getServices();
+		List<SDKService> response = serviceManager.getServices();
 		return new ResponseEntity<List<SDKService>>(response, HttpStatus.OK);
 	}
 
@@ -118,9 +116,19 @@ public class ServiceRestController {
 				log.debug("Service entity created");
 				return new ResponseEntity<>(HttpStatus.CREATED);
 			} catch (ExistingEntityException e) {
-				log.error("Service with id " + request.getUuid() + " is already present in database");
+				log.error("Service with id " + request.getId() + " is already present in database");
 				return new ResponseEntity<String>(
-						"Service with id " + request.getUuid() + " is already present in database",
+						"Service with id " + request.getId() + " is already present in database",
+						HttpStatus.BAD_REQUEST);
+			} catch (NotExistingEntityException e2) {
+				log.error("Function id used to build one of the SDKFunctionInstances is not present in database");
+				return new ResponseEntity<String>(
+						"Function id used to build one of the SDKFunctionInstances is not present in database",
+						HttpStatus.BAD_REQUEST);
+			} catch (MalformattedElementException e3) {
+				log.error("Malformatted request");
+				return new ResponseEntity<String>(
+						"Malformatted request",
 						HttpStatus.BAD_REQUEST);
 			}
 		} else {
@@ -142,9 +150,9 @@ public class ServiceRestController {
 				log.debug("Service entity updated");
 				return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 			} catch (NotExistingEntityException e) {
-				log.error("Service with id " + request.getUuid() + " is not present in database");
+				log.error("Service with id " + request.getId() + " is not present in database");
 				return new ResponseEntity<String>(
-						"Service with id " + request.getUuid() + " is not present in database", HttpStatus.BAD_REQUEST);
+						"Service with id " + request.getId() + " is not present in database", HttpStatus.BAD_REQUEST);
 			}
 		} else {
 			log.error("The service provided cannot be validated");

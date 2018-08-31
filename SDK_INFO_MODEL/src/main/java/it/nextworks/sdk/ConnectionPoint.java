@@ -15,8 +15,6 @@
 */
 package it.nextworks.sdk;
 
-import java.util.UUID;
-
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -45,17 +43,13 @@ public class ConnectionPoint {
 	private Long id;
 
 	/**
-	 * UUID for the connection point
-	 */
-	@JsonProperty("uuid")
-	private String uuid = UUID.randomUUID().toString();
-	
-	/**
 	 * Connection point type: {internal/external}
 	 */
 	@JsonProperty("type")
 	private ConnectionPointType type;
 	
+	@JsonIgnore
+	private boolean valid;
 	
 	@JsonIgnore
 	@ManyToOne
@@ -78,8 +72,10 @@ public class ConnectionPoint {
 	 * 	
 	 * @param type Type of the connection point
 	 */
-	public ConnectionPoint(ConnectionPointType type) {
+	public ConnectionPoint(ConnectionPointType type, SDKFunction function, Link link) {
 		this.type = type;
+		this.function = function;
+		this.link = link;
 	}
 
 
@@ -102,10 +98,6 @@ public class ConnectionPoint {
 	}
 
 	
-	public String getUuid() {
-		return uuid;
-	}
-
 
 	public SDKFunction getFunction() {
 		return function;

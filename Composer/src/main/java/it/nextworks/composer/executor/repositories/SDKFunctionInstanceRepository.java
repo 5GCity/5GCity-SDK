@@ -16,14 +16,12 @@
 package it.nextworks.composer.executor.repositories;
 
 import java.util.Optional;
-
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import it.nextworks.sdk.SDKFunctionInstance;
 
 public interface SDKFunctionInstanceRepository extends JpaRepository<SDKFunctionInstance, Long>{
 
-	Optional<SDKFunctionInstance> findByUuid(String id);
 	Optional<SDKFunctionInstance> findById(Long id);
 	
 	
