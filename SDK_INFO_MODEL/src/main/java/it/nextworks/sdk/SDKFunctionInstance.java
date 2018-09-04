@@ -17,13 +17,18 @@ package it.nextworks.sdk;
 
 import java.util.List;
 import javax.persistence.CascadeType;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
+import org.hibernate.annotations.Cascade;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 import org.hibernate.annotations.OnDelete;
@@ -77,11 +82,11 @@ public class SDKFunctionInstance {
 	private SDKService service;
 
 
-	/**
-	 * Function UUID for the function instance
-	 */
+	@ManyToOne
 	@JsonProperty("function")
-	private String function;
+	@Fetch(FetchMode.SELECT)
+	@Cascade(org.hibernate.annotations.CascadeType.ALL)
+	private SDKFunction function;
 	
 	
 	public SDKFunctionInstance() {
@@ -89,7 +94,7 @@ public class SDKFunctionInstance {
 	}
 	
 	
-	public SDKFunctionInstance(Flavour flavour, String function, SDKService service) {
+	public SDKFunctionInstance(Flavour flavour, SDKFunction function, SDKService service) {
 		this.flavour = flavour;
 		for(MonitoringParameter monitoringParameter : monitoringParameters)
 			if(monitoringParameter.isValid()) {
@@ -105,7 +110,7 @@ public class SDKFunctionInstance {
 	 * 
 	 * @return function associated to the SDK Function Instance
 	 */
-	public String getFunction() {
+	public SDKFunction getFunction() {
 		return function;
 	}
 
@@ -114,7 +119,7 @@ public class SDKFunctionInstance {
 	 * Function associated to the SDK Function Instance
 	 * @param functionId 
 	 */
-	public void setFunctionId(String function) {
+	public void setFunction(SDKFunction function) {
 		this.function = function;
 	}
 
@@ -180,17 +185,14 @@ public class SDKFunctionInstance {
 	public boolean isValid() {
 	    if(this.flavour == null)
 	    	return false;
-	    if(this.function == null) {
+	    if(this.function.isValid()) {
 	    	return false;
 	    }
+	    if(!this.service.isValid())
+	    	return false;
 		return true;
 	}
 	
-	
-	public void setFunction(String function) {
-		this.function = function;
-	}
-
 
 	public void deleteMonitoringParameter(MonitoringParameter monitoringParameter) {
 		if(monitoringParameter.isValid()) {

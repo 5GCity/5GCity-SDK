@@ -16,7 +16,9 @@
 package it.nextworks.composer.executor;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,9 +26,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import it.nextworks.composer.executor.interfaces.FunctionManagerProviderInterface;
+import it.nextworks.composer.executor.repositories.ConnectionpointRepository;
+import it.nextworks.composer.executor.repositories.MonitoringParameterRepository;
 import it.nextworks.composer.executor.repositories.SDKFunctionRepository;
+import it.nextworks.sdk.ConnectionPoint;
+import it.nextworks.sdk.MonitoringParameter;
 import it.nextworks.sdk.SDKFunction;
+import it.nextworks.sdk.enums.ConnectionPointType;
 import it.nextworks.sdk.enums.Flavour;
+import it.nextworks.sdk.enums.MonitoringParameterType;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
 
 @Service
@@ -37,14 +45,19 @@ public class FunctionManager implements FunctionManagerProviderInterface{
 	@Autowired
 	private SDKFunctionRepository sdkFunctionRepository;
 	
+	@Autowired
+	private ConnectionpointRepository cpRepository;
+	
+	@Autowired
+	private MonitoringParameterRepository monitoringParamRepository;
 
 	public FunctionManager() {
 		
 	}
 	
 	@Override
-	public SDKFunction getFunction(String id) throws NotExistingEntityException {
-		Optional<SDKFunction> result = sdkFunctionRepository.findById(Long.parseLong(id));
+	public SDKFunction getFunction(Long id) throws NotExistingEntityException {
+		Optional<SDKFunction> result = sdkFunctionRepository.findById(id);
 		if(result.isPresent()) {
 			return result.get();
 		} else {
@@ -69,8 +82,23 @@ public class FunctionManager implements FunctionManagerProviderInterface{
 		List<Flavour> flavour = new ArrayList<>();
 		flavour.add(Flavour.SMALL);
 		flavour.add(Flavour.MEDIUM);
-		SDKFunction function = new SDKFunction("SDKTest1", flavour, "v0.0", "NestuoKD", "SDKTest1 descrt", null);
+		Map<String, String> metadata = new HashMap<>();
+		metadata.put("key1", "value1");
+		metadata.put("key2", "value3");
+		metadata.put("key3", "value2");
+		SDKFunction function = new SDKFunction("SDKTest1", flavour, "v0.0", "NestuoKD", "SDKTest1 descrt", metadata);
 		sdkFunctionRepository.saveAndFlush(function);
+		
+		
+		ConnectionPoint cp1 = new ConnectionPoint(ConnectionPointType.EXTERNAL, "extCp1", function, null);
+		ConnectionPoint cp2 = new ConnectionPoint(ConnectionPointType.EXTERNAL, "extCp2", function, null);
+		cpRepository.saveAndFlush(cp1);
+		cpRepository.saveAndFlush(cp2);
+		
+
+		MonitoringParameter param1 = new MonitoringParameter(MonitoringParameterType.AVERAGE_MEMORY_UTILIZATION, null, function, null);
+		monitoringParamRepository.saveAndFlush(param1);
+		
 		return function.getId().toString();
 	}
 

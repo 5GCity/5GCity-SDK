@@ -324,18 +324,6 @@ public class SDKService {
 			return false;
 		if(this.version == null || this.version == "")
 			return false;
-		if(this.functions == null || this.functions.size() == 0)
-			return false;
-		for(SDKFunctionInstance function : this.functions) {
-			if(!function.isValid())
-				return false;
-		}
-		if(this.topologyList == null || this.topologyList.size() == 0)
-			return false;
-		for(Link link : this.topologyList) {
-			if(!link.isValid())
-				return false;
-		}
 		return true;
 	}
 	

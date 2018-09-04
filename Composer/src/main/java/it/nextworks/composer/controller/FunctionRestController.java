@@ -90,7 +90,7 @@ public class FunctionRestController {
 			return new ResponseEntity<String>("Query without parameter functionId", HttpStatus.BAD_REQUEST);
 		} else {
 			try {
-				SDKFunction result = functionManager.getFunction(functionId);
+				SDKFunction result = functionManager.getFunction(Long.parseLong(functionId));
 				return new ResponseEntity<SDKFunction>(result, HttpStatus.OK);
 			} catch(NotExistingEntityException e) {
 				log.debug("The SDK function identified by the functionId provided is not present");

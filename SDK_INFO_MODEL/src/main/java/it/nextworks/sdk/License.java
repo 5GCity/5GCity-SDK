@@ -40,8 +40,8 @@ public class License {
 	/**
 	 * URL related to the license
 	 */
-	@JsonProperty("URL")
-	private String URL;
+	@JsonProperty("url")
+	private String url;
 	
 
 	/**
@@ -58,7 +58,7 @@ public class License {
 	 */
 	public License(LicenseType type, String URL) {
 		this.type = type;
-		this.URL = URL;
+		this.url = URL;
 	}
 
 	public LicenseType getType() {
@@ -70,18 +70,18 @@ public class License {
 	}
 
 	public String getURL() {
-		return URL;
+		return url;
 	}
 
 	public void setURL(String uRL) {
-		URL = uRL;
+		url = uRL;
 	}
 	
 	
 	public boolean isValid() {
 		if(this.type == null) 
 			return false;		
-		if(this.URL == null || this.URL.length() == 0)
+		if(this.url == null || this.url.length() == 0)
 			return false;
 		return true;
 	}

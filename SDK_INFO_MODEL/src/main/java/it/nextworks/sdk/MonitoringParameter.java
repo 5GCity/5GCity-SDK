@@ -22,6 +22,7 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import it.nextworks.sdk.enums.DirectionType;
@@ -53,6 +54,9 @@ public class MonitoringParameter {
 	@JsonIgnore
 	private boolean valid;
 	
+	@JsonIgnore
+	private boolean validForScalingPurpose;
+	
 	/**
 	 * Parameter Type
 	 */
@@ -62,6 +66,7 @@ public class MonitoringParameter {
 	/**
 	 * Comparing operand between current value and threshold.
 	 */
+	@JsonInclude(JsonInclude.Include.NON_EMPTY)
 	@JsonProperty("direction")
 	private DirectionType direction;
 
@@ -69,6 +74,7 @@ public class MonitoringParameter {
 	/**
 	 * Threshold for the parameter
 	 */
+	@JsonInclude(JsonInclude.Include.NON_EMPTY)
 	@JsonProperty("threshold")
 	private float threshold;
 	
@@ -130,24 +136,6 @@ public class MonitoringParameter {
 		this.service = null;
 		this.functionInstance = null;
 	}
-
-	
-	/**
-	 * Constructor to be used when the monitoring parameter is combined with a SDKFunction
-	 * @param name Parameter type to be monitored
-	 * @param function Function where the parameter is used
-	 */
-	public MonitoringParameter(MonitoringParameterType name, SDKFunctionInstance functionInstance) {
-		this.name = name;
-		this.function = null;
-		this.functionInstance = functionInstance;
-		this.functionInstance = null;
-		this.threshold = 0;
-		this.service = null;
-		this.scalingAspect = null;
-		this.direction = null;
-	}
-	
 	
 
 

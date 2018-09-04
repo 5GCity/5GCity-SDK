@@ -28,7 +28,7 @@ public interface FunctionManagerProviderInterface {
 	 * @return
 	 * @throws NotExistingEntityException 
 	 */
-	public SDKFunction getFunction(String id) throws NotExistingEntityException;
+	public SDKFunction getFunction(Long id) throws NotExistingEntityException;
 	
 	
 	/**

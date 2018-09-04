@@ -107,8 +107,8 @@ public class SDKFunction {
 	@JsonProperty("description")
 	private String description;
 
-	@JsonInclude(JsonInclude.Include.NON_EMPTY)
-	@ElementCollection(fetch=FetchType.EAGER)
+	@JsonIgnore
+	@ElementCollection(fetch=FetchType.LAZY)
 	@Fetch(FetchMode.SELECT)
 	@Cascade(org.hibernate.annotations.CascadeType.ALL)
 	@JsonProperty("functionInstances")

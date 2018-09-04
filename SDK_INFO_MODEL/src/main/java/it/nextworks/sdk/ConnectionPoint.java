@@ -59,6 +59,8 @@ public class ConnectionPoint {
 	@ManyToOne
 	private Link link;
 	
+	@JsonProperty
+	private String name;
 	/**
 	 * Constructor used by JPA
 	 */
@@ -72,10 +74,21 @@ public class ConnectionPoint {
 	 * 	
 	 * @param type Type of the connection point
 	 */
-	public ConnectionPoint(ConnectionPointType type, SDKFunction function, Link link) {
+	public ConnectionPoint(ConnectionPointType type, String name, SDKFunction function, Link link) {
 		this.type = type;
 		this.function = function;
 		this.link = link;
+		this.name = name;
+	}
+
+
+	public String getName() {
+		return name;
+	}
+
+
+	public void setName(String name) {
+		this.name = name;
 	}
 
 
@@ -124,6 +137,8 @@ public class ConnectionPoint {
 	
 	public boolean isValid() {
 		if(this.type == null)
+			return false;
+		if(this.name == null || this.name.length() < 2)
 			return false;
 		return true;
 	}
