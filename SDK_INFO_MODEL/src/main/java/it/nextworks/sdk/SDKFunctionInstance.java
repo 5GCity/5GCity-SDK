@@ -17,18 +17,12 @@ package it.nextworks.sdk;
 
 import java.util.List;
 import javax.persistence.CascadeType;
-import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-
-import org.hibernate.annotations.Cascade;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 import org.hibernate.annotations.OnDelete;
@@ -83,12 +77,17 @@ public class SDKFunctionInstance {
 
 
 	@ManyToOne
-	@JsonProperty("function")
-	@Fetch(FetchMode.SELECT)
-	@Cascade(org.hibernate.annotations.CascadeType.ALL)
-	private SDKFunction function;
+	@JsonIgnore
+	private SDKFunction sdkFunction;
 	
 	
+	@JsonProperty("function_id")
+	private Long functionId;
+	
+	
+	
+
+
 	public SDKFunctionInstance() {
 		//JPA purpose
 	}
@@ -100,29 +99,20 @@ public class SDKFunctionInstance {
 			if(monitoringParameter.isValid()) {
 				this.monitoringParameters.add(monitoringParameter);
 			}
-		this.function = function;
+		this.sdkFunction = function;
 		this.service = service;
 	}
 
 	
 
-	/**
-	 * 
-	 * @return function associated to the SDK Function Instance
-	 */
-	public SDKFunction getFunction() {
-		return function;
+	public SDKFunction getSdkFunction() {
+		return sdkFunction;
 	}
 
 
-	/**
-	 * Function associated to the SDK Function Instance
-	 * @param functionId 
-	 */
-	public void setFunction(SDKFunction function) {
-		this.function = function;
+	public void setSdkFunction(SDKFunction sdkFunction) {
+		this.sdkFunction = sdkFunction;
 	}
-
 
 
 	/**
@@ -185,7 +175,7 @@ public class SDKFunctionInstance {
 	public boolean isValid() {
 	    if(this.flavour == null)
 	    	return false;
-	    if(this.function.isValid()) {
+	    if(this.sdkFunction.isValid()) {
 	    	return false;
 	    }
 	    if(!this.service.isValid())
@@ -205,7 +195,15 @@ public class SDKFunctionInstance {
 		}
 	}
 	
+	public Long getFunctionId() {
+		return functionId;
+	}
 
+
+	public void setFunctionId(Long functionId) {
+		this.functionId = functionId;
+	}
+	
 	/**
 	 * 
 	 * @param monitoringParameters

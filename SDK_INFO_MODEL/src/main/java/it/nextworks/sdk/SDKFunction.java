@@ -107,12 +107,13 @@ public class SDKFunction {
 	@JsonProperty("description")
 	private String description;
 
-	@JsonIgnore
-	@ElementCollection(fetch=FetchType.LAZY)
-	@Fetch(FetchMode.SELECT)
-	@Cascade(org.hibernate.annotations.CascadeType.ALL)
-	@JsonProperty("functionInstances")
+	@JsonInclude(JsonInclude.Include.NON_EMPTY)
+	@OneToMany(mappedBy = "sdkFunction", cascade=CascadeType.ALL)
+	@OnDelete(action = OnDeleteAction.CASCADE)
+	@LazyCollection(LazyCollectionOption.FALSE)
+	@JsonProperty("instances")
 	private List<SDKFunctionInstance> instances = new ArrayList<>();
+	
 	
 	@JsonInclude(JsonInclude.Include.NON_EMPTY)
 	@ElementCollection(fetch=FetchType.EAGER)

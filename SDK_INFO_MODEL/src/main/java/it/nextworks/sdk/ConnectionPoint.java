@@ -42,6 +42,8 @@ public class ConnectionPoint {
 	@JsonProperty("id")
 	private Long id;
 
+	
+	
 	/**
 	 * Connection point type: {internal/external}
 	 */
@@ -134,6 +136,7 @@ public class ConnectionPoint {
 	public void setType(ConnectionPointType type) {
 		this.type = type;
 	}
+
 	
 	public boolean isValid() {
 		if(this.type == null)

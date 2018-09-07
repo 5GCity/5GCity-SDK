@@ -36,6 +36,8 @@ import it.nextworks.sdk.MonitoringParameter;
 import it.nextworks.sdk.SDKFunctionInstance;
 import it.nextworks.sdk.SDKService;
 import it.nextworks.sdk.ScalingAspect;
+import it.nextworks.sdk.enums.ConnectionPointType;
+import it.nextworks.sdk.enums.LinkType;
 import it.nextworks.sdk.enums.StatusType;
 import it.nextworks.sdk.exceptions.AlreadyPublishedServiceException;
 import it.nextworks.sdk.exceptions.ExistingEntityException;
@@ -86,17 +88,9 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 	@Override
 	public List<SDKService> getServices() {
 		log.info("Request for all service stored in database");
-		List<SDKService> result = new ArrayList<>();
 		List<SDKService> services = serviceRepository.findAll();
-		if (services != null) {
-			log.debug("Services found: " + services.size());
-			for(SDKService service: services)
-				result.add(service);
-			return result;
-		} else {
-			log.error("No services are available");
-			return null;
-		}
+		log.info("Returned list of services");
+		return services;
 	}
 
 	@Override
@@ -117,11 +111,11 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
 	@Override
 	public String createService(SDKService service) throws ExistingEntityException, NotExistingEntityException, MalformattedElementException {
-		log.info("Storing into database a new service with ID: " + service.getId());
+		log.info("Storing into database a new service");
 		//TODO Find a way to check if service already exists
 		SDKService response = null;
 		if (service.isValid()) {
-			log.debug("Storing into database service with uuid: " + service.getId());
+			log.debug("Storing into database service with name: " + service.getName());
 			// Saving the service
 			response = serviceRepository.saveAndFlush(service);
 		} else {
@@ -143,7 +137,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 			} catch(NotExistingEntityException e2) {
 				//remove from DB service instance
 				serviceRepository.delete(response);
-				throw new NotExistingEntityException("Function uuid " + instance.getFunction() + " not found on database");
+				throw new NotExistingEntityException("Function uuid " + instance.getFunctionId() + " not found on database");
 			} catch (MalformattedElementException e3) {
 				serviceRepository.delete(response);
 				throw new MalformattedElementException("Malformatted SDKFunctionInstance. Check FlavourType");
@@ -154,21 +148,27 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 		if(service.getTopologyList() != null) {
 			List<Link> links = service.getTopologyList();
 			for (Link link : links) {
-				if(link.isValid()) {
+				if(link.isValid() && link.getType()==LinkType.EXTERNAL) {
 					link.setService(service);
 					linkRepository.saveAndFlush(link);
 					//Getting ConnectionPoints
-					List<ConnectionPoint> cps = link.getConnectionPoints();
-					for(ConnectionPoint cp : cps) {
-						if(cp.isValid()) {
-							cp.setLink(link);
-							cpRepository.saveAndFlush(cp);
+					List<Long> cp_ids = link.getConnectionPointIds();
+					for(Long id : cp_ids) {
+						Optional<ConnectionPoint> cp = cpRepository.findById(id);
+						if (cp.isPresent() && cp.get().isValid() && cp.get().getType() == ConnectionPointType.EXTERNAL) {
+							cp.get().setLink(link);
+							cpRepository.saveAndFlush(cp.get());
 						} else {
-							log.warn("ConnectionPoint was malformatted. Skipping it from the list");
+							serviceRepository.delete(response);
+							log.error("Malformatted request on ConnectionPoints connected to the link");
+							throw new MalformattedElementException(
+									"Malformatted request on ConnectionPoints connected to the link");
 						}
 					}
 				} else {
-					log.warn("Link element was malformatted. Skipping it from the list");
+					serviceRepository.delete(response);
+					log.error("Malformatted request");
+					throw new MalformattedElementException("Malformatted request");
 				}
 			}
 		}
@@ -181,7 +181,9 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 					param.setService(service);
 					monitoringParamRepository.saveAndFlush(param);
 				} else {
-					log.warn("MonitoringParameter element was malformatted. Skipping it from the list");
+					serviceRepository.delete(response);
+					log.error("Malformatted request");
+					throw new MalformattedElementException("Malformatted request");
 				}
 			}
 		}
@@ -201,12 +203,16 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 							param.setScalingAspect(scalingAspect);
 							monitoringParamRepository.saveAndFlush(param);
 						} else {
-							log.warn("MonitoringParameter element was malformatted for scaling purpose. Skipping it from the list");
+							serviceRepository.delete(response);
+							log.error("Malformatted request");
+							throw new MalformattedElementException("Malformatted request");
 						}
 					}
 				}
 			} else {
-				log.warn("ScalingAspect element was malformatted. Skipping it from the list");
+				serviceRepository.delete(response);
+				log.error("Malformatted request");
+				throw new MalformattedElementException("Malformatted request");
 			}
 		}
 		}

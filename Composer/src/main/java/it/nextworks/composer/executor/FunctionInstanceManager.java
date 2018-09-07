@@ -81,7 +81,7 @@ public class FunctionInstanceManager implements FunctionInstanceManagerProviderI
 		List<SDKFunctionInstance> functionList = functionInstanceRepository.findAll();
 		List<SDKFunctionInstance> result = new ArrayList<>();
 		for(SDKFunctionInstance instance: functionList) {
-			if(instance.getFunction().getId() == Long.parseLong(functionId)) {
+			if(instance.getFunctionId() == Long.parseLong(functionId)) {
 				result.add(instance);
 			}
 		}
@@ -166,18 +166,18 @@ public class FunctionInstanceManager implements FunctionInstanceManagerProviderI
 		//Check if FunctionID is correct
 		SDKFunction function = null;
 		try {
-			function = functionManager.getFunction(instance.getFunction().getId());
+			function = functionManager.getFunction(instance.getFunctionId());
 		} catch (NotExistingEntityException e) {
 			functionInstanceRepository.delete(instance);
-			log.error("The Function with UUID: " + instance.getFunction().getId() + " is not present in database");
-			throw new NotExistingEntityException("The Function with UUID: " + instance.getFunction().getId() + " is not present in database");
+			log.error("The Function with UUID: " + instance.getFunctionId() + " is not present in database");
+			throw new NotExistingEntityException("The Function with UUID: " + instance.getFunctionId() + " is not present in database");
 		}
 		if (!function.getFlavour().contains(instance.getFlavour())) {
 			functionInstanceRepository.delete(instance);
 			log.error("The flavour chosen for the FunctionInstance is not available. Your choise: " + instance.getFlavour().toString());
 			throw new MalformattedElementException("The flavour chosen for the FunctionInstance is not available. Your choise: " + instance.getFlavour().toString());
 		}
-		instance.setFunction(function);
+		instance.setSdkFunction(function);
 		functionInstanceRepository.saveAndFlush(instance);
 		//Getting MonitoringParameters
 		List<MonitoringParameter> monitoringParameters = instance.getMonitoringParameters();

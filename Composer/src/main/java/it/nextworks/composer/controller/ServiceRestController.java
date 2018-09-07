@@ -69,6 +69,7 @@ public class ServiceRestController {
 	public ResponseEntity<?> getServices() {
 		log.info("Request for get SERVICES");
 		List<SDKService> response = serviceManager.getServices();
+		log.info("Returned list for getServices with " + response.size() + " elements");
 		return new ResponseEntity<List<SDKService>>(response, HttpStatus.OK);
 	}
 

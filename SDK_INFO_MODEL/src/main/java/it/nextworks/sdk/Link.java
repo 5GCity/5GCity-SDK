@@ -15,6 +15,8 @@
 */
 package it.nextworks.sdk;
 
+import it.nextworks.sdk.enums.LinkType;
+
 import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.CascadeType;
@@ -69,7 +71,8 @@ public class Link {
 	 * List of the L3 connectivity properties
 	 * 
 	 */
-	@ElementCollection(fetch=FetchType.EAGER)
+	@ElementCollection
+	@LazyCollection(LazyCollectionOption.FALSE)
 	@Fetch(FetchMode.SELECT)
 	@Cascade(org.hibernate.annotations.CascadeType.ALL)
 	@JsonProperty("l3_property")
@@ -82,13 +85,25 @@ public class Link {
 	@OneToMany(mappedBy = "link", cascade=CascadeType.ALL)
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	@LazyCollection(LazyCollectionOption.FALSE)
-	@JsonProperty("connection_point")
+	//@JsonProperty("connection_point")
+	@JsonIgnore
 	private List<ConnectionPoint> connectionPoints = new ArrayList<ConnectionPoint>();
 
+	
+	@JsonProperty("connection_point_ids")
+	@ElementCollection
+	@LazyCollection(LazyCollectionOption.FALSE)
+	private List<Long> connectionPointIds = new ArrayList<>();
+	
+	
 	
 	@JsonIgnore
 	@ManyToOne
 	private SDKService service;
+	
+	
+	@JsonProperty("type")
+	public LinkType type;
 	
 	/**
 	 * Default constructor used by JPA
@@ -105,12 +120,23 @@ public class Link {
 	 * @param cps List of the connection points related to the link
 	 * @param service
 	 */
-	public Link(String name, SDKService service) {
+	public Link(String name, LinkType type, SDKService service) {
 		this.name = name;
+		this.type = type;
 		this.service = service;
 	}
 
 	
+	public LinkType getType() {
+		return type;
+	}
+
+
+	public void setType(LinkType type) {
+		this.type = type;
+	}
+
+
 	public String getName() {
 		return name;
 	}
@@ -163,5 +189,17 @@ public class Link {
 		}
 		return true;
 	}
+
+
+	public List<Long> getConnectionPointIds() {
+		return connectionPointIds;
+	}
+
+
+	public void setConnectionPointIds(List<Long> connectionPointIds) {
+		this.connectionPointIds = connectionPointIds;
+	}
+	
+	
 	
 }
