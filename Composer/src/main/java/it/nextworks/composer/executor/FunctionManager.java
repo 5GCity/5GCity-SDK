@@ -99,6 +99,28 @@ public class FunctionManager implements FunctionManagerProviderInterface{
 		MonitoringParameter param1 = new MonitoringParameter(MonitoringParameterType.AVERAGE_MEMORY_UTILIZATION, null, function, null);
 		monitoringParamRepository.saveAndFlush(param1);
 		
+
+		
+		List<Flavour> flavour2 = new ArrayList<>();
+		flavour2.add(Flavour.SMALL);
+		flavour2.add(Flavour.MEDIUM);
+		Map<String, String> metadata2 = new HashMap<>();
+		metadata2.put("key1", "value1");
+		metadata2.put("key2", "value3");
+		metadata2.put("key3", "value2");
+		SDKFunction function2 = new SDKFunction("SDKTest2", flavour2, "v0.0", "NestuoKD", "SDKTest2 descrt", metadata2);
+		sdkFunctionRepository.saveAndFlush(function2);
+		
+		
+		ConnectionPoint cp12 = new ConnectionPoint(ConnectionPointType.EXTERNAL, "extCp12", function2, null);
+		ConnectionPoint cp22 = new ConnectionPoint(ConnectionPointType.EXTERNAL, "extCp22", function2, null);
+		cpRepository.saveAndFlush(cp12);
+		cpRepository.saveAndFlush(cp22);
+		
+
+		MonitoringParameter param12 = new MonitoringParameter(MonitoringParameterType.AVERAGE_MEMORY_UTILIZATION, null, function2, null);
+		monitoringParamRepository.saveAndFlush(param12);
+		
 		return function.getId().toString();
 	}
 

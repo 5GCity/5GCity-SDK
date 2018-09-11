@@ -28,11 +28,14 @@ import it.nextworks.composer.executor.interfaces.ServiceManagerProviderInterface
 import it.nextworks.composer.executor.repositories.ConnectionpointRepository;
 import it.nextworks.composer.executor.repositories.LinkRepository;
 import it.nextworks.composer.executor.repositories.MonitoringParameterRepository;
+import it.nextworks.composer.executor.repositories.SDKFunctionInstanceRepository;
+import it.nextworks.composer.executor.repositories.SDKFunctionRepository;
 import it.nextworks.composer.executor.repositories.SDKServiceRepository;
 import it.nextworks.composer.executor.repositories.ScalingAspectRepository;
 import it.nextworks.sdk.ConnectionPoint;
 import it.nextworks.sdk.Link;
 import it.nextworks.sdk.MonitoringParameter;
+import it.nextworks.sdk.SDKFunction;
 import it.nextworks.sdk.SDKFunctionInstance;
 import it.nextworks.sdk.SDKService;
 import it.nextworks.sdk.ScalingAspect;
@@ -53,6 +56,12 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 	@Autowired
 	private SDKServiceRepository serviceRepository;
 
+	@Autowired 
+	private SDKFunctionInstanceRepository functionInstanceRepository;
+	
+	@Autowired
+	private SDKFunctionRepository functionRepository;
+	
 	@Autowired
 	private LinkRepository linkRepository;
 
@@ -251,6 +260,35 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 		log.info("Request for deletion of service with uuid: " + serviceId);
 		Optional<SDKService> service = serviceRepository.findById(Long.parseLong(serviceId));
 		if (service.isPresent()) {
+			//Delete functionInstance from Functions
+			for(SDKFunctionInstance instance: service.get().getFunctions()) {
+				Optional<SDKFunctionInstance> localInstance = functionInstanceRepository.findById(instance.getId());
+				if(localInstance.isPresent()) {
+					Optional<SDKFunction> function = functionRepository.findById(localInstance.get().getFunctionId());
+					if(function.isPresent()) {
+						localInstance.get().setSdkFunction(null);
+						functionInstanceRepository.saveAndFlush(localInstance.get());
+					} else {
+						log.error("Function with ID " + instance.getFunctionId() + " not found");
+						throw new NotExistingEntityException("Function with ID " + instance.getFunctionId() + " not found");
+					}
+				} else {
+					log.error("Instance with ID " + instance.getId() + " not found");
+					throw new NotExistingEntityException("Instance with ID " + instance.getId() + " not found");
+				}
+			}
+			//Delete CPS from link
+			for(Link link: service.get().getTopologyList()) {
+				List<ConnectionPoint> cps = link.getConnectionPoints();
+				for(Long cpId : link.getConnectionPointIds()) {
+					for(ConnectionPoint cp : cps) {
+						if(cp.getId()==cpId) {
+							cps.remove(cp);
+						}
+					}
+				}
+				link.setConnectionPoints(cps);
+			}
 			serviceRepository.delete(service.get());
 		} else {
 			log.error("Service with UUID " + serviceId + " not found");

@@ -167,7 +167,7 @@ public class ServiceRestController {
 			@ApiResponse(code = 404, message = "Entity to be deleted not found"),
 			@ApiResponse(code = 400, message = "Deletion request without parameter serviceId") })
 	@RequestMapping(value = "/service/{serviceId}", method = RequestMethod.DELETE)
-	public ResponseEntity<?> updateService(@PathVariable String serviceId) {
+	public ResponseEntity<?> deleteService(@PathVariable String serviceId) {
 		log.info("Request for deletion of a service with id: " + serviceId);
 		if (serviceId == null) {
 			log.error("Deletion request without parameter serviceId");
