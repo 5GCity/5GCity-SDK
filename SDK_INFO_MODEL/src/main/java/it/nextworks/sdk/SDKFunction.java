@@ -54,7 +54,6 @@ public class SDKFunction {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	@JsonIgnore
 	@JsonProperty("id")
 	private Long id;
 
@@ -77,6 +76,7 @@ public class SDKFunction {
 	
 	@ElementCollection(fetch=FetchType.EAGER)
 	@JsonProperty("flavours")
+	@Fetch(FetchMode.SELECT) 
 	private List<Flavour> flavour;
 	
 	@JsonIgnore

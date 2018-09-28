@@ -175,11 +175,6 @@ public class SDKFunctionInstance {
 	public boolean isValid() {
 	    if(this.flavour == null)
 	    	return false;
-	    if(this.sdkFunction.isValid()) {
-	    	return false;
-	    }
-	    if(!this.service.isValid())
-	    	return false;
 		return true;
 	}
 	

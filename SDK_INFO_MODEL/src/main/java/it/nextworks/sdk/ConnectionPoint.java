@@ -38,7 +38,6 @@ public class ConnectionPoint {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	@JsonIgnore
 	@JsonProperty("id")
 	private Long id;
 

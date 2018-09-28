@@ -84,14 +84,14 @@ public class ServiceRestController {
 			@ApiResponse(code = 404, message = "SDKService not found on database"),
 			@ApiResponse(code = 200, message = "") })
 	@RequestMapping(value = "/service/{serviceId}", method = RequestMethod.GET)
-	public ResponseEntity<?> getService(@PathVariable String serviceId) {
+	public ResponseEntity<?> getService(@PathVariable Long serviceId) {
 		log.info("Request for get specific service id: " + serviceId);
 		if (serviceId == null) {
 			log.error("Query without parameter serviceId");
 			return new ResponseEntity<String>("Query without parameter functionId", HttpStatus.BAD_REQUEST);
 		} else {
 			try {
-				SDKService response = serviceManager.getServiceByUuid(serviceId);
+				SDKService response = serviceManager.getServiceById(serviceId);
 				return new ResponseEntity<SDKService>(response, HttpStatus.OK);
 			} catch (NotExistingEntityException e) {
 				return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -154,6 +154,10 @@ public class ServiceRestController {
 				log.error("Service with id " + request.getId() + " is not present in database");
 				return new ResponseEntity<String>(
 						"Service with id " + request.getId() + " is not present in database", HttpStatus.BAD_REQUEST);
+			} catch(MalformattedElementException e1) {
+				log.error("Service with id " + request.getId() + " is malformatted");
+				return new ResponseEntity<String>(
+						"Service with id " + request.getId() + " is malformatted", HttpStatus.BAD_REQUEST);
 			}
 		} else {
 			log.error("The service provided cannot be validated");
@@ -167,7 +171,7 @@ public class ServiceRestController {
 			@ApiResponse(code = 404, message = "Entity to be deleted not found"),
 			@ApiResponse(code = 400, message = "Deletion request without parameter serviceId") })
 	@RequestMapping(value = "/service/{serviceId}", method = RequestMethod.DELETE)
-	public ResponseEntity<?> deleteService(@PathVariable String serviceId) {
+	public ResponseEntity<?> deleteService(@PathVariable Long serviceId) {
 		log.info("Request for deletion of a service with id: " + serviceId);
 		if (serviceId == null) {
 			log.error("Deletion request without parameter serviceId");
@@ -189,7 +193,7 @@ public class ServiceRestController {
 			@ApiResponse(code = 404, message = "Entity to be published not found"),
 			@ApiResponse(code = 400, message = "Publication request without parameter serviceId or already published service") })
 	@RequestMapping(value = "/service/{serviceId}/publish", method = RequestMethod.PUT)
-	public ResponseEntity<?> publishService(@PathVariable String serviceId) {
+	public ResponseEntity<?> publishService(@PathVariable Long serviceId) {
 		log.info("Request to publish the service " + serviceId + " to the public catalogue");
 		if (serviceId == null) {
 			log.error("Publishing request without parameter serviceId");
@@ -216,7 +220,7 @@ public class ServiceRestController {
 			@ApiResponse(code = 404, message = "Entity to be unpublished not found"),
 			@ApiResponse(code = 400, message = "Request without parameter serviceId or not yet published service") })
 	@RequestMapping(value = "/service/{serviceId}/unpublish", method = RequestMethod.PUT)
-	public ResponseEntity<?> unPublishService(@PathVariable String serviceId) {
+	public ResponseEntity<?> unPublishService(@PathVariable Long serviceId) {
 		log.info("Request to unpublish the service " + serviceId + " from the public catalogue");
 		if (serviceId == null) {
 			log.error("Request without parameter serviceId");
@@ -243,7 +247,7 @@ public class ServiceRestController {
 			@ApiResponse(code = 400, message = "Service not present in db or request cannot be validated"),
 			@ApiResponse(code = 204, message = "ScalingAspects Updated") })
 	@RequestMapping(value = "/service/{serviceId}/scalingaspects", method = RequestMethod.PUT)
-	public ResponseEntity<?> updateScalingAspects(@PathVariable String serviceId, @RequestBody List<ScalingAspect> scalingAspects) {
+	public ResponseEntity<?> updateScalingAspects(@PathVariable Long serviceId, @RequestBody List<ScalingAspect> scalingAspects) {
 		log.info("Request for update of a scaling aspect list");
 		for (ScalingAspect scaleAspect : scalingAspects) {
 			if (!scaleAspect.isValid()) {
@@ -272,7 +276,7 @@ public class ServiceRestController {
 			@ApiResponse(code = 404, message = "SDKService not found on database"),
 			@ApiResponse(code = 200, message = "OK") })
 	@RequestMapping(value = "/service/{serviceId}/scalingaspects", method = RequestMethod.GET)
-	public ResponseEntity<?> getScalingAspectsForService(@PathVariable String serviceId) {
+	public ResponseEntity<?> getScalingAspectsForService(@PathVariable Long serviceId) {
 		log.info("Request for get list of scalingAspect available on a specific service, identified by id: "
 				+ serviceId );
 
@@ -292,7 +296,7 @@ public class ServiceRestController {
 			@ApiResponse(code = 404, message = "Entity to be deleted not found"),
 			@ApiResponse(code = 400, message = "Deletion request without parameter serviceId") })
 	@RequestMapping(value = "/service/{serviceId}/scalingaspects", method = RequestMethod.DELETE)
-	public ResponseEntity<?> deleteScalingAspects(@PathVariable String serviceId, @RequestBody List<ScalingAspect> scalingAspects) {
+	public ResponseEntity<?> deleteScalingAspects(@PathVariable Long serviceId, @RequestBody List<ScalingAspect> scalingAspects) {
 		log.info("Request for deletion of a list of scalingAspects from service identified by id: "
 				+ serviceId );
 
@@ -315,7 +319,7 @@ public class ServiceRestController {
 			@ApiResponse(code = 400, message = "Service not present in db or request cannot be validated"),
 			@ApiResponse(code = 204, message = "Monitoring Param list Updated") })
 	@RequestMapping(value = "/service/{serviceId}/monitoringparams", method = RequestMethod.PUT)
-	public ResponseEntity<?> updateMonitoringParametersForService(@PathVariable String serviceId,
+	public ResponseEntity<?> updateMonitoringParametersForService(@PathVariable Long serviceId,
 			@RequestBody List<MonitoringParameter> monitoringParameters) {
 		log.info("Request for update of a monitoringParameter list");
 		for (MonitoringParameter param : monitoringParameters) {
@@ -348,7 +352,7 @@ public class ServiceRestController {
 			@ApiResponse(code = 404, message = "SDKService not found on database"),
 			@ApiResponse(code = 200, message = "OK") })
 	@RequestMapping(value = "/service/{serviceId}/monitoringparams", method = RequestMethod.GET)
-	public ResponseEntity<?> getMonitoringParametersForService(@PathVariable String serviceId) {
+	public ResponseEntity<?> getMonitoringParametersForService(@PathVariable Long serviceId) {
 		log.info("Request for get list of monitoringParams available on a specific service, identified by id: "
 				+ serviceId );
 
@@ -368,7 +372,7 @@ public class ServiceRestController {
 			@ApiResponse(code = 404, message = "Entity to be deleted not found"),
 			@ApiResponse(code = 400, message = "Deletion request without parameter serviceId") })
 	@RequestMapping(value = "/service/{serviceId}/monitoringparams", method = RequestMethod.DELETE)
-	public ResponseEntity<?> deleteMonitoringParametersForService(@PathVariable String serviceId,
+	public ResponseEntity<?> deleteMonitoringParametersForService(@PathVariable Long serviceId,
 			@RequestBody List<MonitoringParameter> monitoringParameters) {
 		log.info("Request for deletion of a list of monitoring parameters from service identified by id: "
 				+ serviceId);

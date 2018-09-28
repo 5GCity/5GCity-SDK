@@ -34,7 +34,7 @@ public interface FunctionInstanceManagerProviderInterface {
 	 * @return
 	 * @throws NotExistingEntityException 
 	 */
-	public SDKFunctionInstance getFunction(String id) throws NotExistingEntityException;
+	public SDKFunctionInstance getFunction(Long id) throws NotExistingEntityException;
 	
 	
 	/**
@@ -47,19 +47,20 @@ public interface FunctionInstanceManagerProviderInterface {
 	/**
 	 * 
 	 */
-	public List<SDKFunctionInstance> getFunctionInstancesForFunction(String functionId);
+	public List<SDKFunctionInstance> getFunctionInstancesForFunction(Long functionId);
 	
 	
-	public void updateFlavor(String functionId, Flavour flavour) throws NotExistingEntityException;
+	public void updateFlavor(Long functionId, Flavour flavour) throws NotExistingEntityException;
 	
-	public void updateMonitoringParameters(String functionId, List<MonitoringParameter> monitoringParameters) throws NotExistingEntityException, MalformattedElementException;
+	public void updateMonitoringParameters(Long functionId, List<MonitoringParameter> monitoringParameters) throws NotExistingEntityException, MalformattedElementException;
 
-	public void deleteMonitoringParameters(String functionId, List<MonitoringParameter> monitoringParameters) throws NotExistingEntityException, MalformattedElementException;
+	public void deleteMonitoringParameters(Long functionId, List<MonitoringParameter> monitoringParameters) throws NotExistingEntityException, MalformattedElementException;
 
-	public List<MonitoringParameter> getMonitoringParameters(String functionId) throws NotExistingEntityException;
+	public List<MonitoringParameter> getMonitoringParameters(Long functionId) throws NotExistingEntityException;
 	
 	public String createInstance(SDKFunctionInstance instance, SDKService service) throws ExistingEntityException, NotExistingEntityException, MalformattedElementException;
 	
+	public String updateInstance(SDKFunctionInstance instance, SDKService service) throws NotExistingEntityException, MalformattedElementException;
 	
-	
+	public void deleteInstance(Long id) throws NotExistingEntityException;
 }

@@ -46,7 +46,6 @@ import it.nextworks.sdk.enums.ActionType;
 public class ScalingAspect {
 	
 	@Id
-	@JsonIgnore
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@JsonProperty("id")
 	private Long id;

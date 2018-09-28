@@ -83,14 +83,14 @@ public class FunctionRestController {
 		      @ApiResponse(code = 404, message = "SDKFunction not found on database"),
 		      @ApiResponse(code = 200, message = "")
 	})
-	@RequestMapping(value = "/function/{functionId}", method = RequestMethod.GET)
-	public ResponseEntity<?> getFunction(@PathVariable String functionId) {
+	@RequestMapping(value = "/functions/{functionId}", method = RequestMethod.GET)
+	public ResponseEntity<?> getFunction(@PathVariable Long functionId) {
 		log.info("Receiving a request to get the function identified by id: " + functionId);
 		if(functionId == null) {
 			return new ResponseEntity<String>("Query without parameter functionId", HttpStatus.BAD_REQUEST);
 		} else {
 			try {
-				SDKFunction result = functionManager.getFunction(Long.parseLong(functionId));
+				SDKFunction result = functionManager.getFunction(functionId);
 				return new ResponseEntity<SDKFunction>(result, HttpStatus.OK);
 			} catch(NotExistingEntityException e) {
 				log.debug("The SDK function identified by the functionId provided is not present");

@@ -53,7 +53,6 @@ public class SDKService {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	@JsonIgnore
 	@JsonProperty("id")
 	private Long id;
 	
@@ -233,8 +232,7 @@ public class SDKService {
 
 	
 	public void setFunctions(List<SDKFunctionInstance> functions) {
-		for(SDKFunctionInstance instance: functions)
-			this.functions.add(instance);
+		this.functions  = functions;
 	}
 
 	

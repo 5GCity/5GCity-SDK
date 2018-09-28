@@ -56,12 +56,12 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 	@Autowired
 	private SDKServiceRepository serviceRepository;
 
-	@Autowired 
+	@Autowired
 	private SDKFunctionInstanceRepository functionInstanceRepository;
-	
+
 	@Autowired
 	private SDKFunctionRepository functionRepository;
-	
+
 	@Autowired
 	private LinkRepository linkRepository;
 
@@ -76,22 +76,9 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
 	@Autowired
 	private FunctionInstanceManager functionInstanceManager;
-	
 
 	public ServiceManager() {
-			
-	}
 
-	@Override
-	public SDKService getServiceByUuid(String id) throws NotExistingEntityException {
-		log.info("Request for service with UUID: " + id);
-		Optional<SDKService> service = serviceRepository.findById(Long.parseLong(id));
-		if (service.isPresent()) {
-			return service.get();
-		} else {
-			log.error("Service with UUID " + id + " not found");
-			throw new NotExistingEntityException("Service with UUID " + id + " not found");
-		}
 	}
 
 	@Override
@@ -103,13 +90,13 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 	}
 
 	@Override
-	public List<SDKService> getServicesUsingFunction(String functionId) {
+	public List<SDKService> getServicesUsingFunction(Long functionId) {
 		log.info("Request for all services which are using function with uuid: " + functionId);
 		List<SDKService> serviceList = new ArrayList<>();
 		List<SDKService> services = serviceRepository.findAll();
 		for (SDKService service : services) {
 			for (SDKFunctionInstance function : service.getFunctions())
-				if (function.getId().toString().equals(functionId)) {
+				if (function.getId() == functionId) {
 					log.debug("Service " + service.getId() + " has been found");
 					serviceList.add(service);
 					break;
@@ -119,9 +106,10 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 	}
 
 	@Override
-	public String createService(SDKService service) throws ExistingEntityException, NotExistingEntityException, MalformattedElementException {
+	public String createService(SDKService service)
+			throws ExistingEntityException, NotExistingEntityException, MalformattedElementException {
 		log.info("Storing into database a new service");
-		//TODO Find a way to check if service already exists
+		// TODO Find a way to check if service already exists
 		SDKService response = null;
 		if (service.isValid()) {
 			log.debug("Storing into database service with name: " + service.getName());
@@ -143,10 +131,11 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 				log.error("FunctionInstance uuid " + response.getId() + " already present in database");
 				throw new ExistingEntityException(
 						"FunctionInstance uuid " + response.getId() + " already present in database");
-			} catch(NotExistingEntityException e2) {
-				//remove from DB service instance
+			} catch (NotExistingEntityException e2) {
+				// remove from DB service instance
 				serviceRepository.delete(response);
-				throw new NotExistingEntityException("Function uuid " + instance.getFunctionId() + " not found on database");
+				throw new NotExistingEntityException(
+						"Function uuid " + instance.getFunctionId() + " not found on database");
 			} catch (MalformattedElementException e3) {
 				serviceRepository.delete(response);
 				throw new MalformattedElementException("Malformatted SDKFunctionInstance. Check FlavourType");
@@ -154,17 +143,18 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 		}
 
 		// Getting Links
-		if(service.getTopologyList() != null) {
+		if (service.getTopologyList() != null) {
 			List<Link> links = service.getTopologyList();
 			for (Link link : links) {
-				if(link.isValid() && link.getType()==LinkType.EXTERNAL) {
+				if (link.isValid() && link.getType() == LinkType.EXTERNAL) {
 					link.setService(service);
 					linkRepository.saveAndFlush(link);
-					//Getting ConnectionPoints
+					// Getting ConnectionPoints
 					List<Long> cp_ids = link.getConnectionPointIds();
-					for(Long id : cp_ids) {
+					for (Long id : cp_ids) {
 						Optional<ConnectionPoint> cp = cpRepository.findById(id);
-						if (cp.isPresent() && cp.get().isValid() && cp.get().getType() == ConnectionPointType.EXTERNAL) {
+						if (cp.isPresent() && cp.get().isValid()
+								&& cp.get().getType() == ConnectionPointType.EXTERNAL) {
 							cp.get().setLink(link);
 							cpRepository.saveAndFlush(cp.get());
 						} else {
@@ -181,12 +171,12 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 				}
 			}
 		}
-		
+
 		// Getting Monitoring Parameters
-		if(service.getMonitoringParameters() != null) {
+		if (service.getMonitoringParameters() != null) {
 			List<MonitoringParameter> monitoringParameters = service.getMonitoringParameters();
-			for(MonitoringParameter param : monitoringParameters) {
-				if(param.isValid()) {
+			for (MonitoringParameter param : monitoringParameters) {
+				if (param.isValid()) {
 					param.setService(service);
 					monitoringParamRepository.saveAndFlush(param);
 				} else {
@@ -198,55 +188,122 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 		}
 
 		// Getting Scaling Aspects
-		if(service.getScalingAspects() != null) {
-		List<ScalingAspect> scalingAspects = service.getScalingAspects();
-		for(ScalingAspect scalingAspect : scalingAspects) {
-			if(scalingAspect.isValid()) {
-				scalingAspect.setService(service);
-				scalingRepository.saveAndFlush(scalingAspect);
-				//Getting Monitoring Parameters related to ScalingAspect
-				if(scalingAspect.getMonitoringParameters() != null) {
-					List<MonitoringParameter> monitoringParams = scalingAspect.getMonitoringParameters();
-					for(MonitoringParameter param: monitoringParams) {
-						if(param.isValidForScalingPurpose()) {
-							param.setScalingAspect(scalingAspect);
-							monitoringParamRepository.saveAndFlush(param);
-						} else {
-							serviceRepository.delete(response);
-							log.error("Malformatted request");
-							throw new MalformattedElementException("Malformatted request");
+		if (service.getScalingAspects() != null) {
+			List<ScalingAspect> scalingAspects = service.getScalingAspects();
+			for (ScalingAspect scalingAspect : scalingAspects) {
+				if (scalingAspect.isValid()) {
+					scalingAspect.setService(service);
+					scalingRepository.saveAndFlush(scalingAspect);
+					// Getting Monitoring Parameters related to ScalingAspect
+					if (scalingAspect.getMonitoringParameters() != null) {
+						List<MonitoringParameter> monitoringParams = scalingAspect.getMonitoringParameters();
+						for (MonitoringParameter param : monitoringParams) {
+							if (param.isValidForScalingPurpose()) {
+								param.setScalingAspect(scalingAspect);
+								monitoringParamRepository.saveAndFlush(param);
+							} else {
+								serviceRepository.delete(response);
+								log.error("Malformatted request");
+								throw new MalformattedElementException("Malformatted request");
+							}
 						}
 					}
+				} else {
+					serviceRepository.delete(response);
+					log.error("Malformatted request");
+					throw new MalformattedElementException("Malformatted request");
 				}
-			} else {
-				serviceRepository.delete(response);
-				log.error("Malformatted request");
-				throw new MalformattedElementException("Malformatted request");
 			}
-		}
 		}
 		return service.getId().toString();
 	}
 
 	@Override
-	public String updateService(SDKService service) throws NotExistingEntityException {
+	public String updateService(SDKService service) throws NotExistingEntityException, MalformattedElementException {
 		log.info("Updating an existing service with id: " + service.getId());
-		// TODO Check if service exists
+		// Check if service exists
 		Optional<SDKService> srv = serviceRepository.findById(service.getId());
+		if (!service.isValid()) {
+			log.error("Service id " + service.getId() + " is malformatted");
+			throw new MalformattedElementException("Service id " + service.getId() + " is malformatted");
+		}
+		log.debug("Service is valid");
 		if (!srv.isPresent()) {
 			log.error("Service id " + service.getId() + " already present in database");
 			throw new NotExistingEntityException("Service id " + service.getId() + " not present in database");
 		}
-		// TODO Check if is valid
+		log.debug("Service found on db");
+		// First phase: Check if Objects are OK to be pushed on DB
+		// Check if Instances exists, otherwise has to be created (on second phase)
+		if (!validateInstances(service)) {
+			log.error("SDKFunctionInstances referred to the SDKService " + service.getId() + " cannot be validated ");
+			throw new MalformattedElementException(
+					"SDKFunctionInstances referred to the SDKService " + service.getId() + " cannot be validated");
+		}
+		log.debug("Instances validated");
+		// Check if MonitoringParameters are valid
+		if (!validateMonitoringParameters(service)) {
+			log.error("MonitoringParameters referred to the SDKService " + service.getId() + " cannot be validated ");
+			throw new MalformattedElementException(
+					"MonitoringParameters referred to the SDKService " + service.getId() + " cannot be validated");
+		}
+		log.debug("Monitoring Parameters validated");
+		// Check if ScalingAspects are valid
+		if (!validateScalingAspects(service)) {
+			log.error("ScalingAspects referred to the SDKService " + service.getId() + " cannot be validated ");
+			throw new MalformattedElementException(
+					"ScalingAspects referred to the SDKService " + service.getId() + " cannot be validated");
+		}
+		log.debug("ScalingAspects validated");
+		// Check if Links are valid
+		if (!validateLinks(service)) {
+			log.error("Links referred to the SDKService " + service.getId() + " cannot be validated ");
+			throw new MalformattedElementException(
+					"Links referred to the SDKService " + service.getId() + " cannot be validated");
+		}
+		log.debug("Links validated");
+		// Second phase: If all valid, Update/add objects to db
 		log.debug("Updating into database service with id: " + service.getId());
+
+		List<Link> oldList = srv.get().getTopologyList();
+		// Update del service su DB
 		serviceRepository.saveAndFlush(service);
+		
+		// Update instances (or add new ones)
+		for(SDKFunctionInstance instance : service.getFunctions()) {
+			Optional<SDKFunctionInstance> dbInstance = functionInstanceRepository.findById(instance.getId());
+			if(!dbInstance.isPresent())
+				functionInstanceManager.updateInstance(instance, service);
+			else
+				try {
+					functionInstanceManager.createInstance(instance, service);
+				} catch (ExistingEntityException e) {
+					log.error("This has not to happen");
+				}
+		}
+		// Removing cancelled SDKFunctionInstances
+		Optional<SDKService> dbService = serviceRepository.findById(service.getId());
+		for(SDKFunctionInstance instance : srv.get().getFunctions()) {
+			if(!service.getFunctions().contains(instance)) {
+				functionInstanceManager.deleteInstance(instance.getId());
+			}
+		}
+		// Update MonitoringParameters
+		updateMonitoringParameters(service.getId(), service.getMonitoringParameters());
+		// Update ScalingAspects
+		updateScalingAspect(service.getId(), service.getScalingAspects());
+		// Update links
+		updateLinks(oldList, service);
+		
+		serviceRepository.saveAndFlush(service);
+		
 		return service.getId().toString();
 	}
 
 	@Override
-	public SDKService getServiceById(String id) throws NotExistingEntityException {
+	public SDKService getServiceById(Long id) throws NotExistingEntityException {
 		log.info("Request for service with ID: " + id);
-		Optional<SDKService> service = serviceRepository.findById(Long.parseLong(id));
+		Optional<SDKService> service = serviceRepository.findById(id);
 		if (service.isPresent()) {
 			return service.get();
 		} else {
@@ -256,39 +313,30 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 	}
 
 	@Override
-	public void deleteService(String serviceId) throws NotExistingEntityException {
+	public void deleteService(Long serviceId) throws NotExistingEntityException {
 		log.info("Request for deletion of service with uuid: " + serviceId);
-		Optional<SDKService> service = serviceRepository.findById(Long.parseLong(serviceId));
+		Optional<SDKService> service = serviceRepository.findById(serviceId);
 		if (service.isPresent()) {
-			//Delete functionInstance from Functions
-			for(SDKFunctionInstance instance: service.get().getFunctions()) {
-				Optional<SDKFunctionInstance> localInstance = functionInstanceRepository.findById(instance.getId());
-				if(localInstance.isPresent()) {
-					Optional<SDKFunction> function = functionRepository.findById(localInstance.get().getFunctionId());
-					if(function.isPresent()) {
-						localInstance.get().setSdkFunction(null);
-						functionInstanceRepository.saveAndFlush(localInstance.get());
+			// Delete functionInstance from Functions
+			for (SDKFunctionInstance instance : service.get().getFunctions()) {
+				Optional<SDKFunctionInstance> dbInstance = functionInstanceRepository.findById(instance.getId());
+				if (dbInstance.isPresent()) {
+					Optional<SDKFunction> function = functionRepository.findById(dbInstance.get().getFunctionId());
+					if (function.isPresent()) {
+						dbInstance.get().setSdkFunction(null);
+						functionInstanceRepository.saveAndFlush(dbInstance.get());
 					} else {
 						log.error("Function with ID " + instance.getFunctionId() + " not found");
-						throw new NotExistingEntityException("Function with ID " + instance.getFunctionId() + " not found");
+						throw new NotExistingEntityException(
+								"Function with ID " + instance.getFunctionId() + " not found");
 					}
 				} else {
 					log.error("Instance with ID " + instance.getId() + " not found");
 					throw new NotExistingEntityException("Instance with ID " + instance.getId() + " not found");
 				}
 			}
-			//Delete CPS from link
-			for(Link link: service.get().getTopologyList()) {
-				List<ConnectionPoint> cps = link.getConnectionPoints();
-				for(Long cpId : link.getConnectionPointIds()) {
-					for(ConnectionPoint cp : cps) {
-						if(cp.getId()==cpId) {
-							cps.remove(cp);
-						}
-					}
-				}
-				link.setConnectionPoints(cps);
-			}
+			// Delete CPS from link
+			deleteCps(service.get());
 			serviceRepository.delete(service.get());
 		} else {
 			log.error("Service with UUID " + serviceId + " not found");
@@ -297,10 +345,10 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 	}
 
 	@Override
-	public void publishService(String serviceId) throws NotExistingEntityException, AlreadyPublishedServiceException {
+	public void publishService(Long serviceId) throws NotExistingEntityException, AlreadyPublishedServiceException {
 		log.info("Request for publication of service with uuid: " + serviceId);
 		// Check if service exists
-		Optional<SDKService> optService = serviceRepository.findById(Long.parseLong(serviceId));
+		Optional<SDKService> optService = serviceRepository.findById(serviceId);
 		if (!optService.isPresent()) {
 			log.error("The Service with UUID: " + serviceId + " is not present in database");
 			throw new NotExistingEntityException("The Service with UUID: " + serviceId + " is not present in database");
@@ -322,19 +370,19 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 	}
 
 	@Override
-	public void unPublishService(String serviceId) throws NotExistingEntityException, NotPublishedServiceException {
-		log.info("Request for delete the publication of service with uuid: " + serviceId);
-		Optional<SDKService> optService = serviceRepository.findById(Long.parseLong(serviceId));
+	public void unPublishService(Long serviceId) throws NotExistingEntityException, NotPublishedServiceException {
+		log.info("Request for delete the publication of service with id: " + serviceId);
+		Optional<SDKService> optService = serviceRepository.findById(serviceId);
 		if (!optService.isPresent()) {
-			log.error("The Service with UUID: " + serviceId + " is not present in database");
-			throw new NotExistingEntityException("The Service with UUID: " + serviceId + " is not present in database");
+			log.error("The Service with ID: " + serviceId + " is not present in database");
+			throw new NotExistingEntityException("The Service with ID: " + serviceId + " is not present in database");
 		} else {
 			// Check if is already published
 			SDKService service = optService.get();
 			if (service.getStatus() == StatusType.SAVED) {
-				log.error("The service identified by UUID: " + serviceId + " has not been published yet");
+				log.error("The service identified by ID: " + serviceId + " has not been published yet");
 				throw new NotPublishedServiceException(
-						"The service identified by UUID: " + serviceId + " has been already published");
+						"The service identified by ID: " + serviceId + " has been already published");
 			} else {
 				// A thread will be created to handle this request in order to perform it
 				// asynchronously.
@@ -346,13 +394,13 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 	}
 
 	@Override
-	public void updateScalingAspect(String serviceId, List<ScalingAspect> scalingAspects)
+	public void updateScalingAspect(Long serviceId, List<ScalingAspect> scalingAspects)
 			throws NotExistingEntityException, MalformattedElementException {
 		log.info("Request to update list of scalingAspects for a specific SDK Service " + serviceId);
-		Optional<SDKService> service = serviceRepository.findById(Long.parseLong(serviceId));
+		Optional<SDKService> service = serviceRepository.findById(serviceId);
 		if (!service.isPresent()) {
-			log.error("The Service with UUID: " + serviceId + " is not present in database");
-			throw new NotExistingEntityException("The Service with UUID: " + serviceId + " is not present in database");
+			log.error("The Service with ID: " + serviceId + " is not present in database");
+			throw new NotExistingEntityException("The Service with ID: " + serviceId + " is not present in database");
 		}
 		for (ScalingAspect scale : scalingAspects) {
 			if (!scale.isValid()) {
@@ -367,13 +415,13 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 	}
 
 	@Override
-	public void deleteScalingAspect(String serviceId, List<ScalingAspect> scalingAspects)
+	public void deleteScalingAspect(Long serviceId, List<ScalingAspect> scalingAspects)
 			throws NotExistingEntityException, MalformattedElementException {
 		log.info("Request to delete a list of scalingAspects for a specific SDK Service " + serviceId);
-		Optional<SDKService> service = serviceRepository.findById(Long.parseLong(serviceId));
+		Optional<SDKService> service = serviceRepository.findById(serviceId);
 		if (!service.isPresent()) {
-			log.error("The Service with UUID: " + serviceId + " is not present in database");
-			throw new NotExistingEntityException("The Service with UUID: " + serviceId + " is not present in database");
+			log.error("The Service with ID: " + serviceId + " is not present in database");
+			throw new NotExistingEntityException("The Service with ID: " + serviceId + " is not present in database");
 		}
 		for (ScalingAspect scale : scalingAspects) {
 			if (!scale.isValid()) {
@@ -391,13 +439,13 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 	}
 
 	@Override
-	public List<ScalingAspect> getScalingAspect(String serviceId) throws NotExistingEntityException {
+	public List<ScalingAspect> getScalingAspect(Long serviceId) throws NotExistingEntityException {
 		log.info("Request to get the list of scalingAspects for a specific SDK Service " + serviceId);
-		Optional<SDKService> service = serviceRepository.findById(Long.parseLong(serviceId));
+		Optional<SDKService> service = serviceRepository.findById(serviceId);
 		List<ScalingAspect> list = new ArrayList<>();
 		if (!service.isPresent()) {
-			log.error("The Service with UUID: " + serviceId + " is not present in database");
-			throw new NotExistingEntityException("The Service with UUID: " + serviceId + " is not present in database");
+			log.error("The Service with ID: " + serviceId + " is not present in database");
+			throw new NotExistingEntityException("The Service with ID: " + serviceId + " is not present in database");
 		} else {
 			for (ScalingAspect scale : service.get().getScalingAspects())
 				list.add(scale);
@@ -406,13 +454,13 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 	}
 
 	@Override
-	public void updateMonitoringParameters(String serviceId, List<MonitoringParameter> monitoringParameters)
+	public void updateMonitoringParameters(Long serviceId, List<MonitoringParameter> monitoringParameters)
 			throws NotExistingEntityException, MalformattedElementException {
 		log.info("Request to update list of scalingAspects for a specific SDK Service " + serviceId);
-		Optional<SDKService> service = serviceRepository.findById(Long.parseLong(serviceId));
+		Optional<SDKService> service = serviceRepository.findById(serviceId);
 		if (!service.isPresent()) {
-			log.error("The Service with UUID: " + serviceId + " is not present in database");
-			throw new NotExistingEntityException("The Service with UUID: " + serviceId + " is not present in database");
+			log.error("The Service with ID: " + serviceId + " is not present in database");
+			throw new NotExistingEntityException("The Service with ID: " + serviceId + " is not present in database");
 		}
 		for (MonitoringParameter param : monitoringParameters) {
 			if (!param.isValid()) {
@@ -428,13 +476,13 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 	}
 
 	@Override
-	public void deleteMonitoringParameters(String serviceId, List<MonitoringParameter> monitoringParameters)
+	public void deleteMonitoringParameters(Long serviceId, List<MonitoringParameter> monitoringParameters)
 			throws NotExistingEntityException, MalformattedElementException {
 		log.info("Request to delete a list of monitoring parameters for a specific SDK Service " + serviceId);
-		Optional<SDKService> service = serviceRepository.findById(Long.parseLong(serviceId));
+		Optional<SDKService> service = serviceRepository.findById(serviceId);
 		if (!service.isPresent()) {
-			log.error("The Service with UUID: " + serviceId + " is not present in database");
-			throw new NotExistingEntityException("The Service with UUID: " + serviceId + " is not present in database");
+			log.error("The Service with ID: " + serviceId + " is not present in database");
+			throw new NotExistingEntityException("The Service with ID: " + serviceId + " is not present in database");
 		}
 		for (MonitoringParameter param : monitoringParameters) {
 			if (!param.isValid()) {
@@ -452,12 +500,12 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 	}
 
 	@Override
-	public List<MonitoringParameter> getMonitoringParameters(String serviceId) throws NotExistingEntityException {
+	public List<MonitoringParameter> getMonitoringParameters(Long serviceId) throws NotExistingEntityException {
 		log.info("Request to get the list of monitoring parameters for a specific SDK Service " + serviceId);
-		Optional<SDKService> service = serviceRepository.findById(Long.parseLong(serviceId));
+		Optional<SDKService> service = serviceRepository.findById(serviceId);
 		if (!service.isPresent()) {
-			log.error("The Service with UUID: " + serviceId + " is not present in database");
-			throw new NotExistingEntityException("The Service with UUID: " + serviceId + " is not present in database");
+			log.error("The Service with ID: " + serviceId + " is not present in database");
+			throw new NotExistingEntityException("The Service with ID: " + serviceId + " is not present in database");
 		}
 		List<MonitoringParameter> list = new ArrayList<>();
 		for (MonitoringParameter param : service.get().getMonitoringParameters())
@@ -465,4 +513,100 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 		return list;
 	}
 
+	private boolean validateScalingAspects(SDKService service) {
+		if (service.getScalingAspects() != null) {
+			List<ScalingAspect> scalingAspects = service.getScalingAspects();
+			for (ScalingAspect scalingAspect : scalingAspects) {
+				if (scalingAspect.isValid()) {
+					if (scalingAspect.getMonitoringParameters() != null) {
+						List<MonitoringParameter> monitoringParams = scalingAspect.getMonitoringParameters();
+						for (MonitoringParameter param : monitoringParams) {
+							if (!param.isValidForScalingPurpose()) {
+								return false;
+							}
+						}
+					}
+				} else {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	private boolean validateMonitoringParameters(SDKService service) {
+		List<MonitoringParameter> monitoringParameters = service.getMonitoringParameters();
+		if (monitoringParameters != null) {
+			for (MonitoringParameter param : monitoringParameters) {
+				if (!param.isValid()) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	private boolean validateLinks(SDKService service) {
+		if (service.getTopologyList() != null) {
+			List<Link> links = service.getTopologyList();
+			for (Link link : links) {
+				if (link.isValid() && link.getType() == LinkType.EXTERNAL) {
+					// Getting ConnectionPoints
+					List<Long> cp_ids = link.getConnectionPointIds();
+					for (Long id : cp_ids) {
+						Optional<ConnectionPoint> cp = cpRepository.findById(id);
+						if (!(cp.isPresent() && cp.get().isValid()
+								&& cp.get().getType() == ConnectionPointType.EXTERNAL)) {
+							return false;
+						}
+					}
+				} else {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	private boolean validateInstances(SDKService service) {
+		List<SDKFunctionInstance> instances = service.getFunctions();
+		for (SDKFunctionInstance instance : instances) {
+			// Check if already in DB and related to the instance
+			Optional<SDKFunctionInstance> dbInstance = functionInstanceRepository.findById(instance.getId());
+			if (!dbInstance.isPresent()) {
+				continue;
+			} else if (!functionInstanceManager.validateInstance(instance)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	
+	private void updateLinks(List<Link> oldList, SDKService service) throws NotExistingEntityException {
+		//Remove all links
+		deleteCps(service);
+		//ADD new links
+		for(Link link : service.getTopologyList()) {
+			link.setService(service);
+			linkRepository.saveAndFlush(link);	
+		}
+		
+	}
+	
+	private void deleteCps(SDKService service) {
+		for (Link link : service.getTopologyList()) {
+			List<ConnectionPoint> cps = link.getConnectionPoints();
+			for (Long cpId : link.getConnectionPointIds()) {
+				for (ConnectionPoint cp : cps) {
+					if (cp.getId() == cpId) {
+						//cps.remove(cp);
+						cpRepository.delete(cp);
+					}
+				}
+			}
+			link.setConnectionPoints(cps);
+			linkRepository.saveAndFlush(link);
+		}
+	}
 }

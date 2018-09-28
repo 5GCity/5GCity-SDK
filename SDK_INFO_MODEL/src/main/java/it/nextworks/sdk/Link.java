@@ -52,7 +52,6 @@ public class Link {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	@JsonIgnore
 	@JsonProperty("id")
 	private Long id;
 	

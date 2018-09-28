@@ -27,34 +27,32 @@ import it.nextworks.sdk.exceptions.NotPublishedServiceException;
 
 public interface ServiceManagerProviderInterface {
 
-	public SDKService getServiceByUuid(String id) throws NotExistingEntityException;
-	
-	public SDKService getServiceById(String id) throws NotExistingEntityException;
+	public SDKService getServiceById(Long id) throws NotExistingEntityException;
 	
 	public List<SDKService> getServices() throws NotExistingEntityException;
 	
-	public List<SDKService> getServicesUsingFunction(String functionId) throws NotExistingEntityException;
+	public List<SDKService> getServicesUsingFunction(Long functionId) throws NotExistingEntityException;
 		
 	public String createService(SDKService service) throws ExistingEntityException, NotExistingEntityException, MalformattedElementException;
 	
-	public String updateService(SDKService service) throws NotExistingEntityException;
+	public String updateService(SDKService service) throws NotExistingEntityException, MalformattedElementException;
 	
-	public void deleteService(String serviceId) throws NotExistingEntityException;
+	public void deleteService(Long serviceId) throws NotExistingEntityException;
 	
-	public void publishService(String serviceId) throws NotExistingEntityException, AlreadyPublishedServiceException;
+	public void publishService(Long serviceId) throws NotExistingEntityException, AlreadyPublishedServiceException;
 	
-	public void unPublishService(String serviceId) throws NotExistingEntityException, NotPublishedServiceException;
+	public void unPublishService(Long serviceId) throws NotExistingEntityException, NotPublishedServiceException;
 	
-	public void updateScalingAspect(String serviceId, List<ScalingAspect> scalingAspects) throws NotExistingEntityException, MalformattedElementException;
+	public void updateScalingAspect(Long serviceId, List<ScalingAspect> scalingAspects) throws NotExistingEntityException, MalformattedElementException;
 
-	public void deleteScalingAspect(String serviceId, List<ScalingAspect> scalingAspects) throws NotExistingEntityException, MalformattedElementException;
+	public void deleteScalingAspect(Long serviceId, List<ScalingAspect> scalingAspects) throws NotExistingEntityException, MalformattedElementException;
 
-	public List<ScalingAspect> getScalingAspect(String serviceId) throws NotExistingEntityException;
+	public List<ScalingAspect> getScalingAspect(Long serviceId) throws NotExistingEntityException;
 
-	public void updateMonitoringParameters(String serviceId, List<MonitoringParameter> monitoringParameters) throws NotExistingEntityException, MalformattedElementException;
+	public void updateMonitoringParameters(Long serviceId, List<MonitoringParameter> monitoringParameters) throws NotExistingEntityException, MalformattedElementException;
 
-	public void deleteMonitoringParameters(String serviceId, List<MonitoringParameter> monitoringParameters) throws NotExistingEntityException, MalformattedElementException;
+	public void deleteMonitoringParameters(Long serviceId, List<MonitoringParameter> monitoringParameters) throws NotExistingEntityException, MalformattedElementException;
 
-	public List<MonitoringParameter> getMonitoringParameters(String serviceId) throws NotExistingEntityException;
+	public List<MonitoringParameter> getMonitoringParameters(Long serviceId) throws NotExistingEntityException;
 	
 }
