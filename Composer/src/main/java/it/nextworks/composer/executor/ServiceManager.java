@@ -153,11 +153,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 					List<Long> cp_ids = link.getConnectionPointIds();
 					for (Long id : cp_ids) {
 						Optional<ConnectionPoint> cp = cpRepository.findById(id);
-						if (cp.isPresent() && cp.get().isValid()
-								&& cp.get().getType() == ConnectionPointType.EXTERNAL) {
-							cp.get().setLink(link);
-							cpRepository.saveAndFlush(cp.get());
-						} else {
+						if (!cp.isPresent() || !cp.get().isValid()
+								|| cp.get().getType() != ConnectionPointType.EXTERNAL) {
 							serviceRepository.delete(response);
 							log.error("Malformatted request on ConnectionPoints connected to the link");
 							throw new MalformattedElementException(
@@ -268,11 +265,11 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 		List<Link> oldList = srv.get().getTopologyList();
 		// Update del service su DB
 		serviceRepository.saveAndFlush(service);
-		
+
 		// Update instances (or add new ones)
-		for(SDKFunctionInstance instance : service.getFunctions()) {
+		for (SDKFunctionInstance instance : service.getFunctions()) {
 			Optional<SDKFunctionInstance> dbInstance = functionInstanceRepository.findById(instance.getId());
-			if(!dbInstance.isPresent())
+			if (!dbInstance.isPresent())
 				functionInstanceManager.updateInstance(instance, service);
 			else
 				try {
@@ -283,8 +280,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 		}
 		// Removing cancelled SDKFunctionInstances
 		Optional<SDKService> dbService = serviceRepository.findById(service.getId());
-		for(SDKFunctionInstance instance : srv.get().getFunctions()) {
-			if(!service.getFunctions().contains(instance)) {
+		for (SDKFunctionInstance instance : srv.get().getFunctions()) {
+			if (!service.getFunctions().contains(instance)) {
 				functionInstanceManager.deleteInstance(instance.getId());
 			}
 		}
@@ -294,9 +291,9 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 		updateScalingAspect(service.getId(), service.getScalingAspects());
 		// Update links
 		updateLinks(oldList, service);
-		
+
 		serviceRepository.saveAndFlush(service);
-		
+
 		return service.getId().toString();
 	}
 
@@ -323,7 +320,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 				if (dbInstance.isPresent()) {
 					Optional<SDKFunction> function = functionRepository.findById(dbInstance.get().getFunctionId());
 					if (function.isPresent()) {
-						dbInstance.get().setSdkFunction(null);
+						// dbInstance.get().setSdkFunction(null);
+						dbInstance.get().setFunctionId(null);
 						functionInstanceRepository.saveAndFlush(dbInstance.get());
 					} else {
 						log.error("Function with ID " + instance.getFunctionId() + " not found");
@@ -582,30 +580,38 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 		return true;
 	}
 
-	
 	private void updateLinks(List<Link> oldList, SDKService service) throws NotExistingEntityException {
-		//Remove all links
+		// Remove all links
 		deleteCps(service);
-		//ADD new links
-		for(Link link : service.getTopologyList()) {
+		// ADD new links
+		for (Link link : service.getTopologyList()) {
 			link.setService(service);
-			linkRepository.saveAndFlush(link);	
+			linkRepository.saveAndFlush(link);
 		}
-		
+
 	}
-	
+
 	private void deleteCps(SDKService service) {
 		for (Link link : service.getTopologyList()) {
-			List<ConnectionPoint> cps = link.getConnectionPoints();
-			for (Long cpId : link.getConnectionPointIds()) {
-				for (ConnectionPoint cp : cps) {
-					if (cp.getId() == cpId) {
-						//cps.remove(cp);
-						cpRepository.delete(cp);
-					}
+			List<Long> cps = link.getConnectionPointIds();
+			for (Long cpId : cps) {
+				Optional<ConnectionPoint> cp = cpRepository.findById(cpId);
+				if (cp.isPresent()) {
+					cpRepository.delete(cp.get());
 				}
 			}
-			link.setConnectionPoints(cps);
+//			List<ConnectionPoint> cps = link.getConnectionPoints();
+//			for (Long cpId : link.getConnectionPointIds()) {
+//				for (ConnectionPoint cp : cps) {
+//					log.debug("++++++++++++++++ Checkign CP: " + cpId + " in links connection points");
+//					if (cp.getId() == cpId) {
+//						cps.remove(cp);
+//						log.debug("Found CP with cpId: " + cpId);
+//						cpRepository.delete(cp);
+//					}
+//				}
+//			}
+//			link.setConnectionPoints(cps);
 			linkRepository.saveAndFlush(link);
 		}
 	}

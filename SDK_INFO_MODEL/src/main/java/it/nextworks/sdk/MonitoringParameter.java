@@ -37,7 +37,7 @@ import it.nextworks.sdk.enums.MonitoringParameterType;
  * 		# Services
  * 		# ScalingAspects
  * 
- * @version v0.4
+ * @version v0.5
  *
  */
 @Entity

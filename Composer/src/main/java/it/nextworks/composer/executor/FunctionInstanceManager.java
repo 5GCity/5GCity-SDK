@@ -198,7 +198,8 @@ public class FunctionInstanceManager implements FunctionInstanceManagerProviderI
 					"The flavour chosen for the FunctionInstance is not available. Your choise: "
 							+ instance.getFlavour().toString());
 		}
-		instance.setSdkFunction(function);
+		//instance.setSdkFunction(function);
+		instance.setFunctionId(function.getId());
 		functionInstanceRepository.saveAndFlush(instance);
 		// Getting MonitoringParameters
 		List<MonitoringParameter> monitoringParameters = instance.getMonitoringParameters();

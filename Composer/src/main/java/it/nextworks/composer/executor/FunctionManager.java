@@ -43,7 +43,7 @@ public class FunctionManager implements FunctionManagerProviderInterface{
 	private static final Logger log = LoggerFactory.getLogger(FunctionManager.class);
 			
 	@Autowired
-	private SDKFunctionRepository sdkFunctionRepository;
+	private SDKFunctionRepository functionRepository;
 	
 	@Autowired
 	private ConnectionpointRepository cpRepository;
@@ -57,7 +57,7 @@ public class FunctionManager implements FunctionManagerProviderInterface{
 	
 	@Override
 	public SDKFunction getFunction(Long id) throws NotExistingEntityException {
-		Optional<SDKFunction> result = sdkFunctionRepository.findById(id);
+		Optional<SDKFunction> result = functionRepository.findById(id);
 		if(result.isPresent()) {
 			return result.get();
 		} else {
@@ -69,7 +69,7 @@ public class FunctionManager implements FunctionManagerProviderInterface{
 	
 	@Override
 	public List<SDKFunction> getFunctions() {
-		List<SDKFunction> functionList = sdkFunctionRepository.findAll();
+		List<SDKFunction> functionList = functionRepository.findAll();
 		if(functionList.size() == 0) {
 			log.debug("No Functions are available");
 		} else 
@@ -87,7 +87,7 @@ public class FunctionManager implements FunctionManagerProviderInterface{
 		metadata.put("key2", "value3");
 		metadata.put("key3", "value2");
 		SDKFunction function = new SDKFunction("SDKTest1", flavour, "v0.0", "NestuoKD", "SDKTest1 descrt", metadata);
-		sdkFunctionRepository.saveAndFlush(function);
+		functionRepository.saveAndFlush(function);
 		
 		
 		ConnectionPoint cp1 = new ConnectionPoint(ConnectionPointType.EXTERNAL, "extCp1", function, null);
@@ -109,7 +109,7 @@ public class FunctionManager implements FunctionManagerProviderInterface{
 		metadata2.put("key2", "value3");
 		metadata2.put("key3", "value2");
 		SDKFunction function2 = new SDKFunction("SDKTest2", flavour2, "v0.0", "NestuoKD", "SDKTest2 descrt", metadata2);
-		sdkFunctionRepository.saveAndFlush(function2);
+		functionRepository.saveAndFlush(function2);
 		
 		
 		ConnectionPoint cp12 = new ConnectionPoint(ConnectionPointType.EXTERNAL, "extCp12", function2, null);

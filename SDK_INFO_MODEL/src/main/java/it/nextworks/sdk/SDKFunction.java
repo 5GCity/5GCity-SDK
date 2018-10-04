@@ -15,7 +15,6 @@
 */
 package it.nextworks.sdk;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +46,7 @@ import it.nextworks.sdk.enums.Flavour;
  * The class SDKFunction defines a function entity. Functions are created by special users (admin or editor permission)
  * A function is part of the final service created by a normal user via the composer module
  *  
- * @version v0.4
+ * @version v0.5
  */
 @Entity
 public class SDKFunction {
@@ -107,12 +106,13 @@ public class SDKFunction {
 	@JsonProperty("description")
 	private String description;
 
-	@JsonInclude(JsonInclude.Include.NON_EMPTY)
-	@OneToMany(mappedBy = "sdkFunction", cascade=CascadeType.ALL)
-	@OnDelete(action = OnDeleteAction.CASCADE)
-	@LazyCollection(LazyCollectionOption.FALSE)
-	@JsonProperty("instances")
-	private List<SDKFunctionInstance> instances = new ArrayList<>();
+	
+//	@JsonInclude(JsonInclude.Include.NON_EMPTY)
+//	@OneToMany(mappedBy = "sdkFunction", cascade=CascadeType.ALL)
+//	@OnDelete(action = OnDeleteAction.CASCADE)
+//	@LazyCollection(LazyCollectionOption.FALSE)
+//	@JsonProperty("instances")
+//	private List<SDKFunctionInstance> instances = new ArrayList<>();
 	
 	
 	@JsonInclude(JsonInclude.Include.NON_EMPTY)

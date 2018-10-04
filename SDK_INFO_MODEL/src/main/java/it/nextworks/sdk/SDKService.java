@@ -45,7 +45,7 @@ import it.nextworks.sdk.enums.ScalingRatioType;
 import it.nextworks.sdk.enums.StatusType;
 /**
  * 
- * @version v0.4
+ * @version v0.5
  *
  */
 @Entity

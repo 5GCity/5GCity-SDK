@@ -24,7 +24,7 @@ import it.nextworks.sdk.enums.LicenseType;
  * 
  * The class License defines the license related to the Service.
  * 
- * @version v0.4
+ * @version v0.5
  *
  */
 @Embeddable

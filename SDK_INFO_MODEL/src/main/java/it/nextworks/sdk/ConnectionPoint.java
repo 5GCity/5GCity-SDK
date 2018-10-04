@@ -30,7 +30,7 @@ import it.nextworks.sdk.enums.ConnectionPointType;
  * 
  * The class defines a connection point associated to a SDKFunction or to a Link
  * 
- * @version v0.4
+ * @version v0.5
  *
  */
 @Entity
@@ -56,9 +56,9 @@ public class ConnectionPoint {
 	@ManyToOne
 	private SDKFunction function;
 	
-	@JsonIgnore
-	@ManyToOne
-	private Link link;
+//	@JsonIgnore
+//	@ManyToOne
+//	private Link link;
 	
 	@JsonProperty
 	private String name;
@@ -78,7 +78,7 @@ public class ConnectionPoint {
 	public ConnectionPoint(ConnectionPointType type, String name, SDKFunction function, Link link) {
 		this.type = type;
 		this.function = function;
-		this.link = link;
+//		this.link = link;
 		this.name = name;
 	}
 
@@ -93,14 +93,14 @@ public class ConnectionPoint {
 	}
 
 
-	public Link getLink() {
-		return link;
-	}
-
-
-	public void setLink(Link link) {
-		this.link = link;
-	}
+//	public Link getLink() {
+//		return link;
+//	}
+//
+//
+//	public void setLink(Link link) {
+//		this.link = link;
+//	}
 
 
 	/**

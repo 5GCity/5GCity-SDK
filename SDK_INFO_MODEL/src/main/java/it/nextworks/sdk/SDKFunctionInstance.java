@@ -37,7 +37,7 @@ import it.nextworks.sdk.enums.Flavour;
  * The class SDKFunction defines a function entity. Functions are created by special users (admin or editor permission)
  * A function is part of the final service created by a normal user via the composer module
  *  
- * @version v0.4
+ * @version v0.5
  */
 @Entity
 public class SDKFunctionInstance {
@@ -75,11 +75,11 @@ public class SDKFunctionInstance {
 	@JsonIgnore
 	private SDKService service;
 
-
+/*
 	@ManyToOne
 	@JsonIgnore
 	private SDKFunction sdkFunction;
-	
+*/	
 	
 	@JsonProperty("function_id")
 	private Long functionId;
@@ -99,12 +99,13 @@ public class SDKFunctionInstance {
 			if(monitoringParameter.isValid()) {
 				this.monitoringParameters.add(monitoringParameter);
 			}
-		this.sdkFunction = function;
+//		this.sdkFunction = function;
+		this.functionId = function.getId();
 		this.service = service;
 	}
 
 	
-
+/*
 	public SDKFunction getSdkFunction() {
 		return sdkFunction;
 	}
@@ -113,7 +114,7 @@ public class SDKFunctionInstance {
 	public void setSdkFunction(SDKFunction sdkFunction) {
 		this.sdkFunction = sdkFunction;
 	}
-
+*/
 
 	/**
 	 * 

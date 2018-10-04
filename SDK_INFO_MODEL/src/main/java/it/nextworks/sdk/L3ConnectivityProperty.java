@@ -24,7 +24,7 @@ import it.nextworks.sdk.enums.Protocol;
  * 
  * The class defines a Layer3 connectivity rule, to be associated to a Link
  * 
- * @version v0.4
+ * @version v0.5
  *
  */
 @Embeddable
