@@ -162,6 +162,10 @@ public class SDKService {
 	@JsonProperty("metadata")
 	private Map<String, String> metadata = new HashMap<String, String>();
 	
+	
+	@JsonIgnore
+	private String nsNode;
+	
 	/**
 	 * Constructor used by JPA
 	 */
@@ -352,4 +356,16 @@ public class SDKService {
 		this.metadata = metadata;
 	}
 
+
+	public String getNsNode() {
+		return nsNode;
+	}
+
+
+	public void setNsNode(String nsNode) {
+		this.nsNode = nsNode;
+	}
+	
+	
+	
 }

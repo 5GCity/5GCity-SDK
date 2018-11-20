@@ -15,10 +15,12 @@
 */
 package it.nextworks.sdk;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -84,6 +86,7 @@ public class SDKFunction {
 	/**
 	 * Current version of the SDKFunction
 	 */
+	@Column(nullable=false)
 	@JsonProperty("version")
 	private String version;
 	
@@ -105,14 +108,6 @@ public class SDKFunction {
 	 */
 	@JsonProperty("description")
 	private String description;
-
-	
-//	@JsonInclude(JsonInclude.Include.NON_EMPTY)
-//	@OneToMany(mappedBy = "sdkFunction", cascade=CascadeType.ALL)
-//	@OnDelete(action = OnDeleteAction.CASCADE)
-//	@LazyCollection(LazyCollectionOption.FALSE)
-//	@JsonProperty("instances")
-//	private List<SDKFunctionInstance> instances = new ArrayList<>();
 	
 	
 	@JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -121,6 +116,10 @@ public class SDKFunction {
 	@Cascade(org.hibernate.annotations.CascadeType.ALL)
 	@JsonProperty("metadata")
 	private Map<String, String> metadata = new HashMap<String, String>();
+	
+	
+	@JsonIgnore
+	private String vnfNode;
 	
 	
 	/**
@@ -139,9 +138,9 @@ public class SDKFunction {
 	 * @param version Current version of the function
 	 * @param vendor Vendor identifier of the function
 	 * @param description A short description of the function.
-	 * @param metadata Speific metadata
+	 * @param metadata Specific metadata
 	 */
-	public SDKFunction(String name, List<Flavour> flavour, String version, 
+	public SDKFunction(String name, List<Flavour> flavour, String version, String vnfNode,
 				String vendor, String description, Map<String, String> metadata) {
 		
 		this.name = name;
@@ -150,6 +149,8 @@ public class SDKFunction {
 		this.version = version;
 		this.vendor = vendor;
 		this.description = description;
+		
+		this.vnfNode = vnfNode;
 				
 		if (metadata != null) this.metadata = metadata;
 	}
@@ -238,7 +239,6 @@ public class SDKFunction {
 		return id;
 	}
 
-
 	
 	public boolean isValid() {
 	    if(this.name == null || this.name.length() == 0)
@@ -250,6 +250,8 @@ public class SDKFunction {
 		if(this.vendor == null || this.vendor.length() == 0)
 			return false;
 		if(this.flavour == null || this.flavour.size() == 0)
+			return false;
+		if(this.vnfNode == null )
 			return false;
 		return true;
 	}

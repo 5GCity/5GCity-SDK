@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,7 +87,7 @@ public class FunctionManager implements FunctionManagerProviderInterface{
 		metadata.put("key1", "value1");
 		metadata.put("key2", "value3");
 		metadata.put("key3", "value2");
-		SDKFunction function = new SDKFunction("SDKTest1", flavour, "v0.0", "NestuoKD", "SDKTest1 descrt", metadata);
+		SDKFunction function = new SDKFunction("SDKTest1", flavour, "v0.0", "node1_id", "NestuoKD", "SDKTest1 descrt", metadata);
 		functionRepository.saveAndFlush(function);
 		
 		
@@ -100,7 +101,6 @@ public class FunctionManager implements FunctionManagerProviderInterface{
 		monitoringParamRepository.saveAndFlush(param1);
 		
 
-		
 		List<Flavour> flavour2 = new ArrayList<>();
 		flavour2.add(Flavour.SMALL);
 		flavour2.add(Flavour.MEDIUM);
@@ -108,7 +108,7 @@ public class FunctionManager implements FunctionManagerProviderInterface{
 		metadata2.put("key1", "value1");
 		metadata2.put("key2", "value3");
 		metadata2.put("key3", "value2");
-		SDKFunction function2 = new SDKFunction("SDKTest2", flavour2, "v0.0", "NestuoKD", "SDKTest2 descrt", metadata2);
+		SDKFunction function2 = new SDKFunction("SDKTest2", flavour2, "v0.0", "node2_id", "NestuoKD", "SDKTest2 descrt", metadata2);
 		functionRepository.saveAndFlush(function2);
 		
 		
