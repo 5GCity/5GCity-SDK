@@ -14,6 +14,7 @@ public class Catalogue {
 	private String catalogueId;
 	private CatalogueType type;
 	private String url;
+	private boolean authentication;
 	private String username;
 	private String password;
 	
@@ -32,10 +33,11 @@ public class Catalogue {
 	 * @param password Password o the username provided
 	 */
 	public Catalogue(String catalogueId, CatalogueType type, String url, 
-					 String username, String password) {
+					 boolean authentication, String username, String password) {
 		this.catalogueId = catalogueId;
 		this.type = type;
 		this.url = url;
+		this.authentication = authentication;
 		this.username = username;
 		this.password = password;
 	}
@@ -84,8 +86,21 @@ public class Catalogue {
 	public String getCatalogueId() {
 		return catalogueId;
 	}
-	
-	
+
+
+	public Long getId() {
+		return id;
+	}
+
+
+	public boolean isAuthentication() {
+		return authentication;
+	}
+
+
+	public void setCatalogueId(String catalogueId) {
+		this.catalogueId = catalogueId;
+	}
 	
 	
 	

@@ -44,12 +44,6 @@ public class FiveGCataloguePlugin extends CataloguePlugin{
 //		throw new NotYetImplementedException();
 //	}
 //	
-	public boolean isAuthenticationNeeded() {
-		if(catalogue.getUsername() == null || catalogue.getPassword() == null)
-			return false;
-		else 
-			return true;
-	}
 
 	@Override
 	public List<VnfPkgInfo> listVnfPackageInfo() {
