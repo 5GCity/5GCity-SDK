@@ -18,13 +18,18 @@ package it.nextworks.composer.executor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import javax.annotation.PostConstruct;
+
 import org.hibernate.cfg.NotYetImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import it.nextworks.composer.executor.interfaces.ServiceManagerProviderInterface;
+import it.nextworks.composer.executor.repositories.CatalogueRepository;
 import it.nextworks.composer.executor.repositories.ConnectionpointRepository;
 import it.nextworks.composer.executor.repositories.LinkRepository;
 import it.nextworks.composer.executor.repositories.MonitoringParameterRepository;
@@ -32,6 +37,7 @@ import it.nextworks.composer.executor.repositories.SDKFunctionInstanceRepository
 import it.nextworks.composer.executor.repositories.SDKFunctionRepository;
 import it.nextworks.composer.executor.repositories.SDKServiceRepository;
 import it.nextworks.composer.executor.repositories.ScalingAspectRepository;
+import it.nextworks.composer.plugins.catalogue.Catalogue;
 import it.nextworks.sdk.ConnectionPoint;
 import it.nextworks.sdk.Link;
 import it.nextworks.sdk.MonitoringParameter;
@@ -77,9 +83,20 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 	@Autowired
 	private FunctionInstanceManager functionInstanceManager;
 
-	public ServiceManager() {
+	@Value("${catalogue.host}")
+	private String hostname;
 
+	@Autowired
+	private CatalogueRepository catalogueRepo;
+
+	public ServiceManager() {
 	}
+	
+//	@PostConstruct
+//	public void init() {
+//		Catalogue catalogue = new Catalogue("5g-catalogue", hostname, false, null, null);
+//		catalogueRepo.saveAndFlush(catalogue);
+//	}
 
 	@Override
 	public List<SDKService> getServices() {
