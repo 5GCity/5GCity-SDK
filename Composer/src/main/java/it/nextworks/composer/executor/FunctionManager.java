@@ -82,44 +82,51 @@ public class FunctionManager implements FunctionManagerProviderInterface{
 	public String createFunction() {
 		List<Flavour> flavour = new ArrayList<>();
 		flavour.add(Flavour.SMALL);
-		flavour.add(Flavour.MEDIUM);
 		Map<String, String> metadata = new HashMap<>();
-		metadata.put("key1", "value1");
-		metadata.put("key2", "value3");
-		metadata.put("key3", "value2");
-		SDKFunction function = new SDKFunction("SDKTest1", flavour, "v0.0", "node1_id", "NestuoKD", "SDKTest1 descrt", metadata);
+		metadata.put("cloud-init", "#!/bin/vbash\r\n" + 
+				"source /opt/vyatta/etc/functions/script-template\r\n" + 
+				"configure\r\n" + 
+				"set interfaces ethernet eth1  address 192.168.200.1/24\r\n" + 
+				"\r\n" + 
+				"commit\r\n" + 
+				"exit");
+//		metadata.put("key2", "value3");
+//		metadata.put("key3", "value2");
+		
+		SDKFunction function = new SDKFunction("vFirewall-v3", flavour, "v3", "vfirewall_id", "Nextworks", "vFirewall", metadata);
 		functionRepository.saveAndFlush(function);
 		
 		
-		ConnectionPoint cp1 = new ConnectionPoint(ConnectionPointType.EXTERNAL, "extCp1", function, null);
-		ConnectionPoint cp2 = new ConnectionPoint(ConnectionPointType.EXTERNAL, "extCp2", function, null);
+		ConnectionPoint cp1 = new ConnectionPoint(ConnectionPointType.EXTERNAL, "MGMT", function, null);
+		ConnectionPoint cp2 = new ConnectionPoint(ConnectionPointType.EXTERNAL, "VIDEO", function, null);
+		ConnectionPoint cp3 = new ConnectionPoint(ConnectionPointType.EXTERNAL, "EXT", function, null);
+		ConnectionPoint cp4 = new ConnectionPoint(ConnectionPointType.EXTERNAL, "DCNET", function, null);
 		cpRepository.saveAndFlush(cp1);
 		cpRepository.saveAndFlush(cp2);
+		cpRepository.saveAndFlush(cp3);
+		cpRepository.saveAndFlush(cp4);
 		
-
-		MonitoringParameter param1 = new MonitoringParameter(MonitoringParameterType.AVERAGE_MEMORY_UTILIZATION, null, function, null);
-		monitoringParamRepository.saveAndFlush(param1);
+//
+//		MonitoringParameter param1 = new MonitoringParameter(MonitoringParameterType.AVERAGE_MEMORY_UTILIZATION, null, function, null);
+//		monitoringParamRepository.saveAndFlush(param1);
 		
 
 		List<Flavour> flavour2 = new ArrayList<>();
 		flavour2.add(Flavour.SMALL);
-		flavour2.add(Flavour.MEDIUM);
 		Map<String, String> metadata2 = new HashMap<>();
-		metadata2.put("key1", "value1");
-		metadata2.put("key2", "value3");
-		metadata2.put("key3", "value2");
-		SDKFunction function2 = new SDKFunction("SDKTest2", flavour2, "v0.0", "node2_id", "NestuoKD", "SDKTest2 descrt", metadata2);
+//		metadata2.put("key1", "value1");
+//		metadata2.put("key2", "value3");
+//		metadata2.put("key3", "value2");
+		SDKFunction function2 = new SDKFunction("vPlate-v3", flavour2, "v3", "vplate_id", "Nextworks", "VPlate: Plate recognition", metadata2);
 		functionRepository.saveAndFlush(function2);
 		
 		
-		ConnectionPoint cp12 = new ConnectionPoint(ConnectionPointType.EXTERNAL, "extCp12", function2, null);
-		ConnectionPoint cp22 = new ConnectionPoint(ConnectionPointType.EXTERNAL, "extCp22", function2, null);
+		ConnectionPoint cp12 = new ConnectionPoint(ConnectionPointType.EXTERNAL, "VIDEO", function2, null);
 		cpRepository.saveAndFlush(cp12);
-		cpRepository.saveAndFlush(cp22);
 		
 
-		MonitoringParameter param12 = new MonitoringParameter(MonitoringParameterType.AVERAGE_MEMORY_UTILIZATION, null, function2, null);
-		monitoringParamRepository.saveAndFlush(param12);
+//		MonitoringParameter param12 = new MonitoringParameter(MonitoringParameterType.AVERAGE_MEMORY_UTILIZATION, null, function2, null);
+//		monitoringParamRepository.saveAndFlush(param12);
 		
 		return function.getId().toString();
 	}
