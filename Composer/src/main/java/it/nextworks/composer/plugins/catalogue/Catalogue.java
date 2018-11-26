@@ -12,7 +12,6 @@ public class Catalogue {
 	private Long id;
 	
 	private String catalogueId;
-	private CatalogueType type;
 	private String url;
 	private boolean authentication;
 	private String username;
@@ -27,29 +26,17 @@ public class Catalogue {
 	/**
 	 * Creating a Catalogue entry in database
 	 * @param catalogueId Catalogue ID
-	 * @param type Type of catalogue
 	 * @param url Url to reach the catalogue
 	 * @param username Identify the user
 	 * @param password Password o the username provided
 	 */
-	public Catalogue(String catalogueId, CatalogueType type, String url, 
+	public Catalogue(String catalogueId, String url, 
 					 boolean authentication, String username, String password) {
 		this.catalogueId = catalogueId;
-		this.type = type;
 		this.url = url;
 		this.authentication = authentication;
 		this.username = username;
 		this.password = password;
-	}
-
-
-	public CatalogueType getType() {
-		return type;
-	}
-
-
-	public void setType(CatalogueType type) {
-		this.type = type;
 	}
 
 

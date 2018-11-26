@@ -61,7 +61,13 @@
 			<scope>test</scope>
 		</dependency>
 -->
-
+	<!-- https://mvnrepository.com/artifact/joda-time/joda-time -->
+<dependency>
+    <groupId>joda-time</groupId>
+    <artifactId>joda-time</artifactId>
+    <version>2.3</version>
+</dependency>
+	
         <!-- NFV-LIBS -->
         <dependency>
 		    <groupId>it.nextworks.nfvmano</groupId>
