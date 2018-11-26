@@ -1,19 +1,10 @@
-/*
-* Copyright 2018 Nextworks s.r.l.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
 package it.nextworks.sdk;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import it.nextworks.sdk.enums.ConnectionPointType;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -21,129 +12,116 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import it.nextworks.sdk.enums.ConnectionPointType;
 
 /**
+ * ConnectionPoint
+ * <p>
  * 
- * The class defines a connection point associated to a SDKFunction or to a Link
  * 
- * @version v0.5
- *
  */
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonPropertyOrder({
+    "id",
+    "name",
+    "type"
+})
 @Entity
 public class ConnectionPoint {
-	
-	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	@JsonProperty("id")
-	private Long id;
 
-	
-	
-	/**
-	 * Connection point type: {internal/external}
-	 */
-	@JsonProperty("type")
-	private ConnectionPointType type;
-	
-	@JsonIgnore
-	private boolean valid;
-	
-	@JsonIgnore
-	@ManyToOne
-	private SDKFunction function;
-	
-//	@JsonIgnore
-//	@ManyToOne
-//	private Link link;
-	
-	@JsonProperty
-	private String name;
-	/**
-	 * Constructor used by JPA
-	 */
-	public ConnectionPoint() {
-		//JPA Purpose
-	}
-	
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Integer id;
 
-	/** 
-	 * Creates a new Connection point. A random UUID is generated on creation.
-	 * 	
-	 * @param type Type of the connection point
-	 */
-	public ConnectionPoint(ConnectionPointType type, String name, SDKFunction function, Link link) {
-		this.type = type;
-		this.function = function;
-//		this.link = link;
-		this.name = name;
-	}
+    private String name;
 
+    @JsonProperty("type")
+    private ConnectionPointType type;
 
-	public String getName() {
-		return name;
-	}
+    @JsonProperty("id")
+    public Integer getId() {
+        return id;
+    }
 
+    @JsonProperty("name")
+    public String getName() {
+        return name;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    @JsonProperty("name")
+    public void setName(String name) {
+        this.name = name;
+    }
 
+    @JsonProperty("type")
+    public ConnectionPointType getType() {
+        return type;
+    }
 
-//	public Link getLink() {
-//		return link;
-//	}
-//
-//
-//	public void setLink(Link link) {
-//		this.link = link;
-//	}
+    @JsonProperty("type")
+    public void setType(ConnectionPointType type) {
+        this.type = type;
+    }
 
+    @JsonIgnore
+    @ManyToOne
+    private SdkFunction sdkFunction;
 
-	/**
-	 * 
-	 * @return unique identifier for the given connection point
-	 */
-	public Long getId() {
-		return id;
-	}
+    @JsonIgnore
+    public boolean isValid() {
+        return this.type != null
+                && this.name != null
+                && this.name.length() >= 2;
+    }
 
-	
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(ConnectionPoint.class.getName())
+                .append('@')
+                .append(Integer.toHexString(System.identityHashCode(this)))
+                .append('[');
+        sb.append("id");
+        sb.append('=');
+        sb.append(((this.id == null)?"<null>":this.id));
+        sb.append(',');
+        sb.append("name");
+        sb.append('=');
+        sb.append(((this.name == null)?"<null>":this.name));
+        sb.append(',');
+        sb.append("type");
+        sb.append('=');
+        sb.append(((this.type == null)?"<null>":this.type));
+        sb.append(',');
+        if (sb.charAt((sb.length()- 1)) == ',') {
+            sb.setCharAt((sb.length()- 1), ']');
+        } else {
+            sb.append(']');
+        }
+        return sb.toString();
+    }
 
-	public SDKFunction getFunction() {
-		return function;
-	}
+    @Override
+    public int hashCode() {
+        int result = 1;
+        result = ((result* 31)+((this.name == null)? 0 :this.name.hashCode()));
+        result = ((result* 31)+((this.id == null)? 0 :this.id.hashCode()));
+        result = ((result* 31)+((this.type == null)? 0 :this.type.hashCode()));
+        return result;
+    }
 
+    @Override
+    public boolean equals(Object other) {
+        if (other == this) {
+            return true;
+        }
+        if (!(other instanceof ConnectionPoint)) {
+            return false;
+        }
+        ConnectionPoint rhs = ((ConnectionPoint) other);
+        return (
+                ((this.name == rhs.name) || ((this.name != null) && this.name.equals(rhs.name)))
+                        && ((this.id == rhs.id) || ((this.id != null) && this.id.equals(rhs.id)))
+                        && ((this.type == rhs.type) || ((this.type != null) && this.type.equals(rhs.type))));
+    }
 
-	public void setFunction(SDKFunction function) {
-		this.function = function;
-	}
-
-
-	/**
-	 * 
-	 * @return type for the given connection point
-	 */
-	public ConnectionPointType getType() {
-		return type;
-	}
-
-	
-	public void setType(ConnectionPointType type) {
-		this.type = type;
-	}
-
-	
-	public boolean isValid() {
-		if(this.type == null)
-			return false;
-		if(this.name == null || this.name.length() < 2)
-			return false;
-		return true;
-	}
-
-	
 }

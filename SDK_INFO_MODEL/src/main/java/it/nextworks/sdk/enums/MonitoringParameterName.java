@@ -11,20 +11,19 @@ import java.util.Map;
  *
  * @author Marco Capitani <m.capitani AT nextworks.it>
  */
-public enum LinkType {
+public enum MonitoringParameterName {
 
-    INTERNAL("INTERNAL"),
-    EXTERNAL("EXTERNAL");
+    AVERAGE_MEMORY_UTILIZATION("AVERAGE_MEMORY_UTILIZATION");
     private final String value;
-    private final static Map<String, LinkType> CONSTANTS = new HashMap<String, LinkType>();
+    private final static Map<String, MonitoringParameterName> CONSTANTS = new HashMap<String, MonitoringParameterName>();
 
     static {
-        for (LinkType c : values()) {
+        for (MonitoringParameterName c : values()) {
             CONSTANTS.put(c.value, c);
         }
     }
 
-    private LinkType(String value) {
+    private MonitoringParameterName(String value) {
         this.value = value;
     }
 
@@ -39,8 +38,8 @@ public enum LinkType {
     }
 
     @JsonCreator
-    public static LinkType fromValue(String value) {
-        LinkType constant = CONSTANTS.get(value);
+    public static MonitoringParameterName fromValue(String value) {
+        MonitoringParameterName constant = CONSTANTS.get(value);
         if (constant == null) {
             throw new IllegalArgumentException(value);
         } else {

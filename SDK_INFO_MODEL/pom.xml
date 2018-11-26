@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>it.nextworks</groupId>
   <artifactId>SDK_INFO_MODEL</artifactId>
-  <version>0.0.4</version>
+  <version>0.0.6</version>
   
   <properties>
 
@@ -34,6 +34,13 @@
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-tx</artifactId>
 			<version>${spring-framework.version}</version>
+		</dependency>
+
+		<!-- Expression evaluation -->
+		<dependency>
+			<groupId>com.udojava</groupId>
+			<artifactId>EvalEx</artifactId>
+			<version>2.1</version>
 		</dependency>
 
 		<!-- Hibernate -->
@@ -68,6 +75,12 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>2.6.4</version>
-        </dependency>        
+        </dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<version>RELEASE</version>
+			<scope>compile</scope>
+		</dependency>
 	</dependencies>	
 </project>

@@ -2,6 +2,7 @@ package it.nextworks.sdk.enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import it.nextworks.sdk.MonitoringParameter;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,20 +12,20 @@ import java.util.Map;
  *
  * @author Marco Capitani <m.capitani AT nextworks.it>
  */
-public enum LinkType {
+public enum Direction {
 
-    INTERNAL("INTERNAL"),
-    EXTERNAL("EXTERNAL");
+    GREATER_THAN("GREATER_THAN"),
+    LOWER_THAN("LOWER_THAN");
     private final String value;
-    private final static Map<String, LinkType> CONSTANTS = new HashMap<String, LinkType>();
+    private final static Map<String, Direction> CONSTANTS = new HashMap<String, Direction>();
 
     static {
-        for (LinkType c : values()) {
+        for (Direction c : values()) {
             CONSTANTS.put(c.value, c);
         }
     }
 
-    private LinkType(String value) {
+    private Direction(String value) {
         this.value = value;
     }
 
@@ -39,8 +40,8 @@ public enum LinkType {
     }
 
     @JsonCreator
-    public static LinkType fromValue(String value) {
-        LinkType constant = CONSTANTS.get(value);
+    public static Direction fromValue(String value) {
+        Direction constant = CONSTANTS.get(value);
         if (constant == null) {
             throw new IllegalArgumentException(value);
         } else {

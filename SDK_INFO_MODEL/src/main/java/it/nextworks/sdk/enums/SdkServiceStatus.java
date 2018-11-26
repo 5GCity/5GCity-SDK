@@ -11,20 +11,20 @@ import java.util.Map;
  *
  * @author Marco Capitani <m.capitani AT nextworks.it>
  */
-public enum LinkType {
+public enum SdkServiceStatus {
 
-    INTERNAL("INTERNAL"),
-    EXTERNAL("EXTERNAL");
+    SAVED("SAVED"),
+    COMMITTED("COMMITTED");
     private final String value;
-    private final static Map<String, LinkType> CONSTANTS = new HashMap<String, LinkType>();
+    private final static Map<String, SdkServiceStatus> CONSTANTS = new HashMap<String, SdkServiceStatus>();
 
     static {
-        for (LinkType c : values()) {
+        for (SdkServiceStatus c : values()) {
             CONSTANTS.put(c.value, c);
         }
     }
 
-    private LinkType(String value) {
+    private SdkServiceStatus(String value) {
         this.value = value;
     }
 
@@ -39,8 +39,8 @@ public enum LinkType {
     }
 
     @JsonCreator
-    public static LinkType fromValue(String value) {
-        LinkType constant = CONSTANTS.get(value);
+    public static SdkServiceStatus fromValue(String value) {
+        SdkServiceStatus constant = CONSTANTS.get(value);
         if (constant == null) {
             throw new IllegalArgumentException(value);
         } else {

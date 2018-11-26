@@ -1,163 +1,151 @@
-/*
-* Copyright 2018 Nextworks s.r.l.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
 package it.nextworks.sdk;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import it.nextworks.sdk.enums.ScalingAction;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
 
-import it.nextworks.sdk.enums.ActionType;
 
 /**
+ * ScalingAspect
+ * <p>
  * 
- * The class creates a ScalingAspect entity. It is used to define a scaling strategy based on the monitoring parameters
  * 
- * @version v0.5
- *
  */
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonPropertyOrder({
+    "action",
+    "id",
+    "monitoring_parameter",
+    "name"
+})
 @Entity
 public class ScalingAspect {
-	
-	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	@JsonProperty("id")
-	private Long id;
 
-	
-	@JsonIgnore
-	private boolean valid;
-	
-	
-	/**
-	 * Human readable identifier of the ScalingAspect
-	 */
-	@JsonProperty("name")
-	private String name;
-	
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Integer id;
 
-	
-	/**
-	 * List of parameters to be monitored, in order to enable scaling
-	 */
-	@OneToMany(mappedBy = "scalingAspect", cascade=CascadeType.ALL)
-	@OnDelete(action = OnDeleteAction.CASCADE)
-	@LazyCollection(LazyCollectionOption.FALSE)
-	@JsonProperty("monitoring_parameter")
-	private List<MonitoringParameter> monitoringParameters = new ArrayList<MonitoringParameter>();
+    private ScalingAction action;
 
-	
-	/**
-	 * Action to be taken in case thresholds are reached
-	 */
-	@JsonProperty("action")
-	private ActionType action;
+    @OneToMany(mappedBy = "service", cascade = CascadeType.ALL)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @LazyCollection(LazyCollectionOption.FALSE)
+    @JsonProperty("monitoring_parameters")
+    private List<MonitoringParameter> monitoringParameter = new ArrayList<>();
 
-	
-	@JsonIgnore
-	@ManyToOne
-	private SDKService service;
-	
-	/**
-	 * Constructor used by JPA
-	 */
-	public ScalingAspect() {
-		//JPA Purpose
-	}
-	
-	/**
-	 * Construction of a ScalingAspect entity
-	 * @param name Human readable identifier of the scaling policy
-	 * @param monitoringParameters List of parameters to be monitored for scaling purposes. 
-	 *                All the elements of this list must have a threshold grater that 0 and a DirectionType defined (not null)
-	 * @param action Scaling type
-	 * @param service
-	 */
-	public ScalingAspect(String name, ActionType action, SDKService service) {
-		this.name = name;
-		this.action = action;
-		this.service = service;
-	}
+    private String name;
 
+    @JsonProperty("action")
+    public ScalingAction getAction() {
+        return action;
+    }
 
-	public String getName() {
-		return name;
-	}
+    @JsonProperty("action")
+    public void setAction(ScalingAction action) {
+        this.action = action;
+    }
 
+    @JsonProperty("id")
+    public Integer getId() {
+        return id;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    @JsonProperty("monitoring_parameter")
+    public List<MonitoringParameter> getMonitoringParameter() {
+        return monitoringParameter;
+    }
 
+    @JsonProperty("monitoring_parameter")
+    public void setMonitoringParameter(List<MonitoringParameter> monitoringParameter) {
+        this.monitoringParameter = monitoringParameter;
+    }
 
-	public List<MonitoringParameter> getMonitoringParameters() {
-		return monitoringParameters;
-	}
+    @JsonProperty("name")
+    public String getName() {
+        return name;
+    }
 
+    @JsonProperty("name")
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public void setMonitoringParameters(List<MonitoringParameter> monitoringParameters) {
-		this.monitoringParameters = monitoringParameters;
-	}
+    public boolean isValid() {
+        return name != null && name.length() > 0
+                && action != null
+                && monitoringParameter != null && monitoringParameter.size() > 0
+                && monitoringParameter.stream().allMatch(MonitoringParameter::isValid);
+    }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(ScalingAspect.class.getName())
+                .append('@')
+                .append(Integer.toHexString(System.identityHashCode(this)))
+                .append('[');
+        sb.append("action");
+        sb.append('=');
+        sb.append(((this.action == null)?"<null>":this.action));
+        sb.append(',');
+        sb.append("id");
+        sb.append('=');
+        sb.append(((this.id == null)?"<null>":this.id));
+        sb.append(',');
+        sb.append("monitoringParameter");
+        sb.append('=');
+        sb.append(((this.monitoringParameter == null)?"<null>":this.monitoringParameter));
+        sb.append(',');
+        sb.append("name");
+        sb.append('=');
+        sb.append(((this.name == null)?"<null>":this.name));
+        sb.append(',');
+        if (sb.charAt((sb.length()- 1)) == ',') {
+            sb.setCharAt((sb.length()- 1), ']');
+        } else {
+            sb.append(']');
+        }
+        return sb.toString();
+    }
 
-	public ActionType getAction() {
-		return action;
-	}
+    @Override
+    public int hashCode() {
+        int result = 1;
+        result = ((result* 31)+((this.name == null)? 0 :this.name.hashCode()));
+        result = ((result* 31)+((this.action == null)? 0 :this.action.hashCode()));
+        result = ((result* 31)+((this.id == null)? 0 :this.id.hashCode()));
+        result = ((result* 31)+((this.monitoringParameter == null)? 0 :this.monitoringParameter.hashCode()));
+        return result;
+    }
 
+    @Override
+    public boolean equals(Object other) {
+        if (other == this) {
+            return true;
+        }
+        if (!(other instanceof ScalingAspect)) {
+            return false;
+        }
+        ScalingAspect rhs = ((ScalingAspect) other);
+        return (((((this.name == rhs.name)||((this.name!= null)&&this.name.equals(rhs.name)))
+                &&((this.action == rhs.action)||((this.action!= null)&&this.action.equals(rhs.action))))
+                &&((this.id == rhs.id)||((this.id!= null)&&this.id.equals(rhs.id))))
+                &&((this.monitoringParameter == rhs.monitoringParameter)||((this.monitoringParameter!= null)&&this.monitoringParameter.equals(rhs.monitoringParameter))));
+    }
 
-	public void setAction(ActionType action) {
-		this.action = action;
-	}
-
-
-	public Long getId() {
-		return id;
-	}
-	
-
-	public SDKService getService() {
-		return service;
-	}
-
-
-	public void setService(SDKService service) {
-		this.service = service;
-	}
-	
-	public boolean isValid() {
-	    if(this.action == null)
-	    	return false;
-	    if(this.monitoringParameters == null || this.monitoringParameters.size() == 0)
-	    	return false;
-	    if(this.name == null)
-	    	return false;
-		return true;
-	}
-	
 }
