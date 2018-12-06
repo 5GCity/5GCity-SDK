@@ -1,58 +1,63 @@
 /*
-* Copyright 2018 Nextworks s.r.l.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright 2018 Nextworks s.r.l.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package it.nextworks.composer.executor.interfaces;
 
-import java.util.List;
 import it.nextworks.sdk.MonitoringParameter;
-import it.nextworks.sdk.SDKService;
 import it.nextworks.sdk.ScalingAspect;
+import it.nextworks.sdk.SdkService;
 import it.nextworks.sdk.exceptions.AlreadyPublishedServiceException;
 import it.nextworks.sdk.exceptions.ExistingEntityException;
-import it.nextworks.sdk.exceptions.MalformattedElementException;
+import it.nextworks.sdk.exceptions.MalformedElementException;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
 import it.nextworks.sdk.exceptions.NotPublishedServiceException;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Set;
+
 public interface ServiceManagerProviderInterface {
 
-	public SDKService getServiceById(Long id) throws NotExistingEntityException;
-	
-	public List<SDKService> getServices() throws NotExistingEntityException;
-	
-	public List<SDKService> getServicesUsingFunction(Long functionId) throws NotExistingEntityException;
-		
-	public String createService(SDKService service) throws ExistingEntityException, NotExistingEntityException, MalformattedElementException;
-	
-	public String updateService(SDKService service) throws NotExistingEntityException, MalformattedElementException;
-	
-	public void deleteService(Long serviceId) throws NotExistingEntityException;
-	
-	public void publishService(Long serviceId) throws NotExistingEntityException, AlreadyPublishedServiceException;
-	
-	public void unPublishService(Long serviceId) throws NotExistingEntityException, NotPublishedServiceException;
-	
-	public void updateScalingAspect(Long serviceId, List<ScalingAspect> scalingAspects) throws NotExistingEntityException, MalformattedElementException;
+    SdkService getServiceById(Long id) throws NotExistingEntityException;
 
-	public void deleteScalingAspect(Long serviceId, List<ScalingAspect> scalingAspects) throws NotExistingEntityException, MalformattedElementException;
+    List<SdkService> getServices() throws NotExistingEntityException;
 
-	public List<ScalingAspect> getScalingAspect(Long serviceId) throws NotExistingEntityException;
+    List<SdkService> getServicesUsingFunction(Long functionId) throws NotExistingEntityException;
 
-	public void updateMonitoringParameters(Long serviceId, List<MonitoringParameter> monitoringParameters) throws NotExistingEntityException, MalformattedElementException;
+    String createService(SdkService service) throws ExistingEntityException, NotExistingEntityException, MalformedElementException;
 
-	public void deleteMonitoringParameters(Long serviceId, List<MonitoringParameter> monitoringParameters) throws NotExistingEntityException, MalformattedElementException;
+    String updateService(SdkService service) throws NotExistingEntityException, MalformedElementException;
 
-	public List<MonitoringParameter> getMonitoringParameters(Long serviceId) throws NotExistingEntityException;
-	
+    void deleteService(Long serviceId) throws NotExistingEntityException;
+
+    String publishService(Long serviceId, List<BigDecimal> parameterValues) throws NotExistingEntityException;
+
+    void publishService(Long serviceInstanceId) throws NotExistingEntityException, AlreadyPublishedServiceException;
+
+    void unPublishService(Long serviceInstanceId) throws NotExistingEntityException, NotPublishedServiceException;
+
+    void updateScalingAspect(Long serviceId, Set<ScalingAspect> scalingAspects) throws NotExistingEntityException, MalformedElementException;
+
+    void deleteScalingAspect(Long serviceId, Set<ScalingAspect> scalingAspects) throws NotExistingEntityException, MalformedElementException;
+
+    List<ScalingAspect> getScalingAspect(Long serviceId) throws NotExistingEntityException;
+
+    void updateMonitoringParameters(Long serviceId, Set<MonitoringParameter> monitoringParameters) throws NotExistingEntityException, MalformedElementException;
+
+    void deleteMonitoringParameters(Long serviceId, Set<MonitoringParameter> monitoringParameters) throws NotExistingEntityException, MalformedElementException;
+
+    List<MonitoringParameter> getMonitoringParameters(Long serviceId) throws NotExistingEntityException;
+
 }

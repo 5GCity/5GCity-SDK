@@ -6,6 +6,7 @@ import it.nextworks.sdk.evalex.ExtendedExpression;
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -15,10 +16,7 @@ import java.util.Set;
  */
 public class SdkFunctionInstance implements SdkComponentInstance<SdkFunction> {
 
-    // TODO JPA, equals etc etc
-    // TODO: maybe not needed?
-
-    private Integer id;
+    private Long id;
 
     private SdkFunction template;
 
@@ -26,29 +24,16 @@ public class SdkFunctionInstance implements SdkComponentInstance<SdkFunction> {
 
     private List<BigDecimal> parameterValues;
 
-    public Integer getId() {
-        return id;
-    }
-
-    public SdkFunction getTemplate() {
-        return template;
-    }
-
-    @JsonIgnore
-    public Integer getOuterServiceId() {
-        return service.getId();
-    }
-
     public SdkFunctionInstance(
-            SdkFunction template,
-            List<BigDecimal> parameterValues,
-            SdkServiceInstance service
+        SdkFunction template,
+        List<BigDecimal> parameterValues,
+        SdkServiceInstance service
     ) {
         if (!(template.getFreeParametersNumber() == parameterValues.size())) {
             throw new IllegalArgumentException(String.format(
-                    "Parameter number not matching: expected %s, got %s",
-                    template.getFreeParametersNumber(),
-                    parameterValues.size()
+                "Parameter number not matching: expected %s, got %s",
+                template.getFreeParametersNumber(),
+                parameterValues.size()
             ));
         }
         this.parameterValues = parameterValues;
@@ -56,11 +41,28 @@ public class SdkFunctionInstance implements SdkComponentInstance<SdkFunction> {
         this.service = service;
     }
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public SdkFunction getTemplate() {
+        return template;
+    }
+
+    @JsonIgnore
+    public Long getOuterServiceId() {
+        return service.getId();
+    }
+
     @JsonIgnore
     public boolean isValid() {
         return template != null
-                && parameterValues != null
-                && template.getFreeParametersNumber() == parameterValues.size();
+            && parameterValues != null
+            && template.getFreeParametersNumber() == parameterValues.size();
     }
 
     @JsonIgnore
@@ -92,7 +94,18 @@ public class SdkFunctionInstance implements SdkComponentInstance<SdkFunction> {
     }
 
     @Override
-    public ServiceInformation makeInformation() {
-        return new ServiceInformation(this);
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof SdkFunctionInstance)) return false;
+        SdkFunctionInstance that = (SdkFunctionInstance) o;
+        return Objects.equals(getId(), that.getId()) &&
+            Objects.equals(getTemplate(), that.getTemplate()) &&
+            Objects.equals(service, that.service) &&
+            Objects.equals(parameterValues, that.parameterValues);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId(), getTemplate(), service, parameterValues);
     }
 }

@@ -1,5 +1,10 @@
 package it.nextworks.composer.plugins.catalogue.invoker.vnf;
 
+import it.nextworks.composer.plugins.catalogue.Catalogue;
+import it.nextworks.composer.plugins.catalogue.invoker.vnf.auth.ApiKeyAuth;
+import it.nextworks.composer.plugins.catalogue.invoker.vnf.auth.Authentication;
+import it.nextworks.composer.plugins.catalogue.invoker.vnf.auth.HttpBasicAuth;
+import it.nextworks.composer.plugins.catalogue.invoker.vnf.auth.OAuth;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,72 +38,42 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.ParseException;
-import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Map.Entry;
 import java.util.TimeZone;
-
-import it.nextworks.composer.plugins.catalogue.invoker.vnf.auth.Authentication;
-import it.nextworks.composer.plugins.catalogue.invoker.vnf.auth.HttpBasicAuth;
-import it.nextworks.composer.executor.repositories.CatalogueRepository;
-import it.nextworks.composer.plugins.catalogue.Catalogue;
-import it.nextworks.composer.plugins.catalogue.invoker.vnf.auth.ApiKeyAuth;
-import it.nextworks.composer.plugins.catalogue.invoker.vnf.auth.OAuth;
 
 @javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2018-11-21T15:10:42.557+01:00")
 @Component("it.nextworks.composer.plugins.catalogue.invoker.vnf.ApiClient")
 public class ApiClient {
-    public enum CollectionFormat {
-        CSV(","), TSV("\t"), SSV(" "), PIPES("|"), MULTI(null);
-
-        private final String separator;
-        private CollectionFormat(String separator) {
-            this.separator = separator;
-        }
-
-        private String collectionToString(Collection<? extends CharSequence> collection) {
-            return StringUtils.collectionToDelimitedString(collection, separator);
-        }
-    }
-    
     private boolean debugging = false;
-    
     private HttpHeaders defaultHeaders = new HttpHeaders();
-    
     private String basePath = "https://localhost";
-
     private RestTemplate restTemplate;
-
     private Map<String, Authentication> authentications;
-
     private HttpStatus statusCode;
     private MultiValueMap<String, String> responseHeaders;
-    
     private DateFormat dateFormat;
-    
-    
+
     public ApiClient(Catalogue catalogue) {
-    	this.basePath = catalogue.getUrl();
+        this.basePath = catalogue.getUrl();
         this.restTemplate = buildRestTemplate();
         init();
     }
-    
-    
+
+
     @Autowired
     public ApiClient(RestTemplate restTemplate, Catalogue catalogue) {
-    	this.basePath = catalogue.getUrl();
+        this.basePath = catalogue.getUrl();
         this.restTemplate = restTemplate;
         init();
     }
-    
+
     protected void init() {
         // Use RFC3339 format for date and datetime.
         // See http://xml2rfc.ietf.org/public/rfc/html/rfc3339.html#anchor14
@@ -115,9 +90,10 @@ public class ApiClient {
         // Prevent the authentications from being modified.
         //authentications = Collections.unmodifiableMap(authentications);
     }
-    
+
     /**
      * Get the current base path
+     *
      * @return String the base path
      */
     public String getBasePath() {
@@ -126,6 +102,7 @@ public class ApiClient {
 
     /**
      * Set the base path, which should include the host
+     *
      * @param basePath the base path
      * @return ApiClient this client
      */
@@ -136,6 +113,7 @@ public class ApiClient {
 
     /**
      * Gets the status code of the previous request
+     *
      * @return HttpStatus the status code
      */
     public HttpStatus getStatusCode() {
@@ -144,6 +122,7 @@ public class ApiClient {
 
     /**
      * Gets the response headers of the previous request
+     *
      * @return MultiValueMap a map of response headers
      */
     public MultiValueMap<String, String> getResponseHeaders() {
@@ -152,6 +131,7 @@ public class ApiClient {
 
     /**
      * Get authentications (key: authentication name, value: authentication).
+     *
      * @return Map the currently configured authentication types
      */
     public Map<String, Authentication> getAuthentications() {
@@ -170,6 +150,7 @@ public class ApiClient {
 
     /**
      * Helper method to set username for the first HTTP basic authentication.
+     *
      * @param username the username
      */
     public void setUsername(String username) {
@@ -184,6 +165,7 @@ public class ApiClient {
 
     /**
      * Helper method to set password for the first HTTP basic authentication.
+     *
      * @param password the password
      */
     public void setPassword(String password) {
@@ -198,6 +180,7 @@ public class ApiClient {
 
     /**
      * Helper method to set API key value for the first API key authentication.
+     *
      * @param apiKey the API key
      */
     public void setApiKey(String apiKey) {
@@ -212,6 +195,7 @@ public class ApiClient {
 
     /**
      * Helper method to set API key prefix for the first API key authentication.
+     *
      * @param apiKeyPrefix the API key prefix
      */
     public void setApiKeyPrefix(String apiKeyPrefix) {
@@ -226,6 +210,7 @@ public class ApiClient {
 
     /**
      * Helper method to set access token for the first OAuth2 authentication.
+     *
      * @param accessToken the access token
      */
     public void setAccessToken(String accessToken) {
@@ -240,6 +225,7 @@ public class ApiClient {
 
     /**
      * Set the User-Agent header's value (by adding to the default header map).
+     *
      * @param userAgent the user agent string
      * @return ApiClient this client
      */
@@ -251,7 +237,7 @@ public class ApiClient {
     /**
      * Add a default header.
      *
-     * @param name The header's name
+     * @param name  The header's name
      * @param value The header's value
      * @return ApiClient this client
      */
@@ -259,10 +245,19 @@ public class ApiClient {
         defaultHeaders.add(name, value);
         return this;
     }
-    
+
+    /**
+     * Check that whether debugging is enabled for this API client.
+     *
+     * @return boolean true if this client is enabled for debugging, false otherwise
+     */
+    public boolean isDebugging() {
+        return debugging;
+    }
+
     public void setDebugging(boolean debugging) {
         List<ClientHttpRequestInterceptor> currentInterceptors = this.restTemplate.getInterceptors();
-        if(debugging) {
+        if (debugging) {
             if (currentInterceptors == null) {
                 currentInterceptors = new ArrayList<ClientHttpRequestInterceptor>();
             }
@@ -285,15 +280,8 @@ public class ApiClient {
     }
 
     /**
-     * Check that whether debugging is enabled for this API client.
-     * @return boolean true if this client is enabled for debugging, false otherwise
-     */
-    public boolean isDebugging() {
-        return debugging;
-    }
-
-    /**
      * Get the date format used to parse/format date parameters.
+     *
      * @return DateFormat format
      */
     public DateFormat getDateFormat() {
@@ -302,6 +290,7 @@ public class ApiClient {
 
     /**
      * Set the date format used to parse/format date parameters.
+     *
      * @param dateFormat Date format
      * @return API client
      */
@@ -309,7 +298,7 @@ public class ApiClient {
         this.dateFormat = dateFormat;
         return this;
     }
-    
+
     /**
      * Parse the given string into Date object.
      */
@@ -330,6 +319,7 @@ public class ApiClient {
 
     /**
      * Format the given parameter object into string.
+     *
      * @param param the object to convert
      * @return String the parameter represented as a String
      */
@@ -337,11 +327,11 @@ public class ApiClient {
         if (param == null) {
             return "";
         } else if (param instanceof Date) {
-            return formatDate( (Date) param);
+            return formatDate((Date) param);
         } else if (param instanceof Collection) {
             StringBuilder b = new StringBuilder();
-            for(Object o : (Collection<?>) param) {
-                if(b.length() > 0) {
+            for (Object o : (Collection<?>) param) {
+                if (b.length() > 0) {
                     b.append(",");
                 }
                 b.append(String.valueOf(o));
@@ -354,9 +344,10 @@ public class ApiClient {
 
     /**
      * Converts a parameter to a {@link MultiValueMap} for use in REST requests
+     *
      * @param collectionFormat The format to convert to
-     * @param name The name of the parameter
-     * @param value The parameter's value
+     * @param name             The name of the parameter
+     * @param value            The parameter's value
      * @return a Map containing the String value(s) of the input parameter
      */
     public MultiValueMap<String, String> parameterToMultiValueMap(CollectionFormat collectionFormat, String name, Object value) {
@@ -366,7 +357,7 @@ public class ApiClient {
             return params;
         }
 
-        if(collectionFormat == null) {
+        if (collectionFormat == null) {
             collectionFormat = CollectionFormat.CSV;
         }
 
@@ -378,7 +369,7 @@ public class ApiClient {
             return params;
         }
 
-        if (valueCollection.isEmpty()){
+        if (valueCollection.isEmpty()) {
             return params;
         }
 
@@ -390,7 +381,7 @@ public class ApiClient {
         }
 
         List<String> values = new ArrayList<String>();
-        for(Object o : valueCollection) {
+        for (Object o : valueCollection) {
             values.add(parameterToString(o));
         }
         params.add(name, collectionFormat.collectionToString(values));
@@ -399,10 +390,11 @@ public class ApiClient {
     }
 
     /**
-    * Check if the given {@code String} is a JSON MIME.
-    * @param mediaType the input MediaType
-    * @return boolean true if the MediaType represents JSON, false otherwise
-    */
+     * Check if the given {@code String} is a JSON MIME.
+     *
+     * @param mediaType the input MediaType
+     * @return boolean true if the MediaType represents JSON, false otherwise
+     */
     public boolean isJsonMime(String mediaType) {
         try {
             return isJsonMime(MediaType.parseMediaType(mediaType));
@@ -414,9 +406,10 @@ public class ApiClient {
     /**
      * Check if the given MIME is a JSON MIME.
      * JSON MIME examples:
-     *     application/json
-     *     application/json; charset=UTF8
-     *     APPLICATION/JSON
+     * application/json
+     * application/json; charset=UTF8
+     * APPLICATION/JSON
+     *
      * @param mediaType the input MediaType
      * @return boolean true if the MediaType represents JSON, false otherwise
      */
@@ -426,8 +419,8 @@ public class ApiClient {
 
     /**
      * Select the Accept header's value from the given accepts array:
-     *     if JSON exists in the given array, use it;
-     *     otherwise use all of them (joining into a string)
+     * if JSON exists in the given array, use it;
+     * otherwise use all of them (joining into a string)
      *
      * @param accepts The accepts array to select from
      * @return List The list of MediaTypes to use for the Accept header
@@ -447,8 +440,8 @@ public class ApiClient {
 
     /**
      * Select the Content-Type header's value from the given array:
-     *     if JSON exists in the given array, use it;
-     *     otherwise use the first one of the array.
+     * if JSON exists in the given array, use it;
+     * otherwise use the first one of the array.
      *
      * @param contentTypes The Content-Type array to select from
      * @return MediaType The Content-Type header to use. If the given array is empty, JSON will be used.
@@ -468,8 +461,9 @@ public class ApiClient {
 
     /**
      * Select the body to use for the request
-     * @param obj the body object
-     * @param formParams the form parameters
+     *
+     * @param obj         the body object
+     * @param formParams  the form parameters
      * @param contentType the content type of the request
      * @return Object the selected body
      */
@@ -481,42 +475,42 @@ public class ApiClient {
     /**
      * Invoke API by sending HTTP request with the given options.
      *
-     * @param <T> the return type to use
-     * @param path The sub-path of the HTTP URL
-     * @param method The request method
-     * @param queryParams The query parameters
-     * @param body The request body object
+     * @param <T>          the return type to use
+     * @param path         The sub-path of the HTTP URL
+     * @param method       The request method
+     * @param queryParams  The query parameters
+     * @param body         The request body object
      * @param headerParams The header parameters
-     * @param formParams The form parameters
-     * @param accept The request's Accept header
-     * @param contentType The request's Content-Type header
-     * @param authNames The authentications to apply
-     * @param returnType The return type into which to deserialize the response
+     * @param formParams   The form parameters
+     * @param accept       The request's Accept header
+     * @param contentType  The request's Content-Type header
+     * @param authNames    The authentications to apply
+     * @param returnType   The return type into which to deserialize the response
      * @return The response body in chosen type
      */
     public <T> T invokeAPI(String path, HttpMethod method, MultiValueMap<String, String> queryParams, Object body, HttpHeaders headerParams, MultiValueMap<String, Object> formParams, List<MediaType> accept, MediaType contentType, String[] authNames, ParameterizedTypeReference<T> returnType) throws RestClientException {
         updateParamsForAuth(authNames, queryParams, headerParams);
-        
+
         final UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(basePath).path(path);
         if (queryParams != null) {
             builder.queryParams(queryParams);
         }
-        
+
         final BodyBuilder requestBuilder = RequestEntity.method(method, builder.build().toUri());
-        if(accept != null) {
+        if (accept != null) {
             requestBuilder.accept(accept.toArray(new MediaType[accept.size()]));
         }
-        if(contentType != null) {
+        if (contentType != null) {
             requestBuilder.contentType(contentType);
         }
-        
+
         addHeadersToRequest(headerParams, requestBuilder);
         addHeadersToRequest(defaultHeaders, requestBuilder);
-        
+
         RequestEntity<Object> requestEntity = requestBuilder.body(selectBody(body, formParams, contentType));
 
         ResponseEntity<T> responseEntity = restTemplate.exchange(requestEntity, returnType);
-        
+
         statusCode = responseEntity.getStatusCode();
         responseHeaders = responseEntity.getHeaders();
 
@@ -532,16 +526,17 @@ public class ApiClient {
             throw new RestClientException("API returned " + statusCode + " and it wasn't handled by the RestTemplate error handler");
         }
     }
-    
+
     /**
      * Add headers to the request that is being built
-     * @param headers The headers to add
+     *
+     * @param headers        The headers to add
      * @param requestBuilder The current request
      */
     protected void addHeadersToRequest(HttpHeaders headers, BodyBuilder requestBuilder) {
         for (Entry<String, List<String>> entry : headers.entrySet()) {
             List<String> values = entry.getValue();
-            for(String value : values) {
+            for (String value : values) {
                 if (value != null) {
                     requestBuilder.header(entry.getKey(), value);
                 }
@@ -551,6 +546,7 @@ public class ApiClient {
 
     /**
      * Build the RestTemplate used to make HTTP requests.
+     *
      * @return RestTemplate
      */
     protected RestTemplate buildRestTemplate() {
@@ -563,8 +559,8 @@ public class ApiClient {
     /**
      * Update query and header parameters based on authentication settings.
      *
-     * @param authNames The authentications to apply
-     * @param queryParams The query parameters
+     * @param authNames    The authentications to apply
+     * @param queryParams  The query parameters
      * @param headerParams The header parameters
      */
     private void updateParamsForAuth(String[] authNames, MultiValueMap<String, String> queryParams, HttpHeaders headerParams) {
@@ -576,7 +572,21 @@ public class ApiClient {
             auth.applyToParams(queryParams, headerParams);
         }
     }
-    
+
+    public enum CollectionFormat {
+        CSV(","), TSV("\t"), SSV(" "), PIPES("|"), MULTI(null);
+
+        private final String separator;
+
+        private CollectionFormat(String separator) {
+            this.separator = separator;
+        }
+
+        private String collectionToString(Collection<? extends CharSequence> collection) {
+            return StringUtils.collectionToDelimitedString(collection, separator);
+        }
+    }
+
     private class ApiClientHttpRequestInterceptor implements ClientHttpRequestInterceptor {
         private final Log log = LogFactory.getLog(ApiClientHttpRequestInterceptor.class);
 
@@ -604,9 +614,9 @@ public class ApiClient {
 
         private String headersToString(HttpHeaders headers) {
             StringBuilder builder = new StringBuilder();
-            for(Entry<String, List<String>> entry : headers.entrySet()) {
+            for (Entry<String, List<String>> entry : headers.entrySet()) {
                 builder.append(entry.getKey()).append("=[");
-                for(String value : entry.getValue()) {
+                for (String value : entry.getValue()) {
                     builder.append(value).append(",");
                 }
                 builder.setLength(builder.length() - 1); // Get rid of trailing comma
@@ -615,7 +625,7 @@ public class ApiClient {
             builder.setLength(builder.length() - 1); // Get rid of trailing comma
             return builder.toString();
         }
-        
+
         private String bodyToString(InputStream body) throws IOException {
             StringBuilder builder = new StringBuilder();
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(body, StandardCharsets.UTF_8));

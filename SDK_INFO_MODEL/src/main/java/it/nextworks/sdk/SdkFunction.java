@@ -1,15 +1,10 @@
 package it.nextworks.sdk;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import it.nextworks.sdk.enums.SdkServiceComponentType;
 import it.nextworks.sdk.evalex.ExtendedExpression;
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.Fetch;
@@ -27,47 +22,58 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
+import javax.persistence.OrderColumn;
+import javax.persistence.PostLoad;
+import javax.persistence.PostPersist;
+import javax.persistence.PostUpdate;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 
 /**
  * SDKFunction
  * <p>
- * 
- * 
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-    "connection_point",
+    "id",
+    "name",
     "description",
+    "vendor",
+    "version",
     "parameters",
     "vnfdId",
     "flavourExpression",
     "instantiationLevelExpression",
-    "id",
     "metadata",
+    "connection_point",
     "monitoringParameters",
-    "requiredPorts",
-    "name",
-    "vendor",
-    "version"
+    "requiredPorts"
 })
 @Entity
-public class SdkFunction implements SdkComponentCandidate<SdkFunction> {
+public class SdkFunction implements InstantiableCandidate<SdkFunction> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Integer id;
+    private Long id;
 
-    @OneToMany(mappedBy = "sdkFunction", cascade= CascadeType.ALL)
+    @OneToMany(mappedBy = "sdkFunction", cascade = CascadeType.ALL)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
-    private List<ConnectionPoint> connectionPoint = new ArrayList<>();
+    private Set<ConnectionPoint> connectionPoint = new HashSet<>();
 
     private String description;
 
-    @ElementCollection(fetch= FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.EAGER)
     @Fetch(FetchMode.SELECT)
     @Cascade(org.hibernate.annotations.CascadeType.ALL)
+    @OrderColumn
     private List<String> parameters = new ArrayList<>();
 
     private String vnfdId;
@@ -76,21 +82,15 @@ public class SdkFunction implements SdkComponentCandidate<SdkFunction> {
 
     private String instantiationLevelExpression;
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    @ElementCollection(fetch= FetchType.EAGER)
-    @Fetch(FetchMode.SELECT)
-    @Cascade(org.hibernate.annotations.CascadeType.ALL)
-    private Map<String, String> metadata = new HashMap<>();
-
-    @OneToMany(mappedBy = "function", cascade=CascadeType.ALL)
+    @OneToMany(mappedBy = "function", cascade = CascadeType.ALL)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
-    private List<MonitoringParameter> monitoringParameters = new ArrayList<>();
+    private Set<Metadata> metadata = new HashSet<>();
 
-    @ElementCollection(fetch= FetchType.EAGER)
-    @Fetch(FetchMode.SELECT)
-    @Cascade(org.hibernate.annotations.CascadeType.ALL)
-    private List<RequiredPort> requiredPorts = new ArrayList<>();
+    @OneToMany(mappedBy = "function", cascade = CascadeType.ALL)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @LazyCollection(LazyCollectionOption.FALSE)
+    private Set<MonitoringParameter> monitoringParameters = new HashSet<>();
 
     private String name;
 
@@ -98,13 +98,20 @@ public class SdkFunction implements SdkComponentCandidate<SdkFunction> {
 
     private String version;
 
+    @Override
+    @JsonIgnore
+    public Map<Long, ConnectionPoint> getConnectionPointMap() {
+        return connectionPoint.stream()
+            .collect(Collectors.toMap(ConnectionPoint::getId, Function.identity()));
+    }
+
     @JsonProperty("connection_point")
-    public List<ConnectionPoint> getConnectionPoint() {
+    public Set<ConnectionPoint> getConnectionPoint() {
         return connectionPoint;
     }
 
     @JsonProperty("connection_point")
-    public void setConnectionPoint(List<ConnectionPoint> connectionPoint) {
+    public void setConnectionPoint(Set<ConnectionPoint> connectionPoint) {
         this.connectionPoint = connectionPoint;
     }
 
@@ -165,40 +172,34 @@ public class SdkFunction implements SdkComponentCandidate<SdkFunction> {
 
     @JsonProperty("id")
     @Override
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("metadata")
     public Map<String, String> getMetadata() {
-        return metadata;
+        return metadata.stream().collect(Collectors.toMap(Metadata::getKey, Metadata::getValue));
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("metadata")
     public void setMetadata(Map<String, String> metadata) {
-        this.metadata = metadata;
+        this.metadata = metadata.entrySet().stream()
+            .map(e -> new Metadata(e.getKey(), e.getValue(), this))
+            .collect(Collectors.toSet());
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("monitoringParameters")
-    public List<MonitoringParameter> getMonitoringParameters() {
+    public Set<MonitoringParameter> getMonitoringParameters() {
         return monitoringParameters;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("monitoringParameters")
-    public void setMonitoringParameters(List<MonitoringParameter> monitoringParameters) {
+    public void setMonitoringParameters(Set<MonitoringParameter> monitoringParameters) {
         this.monitoringParameters = monitoringParameters;
-    }
-
-    @JsonProperty("requiredPorts")
-    public List<RequiredPort> getRequiredPorts() {
-        return requiredPorts;
-    }
-
-    @JsonProperty("requiredPorts")
-    public void setRequiredPorts(List<RequiredPort> requiredPorts) {
-        this.requiredPorts = requiredPorts;
     }
 
     @JsonProperty("name")
@@ -231,6 +232,12 @@ public class SdkFunction implements SdkComponentCandidate<SdkFunction> {
         this.version = version;
     }
 
+    @Override
+    @JsonIgnore
+    public SdkServiceComponentType getType() {
+        return SdkServiceComponentType.SDK_FUNCTION;
+    }
+
     @JsonIgnore
     public ExtendedExpression<String> getFlavourCompiledExpression() {
         return ExtendedExpression.stringValued(flavourExpression, parameters);
@@ -243,8 +250,8 @@ public class SdkFunction implements SdkComponentCandidate<SdkFunction> {
 
     @Override
     public SdkComponentInstance<SdkFunction> instantiate(
-            List<BigDecimal> parameterValues,
-            SdkServiceInstance outerService
+        List<BigDecimal> parameterValues,
+        SdkServiceInstance outerService
     ) {
         return new SdkFunctionInstance(this, parameterValues, outerService);
     }
@@ -253,63 +260,57 @@ public class SdkFunction implements SdkComponentCandidate<SdkFunction> {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(SdkFunction.class.getName())
-                .append('@')
-                .append(Integer.toHexString(System.identityHashCode(this)))
-                .append('[');
+            .append('[');
         sb.append("connectionPoint");
         sb.append('=');
-        sb.append(((this.connectionPoint == null)?"<null>":this.connectionPoint));
+        sb.append(((this.connectionPoint == null) ? "<null>" : this.connectionPoint));
         sb.append(',');
         sb.append("description");
         sb.append('=');
-        sb.append(((this.description == null)?"<null>":this.description));
+        sb.append(((this.description == null) ? "<null>" : this.description));
         sb.append(',');
         sb.append("parameters");
         sb.append('=');
-        sb.append(((this.parameters == null)?"<null>":this.parameters));
+        sb.append(((this.parameters == null) ? "<null>" : this.parameters));
         sb.append(',');
         sb.append("vnfdId");
         sb.append('=');
-        sb.append(((this.vnfdId == null)?"<null>":this.vnfdId));
+        sb.append(((this.vnfdId == null) ? "<null>" : this.vnfdId));
         sb.append(',');
         sb.append("flavourExpression");
         sb.append('=');
-        sb.append(((this.flavourExpression == null)?"<null>":this.flavourExpression));
+        sb.append(((this.flavourExpression == null) ? "<null>" : this.flavourExpression));
         sb.append(',');
         sb.append("instantiationLevelExpression");
         sb.append('=');
-        sb.append(((this.instantiationLevelExpression == null)?"<null>":this.instantiationLevelExpression));
+        sb.append(((this.instantiationLevelExpression == null) ? "<null>" : this.instantiationLevelExpression));
         sb.append(',');
         sb.append("id");
         sb.append('=');
-        sb.append(((this.id == null)?"<null>":this.id));
+        sb.append(((this.id == null) ? "<null>" : this.id));
         sb.append(',');
         sb.append("metadata");
         sb.append('=');
-        sb.append(((this.metadata == null)?"<null>":this.metadata));
+        sb.append(((this.metadata == null) ? "<null>" : this.metadata));
         sb.append(',');
         sb.append("monitoringParameters");
         sb.append('=');
-        sb.append(((this.monitoringParameters == null)?"<null>":this.monitoringParameters));
-        sb.append(',');
-        sb.append("requiredPorts");
-        sb.append('=');
-        sb.append(((this.requiredPorts == null)?"<null>":this.requiredPorts));
+        sb.append(((this.monitoringParameters == null) ? "<null>" : this.monitoringParameters));
         sb.append(',');
         sb.append("name");
         sb.append('=');
-        sb.append(((this.name == null)?"<null>":this.name));
+        sb.append(((this.name == null) ? "<null>" : this.name));
         sb.append(',');
         sb.append("vendor");
         sb.append('=');
-        sb.append(((this.vendor == null)?"<null>":this.vendor));
+        sb.append(((this.vendor == null) ? "<null>" : this.vendor));
         sb.append(',');
         sb.append("version");
         sb.append('=');
-        sb.append(((this.version == null)?"<null>":this.version));
+        sb.append(((this.version == null) ? "<null>" : this.version));
         sb.append(',');
-        if (sb.charAt((sb.length()- 1)) == ',') {
-            sb.setCharAt((sb.length()- 1), ']');
+        if (sb.charAt((sb.length() - 1)) == ',') {
+            sb.setCharAt((sb.length() - 1), ']');
         } else {
             sb.append(']');
         }
@@ -319,19 +320,18 @@ public class SdkFunction implements SdkComponentCandidate<SdkFunction> {
     @Override
     public int hashCode() {
         int result = 1;
-        result = ((result* 31)+((this.metadata == null)? 0 :this.metadata.hashCode()));
-        result = ((result* 31)+((this.instantiationLevelExpression == null)? 0 :this.instantiationLevelExpression.hashCode()));
-        result = ((result* 31)+((this.vnfdId == null)? 0 :this.vnfdId.hashCode()));
-        result = ((result* 31)+((this.description == null)? 0 :this.description.hashCode()));
-        result = ((result* 31)+((this.requiredPorts == null)? 0 :this.requiredPorts.hashCode()));
-        result = ((result* 31)+((this.version == null)? 0 :this.version.hashCode()));
-        result = ((result* 31)+((this.monitoringParameters == null)? 0 :this.monitoringParameters.hashCode()));
-        result = ((result* 31)+((this.flavourExpression == null)? 0 :this.flavourExpression.hashCode()));
-        result = ((result* 31)+((this.vendor == null)? 0 :this.vendor.hashCode()));
-        result = ((result* 31)+((this.name == null)? 0 :this.name.hashCode()));
-        result = ((result* 31)+((this.connectionPoint == null)? 0 :this.connectionPoint.hashCode()));
-        result = ((result* 31)+((this.id == null)? 0 :this.id.hashCode()));
-        result = ((result* 31)+((this.parameters == null)? 0 :this.parameters.hashCode()));
+        result = ((result * 31) + ((this.metadata == null) ? 0 : this.metadata.hashCode()));
+        result = ((result * 31) + ((this.instantiationLevelExpression == null) ? 0 : this.instantiationLevelExpression.hashCode()));
+        result = ((result * 31) + ((this.vnfdId == null) ? 0 : this.vnfdId.hashCode()));
+        result = ((result * 31) + ((this.description == null) ? 0 : this.description.hashCode()));
+        result = ((result * 31) + ((this.version == null) ? 0 : this.version.hashCode()));
+        result = ((result * 31) + ((this.monitoringParameters == null) ? 0 : this.monitoringParameters.hashCode()));
+        result = ((result * 31) + ((this.flavourExpression == null) ? 0 : this.flavourExpression.hashCode()));
+        result = ((result * 31) + ((this.vendor == null) ? 0 : this.vendor.hashCode()));
+        result = ((result * 31) + ((this.name == null) ? 0 : this.name.hashCode()));
+        result = ((result * 31) + ((this.connectionPoint == null) ? 0 : this.connectionPoint.hashCode()));
+        result = ((result * 31) + ((this.id == null) ? 0 : this.id.hashCode()));
+        result = ((result * 31) + ((this.parameters == null) ? 0 : this.parameters.hashCode()));
         return result;
     }
 
@@ -344,34 +344,33 @@ public class SdkFunction implements SdkComponentCandidate<SdkFunction> {
             return false;
         }
         SdkFunction rhs = ((SdkFunction) other);
-        return ((((((((((((
-                ((this.metadata == rhs.metadata)||((this.metadata!= null)&&this.metadata.equals(rhs.metadata)))
-                        &&((this.instantiationLevelExpression == rhs.instantiationLevelExpression)||((this.instantiationLevelExpression!= null)&&this.instantiationLevelExpression.equals(rhs.instantiationLevelExpression))))
-                &&((this.vnfdId == rhs.vnfdId)||((this.vnfdId!= null)&&this.vnfdId.equals(rhs.vnfdId))))
-                &&((this.description == rhs.description)||((this.description!= null)&&this.description.equals(rhs.description))))
-                &&((this.requiredPorts == rhs.requiredPorts)||((this.requiredPorts!= null)&&this.requiredPorts.equals(rhs.requiredPorts))))
-                &&((this.version == rhs.version)||((this.version!= null)&&this.version.equals(rhs.version))))
-                &&((this.monitoringParameters == rhs.monitoringParameters)||((this.monitoringParameters!= null)&&this.monitoringParameters.equals(rhs.monitoringParameters))))
-                &&((this.flavourExpression == rhs.flavourExpression)||((this.flavourExpression!= null)&&this.flavourExpression.equals(rhs.flavourExpression))))
-                &&((this.vendor == rhs.vendor)||((this.vendor!= null)&&this.vendor.equals(rhs.vendor))))
-                &&((this.name == rhs.name)||((this.name!= null)&&this.name.equals(rhs.name))))
-                &&((this.connectionPoint == rhs.connectionPoint)||((this.connectionPoint!= null)&&this.connectionPoint.equals(rhs.connectionPoint))))
-                &&((this.id == rhs.id)||((this.id!= null)&&this.id.equals(rhs.id))))
-                &&((this.parameters == rhs.parameters)||((this.parameters!= null)&&this.parameters.equals(rhs.parameters))));
+        return (((((((((((((this.metadata == rhs.metadata) || ((this.metadata != null) && this.metadata.equals(rhs.metadata)))
+            && ((this.instantiationLevelExpression == rhs.instantiationLevelExpression) || ((this.instantiationLevelExpression != null) && this.instantiationLevelExpression.equals(rhs.instantiationLevelExpression))))
+            && ((this.vnfdId == rhs.vnfdId) || ((this.vnfdId != null) && this.vnfdId.equals(rhs.vnfdId))))
+            && ((this.description == rhs.description) || ((this.description != null) && this.description.equals(rhs.description))))
+            && ((this.version == rhs.version) || ((this.version != null) && this.version.equals(rhs.version))))
+            && ((this.monitoringParameters == rhs.monitoringParameters) || ((this.monitoringParameters != null) && this.monitoringParameters.equals(rhs.monitoringParameters))))
+            && ((this.flavourExpression == rhs.flavourExpression) || ((this.flavourExpression != null) && this.flavourExpression.equals(rhs.flavourExpression))))
+            && ((this.vendor == rhs.vendor) || ((this.vendor != null) && this.vendor.equals(rhs.vendor))))
+            && ((this.name == rhs.name) || ((this.name != null) && this.name.equals(rhs.name))))
+            && ((this.connectionPoint == rhs.connectionPoint) || ((this.connectionPoint != null) && this.connectionPoint.equals(rhs.connectionPoint))))
+            && ((this.id == rhs.id) || ((this.id != null) && this.id.equals(rhs.id))))
+            && ((this.parameters == rhs.parameters) || ((this.parameters != null) && this.parameters.equals(rhs.parameters))));
     }
 
     @JsonIgnore
     @Override
     public boolean isValid() {
         return name != null && name.length() > 0
-                && connectionPoint != null && connectionPoint.size() > 0
-                && connectionPoint.stream().allMatch(ConnectionPoint::isValid)
-                && version != null && version.length() > 0
-                && vendor != null && vendor.length() > 0
-                && vnfdId != null && vnfdId.length() > 0
-                && instantiationLevelExpression != null
-                && flavourExpression != null
-                && validateExpressions();
+            && connectionPoint != null && connectionPoint.size() > 0
+            && connectionPoint.stream().allMatch(ConnectionPoint::isValid)
+            && version != null && version.length() > 0
+            && vendor != null && vendor.length() > 0
+            && vnfdId != null && vnfdId.length() > 0
+            && instantiationLevelExpression != null
+            && flavourExpression != null
+            && metadata != null
+            && validateExpressions();
     }
 
     private boolean validateExpressions() {
@@ -392,5 +391,16 @@ public class SdkFunction implements SdkComponentCandidate<SdkFunction> {
     @Override
     public Integer getFreeParametersNumber() {
         return parameters.size();
+    }
+
+    @PostLoad
+    @PostPersist
+    @PostUpdate
+    private void fixPersistence() {
+        // Cleanup persistence artifacts and weird collection implementations
+        connectionPoint = new HashSet<>(connectionPoint);
+        monitoringParameters = new HashSet<>(monitoringParameters);
+        metadata = new HashSet<>(metadata);
+        parameters = new ArrayList<>(parameters);
     }
 }

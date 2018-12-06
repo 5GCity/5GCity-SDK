@@ -1,11 +1,10 @@
 package it.nextworks.composer.plugins.catalogue.invoker.vnf.auth;
 
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
-
 import org.springframework.http.HttpHeaders;
 import org.springframework.util.Base64Utils;
 import org.springframework.util.MultiValueMap;
+
+import java.nio.charset.StandardCharsets;
 
 @javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2018-11-21T15:10:42.557+01:00")
 public class HttpBasicAuth implements Authentication {

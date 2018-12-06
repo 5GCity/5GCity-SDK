@@ -17,14 +17,11 @@ import javax.persistence.ManyToOne;
 /**
  * MonitoringParameter
  * <p>
- * 
- * 
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-    "direction",
-    "id",
     "name",
+    "direction",
     "threshold"
 })
 @Entity
@@ -32,13 +29,22 @@ public class MonitoringParameter {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Integer id;
+    private Long id;
 
     private Direction direction;
 
     private MonitoringParameterName name;
 
     private Double threshold;
+
+    @ManyToOne
+    private SdkService service;
+
+    @ManyToOne
+    private SdkFunction function;
+
+    @ManyToOne
+    private ScalingAspect scalingAspect;
 
     @JsonProperty("direction")
     public Direction getDirection() {
@@ -50,8 +56,8 @@ public class MonitoringParameter {
         this.direction = direction;
     }
 
-    @JsonProperty("id")
-    public Integer getId() {
+    @JsonIgnore
+    public Long getId() {
         return id;
     }
 
@@ -76,22 +82,41 @@ public class MonitoringParameter {
     }
 
     @JsonIgnore
-    @ManyToOne
-    private SdkFunction function;
+    public SdkService getService() {
+        return service;
+    }
 
     @JsonIgnore
-    @ManyToOne
-    private SdkServiceInstance service;
+    public void setService(SdkService service) {
+        this.service = service;
+    }
 
     @JsonIgnore
-    @ManyToOne
-    private ScalingAspect scalingAspect;
+    public ScalingAspect getScalingAspect() {
+        return scalingAspect;
+    }
 
+    @JsonIgnore
+    public void setScalingAspect(ScalingAspect scalingAspect) {
+        this.scalingAspect = scalingAspect;
+    }
+
+    @JsonIgnore
+    public SdkFunction getFunction() {
+        return function;
+    }
+
+    @JsonIgnore
+    public void setFunction(SdkFunction function) {
+        this.function = function;
+    }
+
+    @JsonIgnore
     public boolean isValidForScalingPurpose() {
         return this.isValid()
-                && this.threshold > 0
-                && this.direction != null
-                && this.scalingAspect != null;
+            && this.threshold > 0
+            && this.direction != null
+            && this.scalingAspect != null;
     }
 
     @JsonIgnore
@@ -102,25 +127,26 @@ public class MonitoringParameter {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(MonitoringParameter.class.getName()).append('@').append(Integer.toHexString(System.identityHashCode(this))).append('[');
+        sb.append(MonitoringParameter.class.getName())
+            .append('[');
         sb.append("direction");
         sb.append('=');
-        sb.append(((this.direction == null)?"<null>":this.direction));
+        sb.append(((this.direction == null) ? "<null>" : this.direction));
         sb.append(',');
         sb.append("id");
         sb.append('=');
-        sb.append(((this.id == null)?"<null>":this.id));
+        sb.append(((this.id == null) ? "<null>" : this.id));
         sb.append(',');
         sb.append("name");
         sb.append('=');
-        sb.append(((this.name == null)?"<null>":this.name));
+        sb.append(((this.name == null) ? "<null>" : this.name));
         sb.append(',');
         sb.append("threshold");
         sb.append('=');
-        sb.append(((this.threshold == null)?"<null>":this.threshold));
+        sb.append(((this.threshold == null) ? "<null>" : this.threshold));
         sb.append(',');
-        if (sb.charAt((sb.length()- 1)) == ',') {
-            sb.setCharAt((sb.length()- 1), ']');
+        if (sb.charAt((sb.length() - 1)) == ',') {
+            sb.setCharAt((sb.length() - 1), ']');
         } else {
             sb.append(']');
         }
@@ -130,10 +156,10 @@ public class MonitoringParameter {
     @Override
     public int hashCode() {
         int result = 1;
-        result = ((result* 31)+((this.name == null)? 0 :this.name.hashCode()));
-        result = ((result* 31)+((this.threshold == null)? 0 :this.threshold.hashCode()));
-        result = ((result* 31)+((this.id == null)? 0 :this.id.hashCode()));
-        result = ((result* 31)+((this.direction == null)? 0 :this.direction.hashCode()));
+        result = ((result * 31) + ((this.name == null) ? 0 : this.name.hashCode()));
+        result = ((result * 31) + ((this.threshold == null) ? 0 : this.threshold.hashCode()));
+        result = ((result * 31) + ((this.id == null) ? 0 : this.id.hashCode()));
+        result = ((result * 31) + ((this.direction == null) ? 0 : this.direction.hashCode()));
         return result;
     }
 
@@ -146,10 +172,10 @@ public class MonitoringParameter {
             return false;
         }
         MonitoringParameter rhs = ((MonitoringParameter) other);
-        return (((((this.name == rhs.name)||((this.name!= null)&&this.name.equals(rhs.name)))
-                &&((this.threshold == rhs.threshold)||((this.threshold!= null)&&this.threshold.equals(rhs.threshold))))
-                &&((this.id == rhs.id)||((this.id!= null)&&this.id.equals(rhs.id))))
-                &&((this.direction == rhs.direction)||((this.direction!= null)&&this.direction.equals(rhs.direction))));
+        return (((((this.name == rhs.name) || ((this.name != null) && this.name.equals(rhs.name)))
+            && ((this.threshold == rhs.threshold) || ((this.threshold != null) && this.threshold.equals(rhs.threshold))))
+            && ((this.id == rhs.id) || ((this.id != null) && this.id.equals(rhs.id))))
+            && ((this.direction == rhs.direction) || ((this.direction != null) && this.direction.equals(rhs.direction))));
     }
 
 }

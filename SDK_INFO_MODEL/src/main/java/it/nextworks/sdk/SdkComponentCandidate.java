@@ -1,14 +1,16 @@
 package it.nextworks.sdk;
 
-import java.math.BigDecimal;
+import it.nextworks.sdk.enums.SdkServiceComponentType;
+
 import java.util.List;
+import java.util.Map;
 
 /**
  * Marker interface for the classes that can be an SdkServiceComponent
  *
  * @author Marco Capitani <m.capitani AT nextworks.it>
  */
-public interface SdkComponentCandidate<T> {
+public interface SdkComponentCandidate {
 
     Integer getFreeParametersNumber();
 
@@ -16,7 +18,9 @@ public interface SdkComponentCandidate<T> {
 
     boolean isValid();
 
-    Integer getId();
+    Long getId();
 
-    SdkComponentInstance<T> instantiate(List<BigDecimal> parameterValues, SdkServiceInstance outerService);
+    Map<Long, ConnectionPoint> getConnectionPointMap();
+
+    SdkServiceComponentType getType();
 }

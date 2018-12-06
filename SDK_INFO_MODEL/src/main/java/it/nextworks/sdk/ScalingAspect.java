@@ -1,8 +1,6 @@
 package it.nextworks.sdk;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -17,38 +15,43 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.PostLoad;
+import javax.persistence.PostPersist;
+import javax.persistence.PostUpdate;
+import java.util.HashSet;
+import java.util.Set;
 
 
 /**
  * ScalingAspect
  * <p>
- * 
- * 
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-    "action",
-    "id",
+    "name",
     "monitoring_parameter",
-    "name"
+    "action"
 })
 @Entity
 public class ScalingAspect {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Integer id;
+    private Long id;
 
     private ScalingAction action;
 
-    @OneToMany(mappedBy = "service", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "scalingAspect", cascade = CascadeType.ALL)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
-    @JsonProperty("monitoring_parameters")
-    private List<MonitoringParameter> monitoringParameter = new ArrayList<>();
+    private Set<MonitoringParameter> monitoringParameter = new HashSet<>();
 
     private String name;
+
+    @ManyToOne
+    private SdkService service;
 
     @JsonProperty("action")
     public ScalingAction getAction() {
@@ -60,18 +63,18 @@ public class ScalingAspect {
         this.action = action;
     }
 
-    @JsonProperty("id")
-    public Integer getId() {
+    @JsonIgnore
+    public Long getId() {
         return id;
     }
 
     @JsonProperty("monitoring_parameter")
-    public List<MonitoringParameter> getMonitoringParameter() {
+    public Set<MonitoringParameter> getMonitoringParameter() {
         return monitoringParameter;
     }
 
     @JsonProperty("monitoring_parameter")
-    public void setMonitoringParameter(List<MonitoringParameter> monitoringParameter) {
+    public void setMonitoringParameter(Set<MonitoringParameter> monitoringParameter) {
         this.monitoringParameter = monitoringParameter;
     }
 
@@ -85,38 +88,48 @@ public class ScalingAspect {
         this.name = name;
     }
 
+    @JsonIgnore
+    public SdkService getService() {
+        return service;
+    }
+
+    @JsonIgnore
+    public void setService(SdkService service) {
+        this.service = service;
+    }
+
+    @JsonIgnore
     public boolean isValid() {
         return name != null && name.length() > 0
-                && action != null
-                && monitoringParameter != null && monitoringParameter.size() > 0
-                && monitoringParameter.stream().allMatch(MonitoringParameter::isValid);
+            && action != null
+            && monitoringParameter != null && monitoringParameter.size() > 0
+            && monitoringParameter.stream()
+            .allMatch(m -> m.isValidForScalingPurpose() && m.getScalingAspect() == this);
     }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(ScalingAspect.class.getName())
-                .append('@')
-                .append(Integer.toHexString(System.identityHashCode(this)))
-                .append('[');
+            .append('[');
         sb.append("action");
         sb.append('=');
-        sb.append(((this.action == null)?"<null>":this.action));
+        sb.append(((this.action == null) ? "<null>" : this.action));
         sb.append(',');
         sb.append("id");
         sb.append('=');
-        sb.append(((this.id == null)?"<null>":this.id));
+        sb.append(((this.id == null) ? "<null>" : this.id));
         sb.append(',');
         sb.append("monitoringParameter");
         sb.append('=');
-        sb.append(((this.monitoringParameter == null)?"<null>":this.monitoringParameter));
+        sb.append(((this.monitoringParameter == null) ? "<null>" : this.monitoringParameter));
         sb.append(',');
         sb.append("name");
         sb.append('=');
-        sb.append(((this.name == null)?"<null>":this.name));
+        sb.append(((this.name == null) ? "<null>" : this.name));
         sb.append(',');
-        if (sb.charAt((sb.length()- 1)) == ',') {
-            sb.setCharAt((sb.length()- 1), ']');
+        if (sb.charAt((sb.length() - 1)) == ',') {
+            sb.setCharAt((sb.length() - 1), ']');
         } else {
             sb.append(']');
         }
@@ -126,10 +139,10 @@ public class ScalingAspect {
     @Override
     public int hashCode() {
         int result = 1;
-        result = ((result* 31)+((this.name == null)? 0 :this.name.hashCode()));
-        result = ((result* 31)+((this.action == null)? 0 :this.action.hashCode()));
-        result = ((result* 31)+((this.id == null)? 0 :this.id.hashCode()));
-        result = ((result* 31)+((this.monitoringParameter == null)? 0 :this.monitoringParameter.hashCode()));
+        result = ((result * 31) + ((this.name == null) ? 0 : this.name.hashCode()));
+        result = ((result * 31) + ((this.action == null) ? 0 : this.action.hashCode()));
+        result = ((result * 31) + ((this.id == null) ? 0 : this.id.hashCode()));
+        result = ((result * 31) + ((this.monitoringParameter == null) ? 0 : this.monitoringParameter.hashCode()));
         return result;
     }
 
@@ -142,10 +155,16 @@ public class ScalingAspect {
             return false;
         }
         ScalingAspect rhs = ((ScalingAspect) other);
-        return (((((this.name == rhs.name)||((this.name!= null)&&this.name.equals(rhs.name)))
-                &&((this.action == rhs.action)||((this.action!= null)&&this.action.equals(rhs.action))))
-                &&((this.id == rhs.id)||((this.id!= null)&&this.id.equals(rhs.id))))
-                &&((this.monitoringParameter == rhs.monitoringParameter)||((this.monitoringParameter!= null)&&this.monitoringParameter.equals(rhs.monitoringParameter))));
+        return (((((this.name == rhs.name) || ((this.name != null) && this.name.equals(rhs.name)))
+            && ((this.action == rhs.action) || ((this.action != null) && this.action.equals(rhs.action))))
+            && ((this.id == rhs.id) || ((this.id != null) && this.id.equals(rhs.id))))
+            && ((this.monitoringParameter == rhs.monitoringParameter) || ((this.monitoringParameter != null) && this.monitoringParameter.equals(rhs.monitoringParameter))));
     }
 
+    @PostLoad
+    @PostPersist
+    @PostUpdate
+    private void fixPersistence() {
+        monitoringParameter = new HashSet<>(monitoringParameter);
+    }
 }

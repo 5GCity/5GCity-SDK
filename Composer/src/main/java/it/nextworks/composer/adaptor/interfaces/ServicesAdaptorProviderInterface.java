@@ -2,35 +2,39 @@ package it.nextworks.composer.adaptor.interfaces;
 
 
 import it.nextworks.nfvmano.libs.descriptors.nsd.nodes.NS.NSNode;
-import it.nextworks.sdk.SDKService;
+import it.nextworks.sdk.SdkService;
+import it.nextworks.sdk.SdkServiceInstance;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 
 public interface ServicesAdaptorProviderInterface {
 
-	
-	/**
-	 * Convert a given network service node into a SDK Service element. The new
-	 * SDKService will be available to the vertical user.
-	 * 
-	 * @param node Node element provided by the catalogue
-	 * @return id of the created sdk service
-	 */
-	public String adaptNSNodeToSDKService(NSNode node);
+    /**
+     * Instantiate an SdkService by providing values for its parameters.
+     *
+     * @param service         Sdk Service provided by the Composer GUI
+     * @param parameterValues values for the parameters in the service
+     * @return the SdkServiceInstance
+     */
+    SdkServiceInstance instantiateSdkService(SdkService service, List<BigDecimal> parameterValues);
 
-	/**
-	 * Convert a created SDK Service via gui into a network service node.
-	 * 
-	 * @param service SDK Service provided by the Composer GUI
-	 * @return id of the new network service
-	 */
-	public String adaptSDKServiceToNSNode(SDKService service);
+    /**
+     * Convert an SdkServiceInstance into a network service descriptor.
+     *
+     * @param serviceInstance Sdk Service instance
+     * @return the new Network Service
+     */
+    NSNode generateNetworkServiceDescriptor(SdkServiceInstance serviceInstance);
 
-	/**
-	 * This operation enables the user to push the NSNode to the public catalogue
-	 * 
-	 * @param node Node to be pushed into the public catalogue
-	 */
-	public void publishToCatalogue(NSNode node);
-	
-	
+    // Should there be a "publish" op? Isn't that for the service?
+    /* *
+     * Publish a Network Service Descriptor to the public catalogue
+     *
+     * @param node Node to be pushed into the public catalogue
+     * @return the ID of the instance published
+     */
+    // String publishToCatalogue(NSNode node);
+
 }

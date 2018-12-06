@@ -1,13 +1,20 @@
-package it.nextworks.sdk;
+package it.nextworks.composer.adaptor.expression;
 
-import java.math.BigDecimal;
+import it.nextworks.sdk.L3Connectivity;
+import it.nextworks.sdk.Link;
+import it.nextworks.sdk.MonitoringParameter;
+import it.nextworks.sdk.ScalingAspect;
+import it.nextworks.sdk.SdkFunction;
+import it.nextworks.sdk.SdkFunctionInstance;
+import it.nextworks.sdk.SdkService;
+import it.nextworks.sdk.SdkServiceInstance;
+
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.function.IntSupplier;
+import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -17,36 +24,30 @@ import java.util.stream.Stream;
  */
 public class ServiceInformation {
 
-    // No need for any sofistication, these are just throwaway ids never exposed outside the class
-    private static IntSupplier functionIds = IntStream.iterate(0, i -> i+1).iterator()::next;
-    private static IntSupplier serviceIds = IntStream.iterate(0, i -> i+1).iterator()::next;
+    private Map<Long, SdkFunction> functions = new HashMap<>();
 
-    private Map<Integer, SdkFunction> functions = new HashMap<>();
+    private Map<Long, Long> funcId2Service = new HashMap<>();
 
-    private Map<Integer, Integer> funcId2Service = new HashMap<>();
+    private Map<Long, String> func2vnfd = new HashMap<>();
 
-    private Map<SdkServiceBase, Integer> service2Id = new HashMap<>();
+    private Map<Long, String> func2flavour = new HashMap<>();
 
-    private Map<Integer, String> func2vnfd = new HashMap<>();
+    private Map<Long, String> func2level = new HashMap<>();
 
-    private Map<Integer, String> func2flavour = new HashMap<>();
+    private Map<Long, Set<L3Connectivity>> service2Rules = new HashMap<>();
 
-    private Map<Integer, String> func2level = new HashMap<>();
+    private Map<Long, Set<Link>> links = new HashMap<>();
 
-    private Map<Integer, List<L3Connectivity>> service2Rules = new HashMap<>();
+    private Set<MonitoringParameter> monitoringParameters = new HashSet<>();
 
-    private Map<Integer, List<Link>> links = new HashMap<>();
-
-    private List<MonitoringParameter> monitoringParameters = new LinkedList<>();
-
-    private List<ScalingAspect> scalingAspects = new LinkedList<>();
+    private Set<ScalingAspect> scalingAspects = new HashSet<>();
 
     public ServiceInformation() {
 
     }
 
     public ServiceInformation(SdkFunctionInstance function) {
-        Integer id = function.getId();
+        Long id = function.getId();
         SdkFunction template = function.getTemplate();
         functions.put(id, template);
         funcId2Service.put(id, function.getOuterServiceId());
@@ -56,18 +57,18 @@ public class ServiceInformation {
         monitoringParameters.addAll(template.getMonitoringParameters());
     }
 
-    public VnfdData getVnfdData(int functionId) {
+    public VnfdData getVnfdData(Long functionId) {
         SdkFunction function = functions.get(functionId);
         List<L3Connectivity> rules = service2Rules.get(funcId2Service.get(functionId)).stream()
-                .filter(
-                        c -> function.getConnectionPoint().stream()
-                                .anyMatch(fc -> fc.getId().equals(c.getConnectionPointId()))
-                ).collect(Collectors.toList());
+            .filter(
+                c -> function.getConnectionPoint().stream()
+                    .anyMatch(fc -> fc.getId().equals(c.getConnectionPointId()))
+            ).collect(Collectors.toList());
         return new VnfdData(
-                func2vnfd.get(functionId),
-                func2flavour.get(functionId),
-                func2level.get(functionId),
-                rules
+            func2vnfd.get(functionId),
+            func2flavour.get(functionId),
+            func2level.get(functionId),
+            rules
         );
     }
 
@@ -75,23 +76,23 @@ public class ServiceInformation {
         return functions.keySet().stream().map(this::getVnfdData);
     }
 
-    public Map<Integer, List<Link>> getLinks() {
+    public Map<Long, Set<Link>> getLinks() {
         return links;
     }
 
-    public List<MonitoringParameter> getMonitoringParameters() {
+    public Set<MonitoringParameter> getMonitoringParameters() {
         return monitoringParameters;
     }
 
-    public List<ScalingAspect> getScalingAspects() {
+    public Set<ScalingAspect> getScalingAspects() {
         return scalingAspects;
     }
 
-    public void addRule(int serviceId, List<L3Connectivity> rules) {
+    public void addRule(Long serviceId, Set<L3Connectivity> rules) {
         this.service2Rules.put(serviceId, rules);
     }
 
-    public void addLink(int serviceId, List<Link> links) {
+    public void addLink(Long serviceId, Set<Link> links) {
         this.links.put(serviceId, links);
     }
 
@@ -117,8 +118,8 @@ public class ServiceInformation {
     }
 
     public ServiceInformation addServiceRelatedInfo(SdkServiceInstance service) {
-        Integer id = service.getId();
-        SdkServiceTemplate template = service.getTemplate();
+        Long id = service.getId();
+        SdkService template = service.getTemplate();
         addLink(id, template.getLink());
         addRule(id, template.getL3Connectivity());
         scalingAspects.addAll(template.getScalingAspect());
@@ -133,10 +134,10 @@ public class ServiceInformation {
         public final List<L3Connectivity> rules;
 
         public VnfdData(
-                String vnfd,
-                String flavour,
-                String instantiationLevel,
-                List<L3Connectivity> rules
+            String vnfd,
+            String flavour,
+            String instantiationLevel,
+            List<L3Connectivity> rules
         ) {
             this.vnfd = vnfd;
             this.flavour = flavour;

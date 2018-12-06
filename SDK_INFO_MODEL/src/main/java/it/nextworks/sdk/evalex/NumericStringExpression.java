@@ -27,8 +27,8 @@ public class NumericStringExpression implements ExtendedExpression<BigDecimal> {
     Used in the implementation of the static methods below
      */
     public NumericStringExpression(
-            String expression,
-            Map<String, Map<String, BigDecimal>> stringInputs
+        String expression,
+        Map<String, Map<String, BigDecimal>> stringInputs
     ) {
         this.expression = new Expression(expression, BASE_CONTEXT);
         List<String> usedVariables = this.expression.getUsedVariables();
@@ -36,8 +36,8 @@ public class NumericStringExpression implements ExtendedExpression<BigDecimal> {
             Set<String> errorVars = new HashSet<>(stringInputs.keySet());
             errorVars.removeAll(usedVariables);
             throw new IllegalArgumentException(String.format(
-                    "String inputs registered for variables '%s' which are not declared",
-                    errorVars
+                "String inputs registered for variables '%s' which are not declared",
+                errorVars
             ));
         }
         this.stringInputs = stringInputs;
@@ -51,25 +51,23 @@ public class NumericStringExpression implements ExtendedExpression<BigDecimal> {
     /**
      * Provides a value to a string variable in the expression.
      *
-     *
-     *
      * @param varName the name of the variable to populate
-     * @param value the desired value
+     * @param value   the desired value
      * @return this StringExpression instance, for chaining
      */
     public NumericStringExpression with(String varName, String value) {
         if (!stringInputs.containsKey(varName)) {
             throw new IllegalArgumentException(String.format(
-                    "Variable '%s' does not accept string values",
-                    varName
+                "Variable '%s' does not accept string values",
+                varName
             ));
         }
         if (!stringInputs.get(varName).containsKey(value)) {
             throw new IllegalArgumentException(String.format(
-                    "Illegal value '%s' for variable '%s'. Accepted: '%s'",
-                    value,
-                    varName,
-                    stringInputs.get(varName).keySet()
+                "Illegal value '%s' for variable '%s'. Accepted: '%s'",
+                value,
+                varName,
+                stringInputs.get(varName).keySet()
             ));
         }
         with(varName, stringInputs.get(varName).get(value));
@@ -81,7 +79,7 @@ public class NumericStringExpression implements ExtendedExpression<BigDecimal> {
      * Provides a value to a variable in the expression
      *
      * @param varName the name of the variable to populate
-     * @param value the desired value
+     * @param value   the desired value
      * @return this StringExpression instance, for chaining
      */
     public NumericStringExpression with(String varName, int value) {
@@ -93,7 +91,7 @@ public class NumericStringExpression implements ExtendedExpression<BigDecimal> {
      * Provides a value to a variable in the expression
      *
      * @param varName the name of the variable to populate
-     * @param value the desired value
+     * @param value   the desired value
      * @return this StringExpression instance, for chaining
      */
     public NumericStringExpression with(String varName, long value) {
@@ -105,7 +103,7 @@ public class NumericStringExpression implements ExtendedExpression<BigDecimal> {
      * Provides a value to a variable in the expression
      *
      * @param varName the name of the variable to populate
-     * @param value the desired value
+     * @param value   the desired value
      * @return this StringExpression instance, for chaining
      */
     public NumericStringExpression with(String varName, BigDecimal value) {
