@@ -14,7 +14,6 @@ import java.util.Map;
 public enum MonitoringParameterName {
 
     AVERAGE_MEMORY_UTILIZATION("AVERAGE_MEMORY_UTILIZATION");
-    private final String value;
     private final static Map<String, MonitoringParameterName> CONSTANTS = new HashMap<String, MonitoringParameterName>();
 
     static {
@@ -23,18 +22,10 @@ public enum MonitoringParameterName {
         }
     }
 
+    private final String value;
+
     private MonitoringParameterName(String value) {
         this.value = value;
-    }
-
-    @Override
-    public String toString() {
-        return this.value;
-    }
-
-    @JsonValue
-    public String value() {
-        return this.value;
     }
 
     @JsonCreator
@@ -45,6 +36,16 @@ public enum MonitoringParameterName {
         } else {
             return constant;
         }
+    }
+
+    @Override
+    public String toString() {
+        return this.value;
+    }
+
+    @JsonValue
+    public String value() {
+        return this.value;
     }
 
 }

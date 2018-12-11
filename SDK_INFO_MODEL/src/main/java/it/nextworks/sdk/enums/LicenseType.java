@@ -15,7 +15,6 @@ public enum LicenseType {
 
     PRIVATE("PRIVATE"),
     PUBLIC("PUBLIC");
-    private final String value;
     private final static Map<String, LicenseType> CONSTANTS = new HashMap<String, LicenseType>();
 
     static {
@@ -24,18 +23,10 @@ public enum LicenseType {
         }
     }
 
+    private final String value;
+
     private LicenseType(String value) {
         this.value = value;
-    }
-
-    @Override
-    public String toString() {
-        return this.value;
-    }
-
-    @JsonValue
-    public String value() {
-        return this.value;
     }
 
     @JsonCreator
@@ -46,6 +37,16 @@ public enum LicenseType {
         } else {
             return constant;
         }
+    }
+
+    @Override
+    public String toString() {
+        return this.value;
+    }
+
+    @JsonValue
+    public String value() {
+        return this.value;
     }
 
 }

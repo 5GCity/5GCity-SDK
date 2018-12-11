@@ -2,7 +2,6 @@ package it.nextworks.sdk.enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import it.nextworks.sdk.ScalingAspect;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,7 +17,6 @@ public enum ScalingAction {
     SCALE_DOWN("SCALE_DOWN"),
     SCALE_IN("SCALE_IN"),
     SCALE_OUT("SCALE_OUT");
-    private final String value;
     private final static Map<String, ScalingAction> CONSTANTS = new HashMap<String, ScalingAction>();
 
     static {
@@ -27,18 +25,10 @@ public enum ScalingAction {
         }
     }
 
+    private final String value;
+
     private ScalingAction(String value) {
         this.value = value;
-    }
-
-    @Override
-    public String toString() {
-        return this.value;
-    }
-
-    @JsonValue
-    public String value() {
-        return this.value;
     }
 
     @JsonCreator
@@ -49,6 +39,16 @@ public enum ScalingAction {
         } else {
             return constant;
         }
+    }
+
+    @Override
+    public String toString() {
+        return this.value;
+    }
+
+    @JsonValue
+    public String value() {
+        return this.value;
     }
 
 }

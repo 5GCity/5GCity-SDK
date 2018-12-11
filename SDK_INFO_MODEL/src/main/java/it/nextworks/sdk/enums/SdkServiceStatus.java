@@ -14,9 +14,10 @@ import java.util.Map;
 public enum SdkServiceStatus {
 
     SAVED("SAVED"),
+    CHANGING("CHANGING"),
     COMMITTED("COMMITTED");
-    private final String value;
-    private final static Map<String, SdkServiceStatus> CONSTANTS = new HashMap<String, SdkServiceStatus>();
+
+    private final static Map<String, SdkServiceStatus> CONSTANTS = new HashMap<>();
 
     static {
         for (SdkServiceStatus c : values()) {
@@ -24,18 +25,10 @@ public enum SdkServiceStatus {
         }
     }
 
-    private SdkServiceStatus(String value) {
+    private final String value;
+
+    SdkServiceStatus(String value) {
         this.value = value;
-    }
-
-    @Override
-    public String toString() {
-        return this.value;
-    }
-
-    @JsonValue
-    public String value() {
-        return this.value;
     }
 
     @JsonCreator
@@ -46,6 +39,16 @@ public enum SdkServiceStatus {
         } else {
             return constant;
         }
+    }
+
+    @Override
+    public String toString() {
+        return this.value;
+    }
+
+    @JsonValue
+    public String value() {
+        return this.value;
     }
 
 }

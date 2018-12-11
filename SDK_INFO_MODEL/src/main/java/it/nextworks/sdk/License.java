@@ -12,8 +12,6 @@ import javax.persistence.Embeddable;
 /**
  * License
  * <p>
- * 
- * 
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -51,19 +49,17 @@ public class License {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(License.class.getName())
-                .append('@')
-                .append(Integer.toHexString(System.identityHashCode(this)))
-                .append('[');
+            .append('[');
         sb.append("type");
         sb.append('=');
-        sb.append(((this.type == null)?"<null>":this.type));
+        sb.append(((this.type == null) ? "<null>" : this.type));
         sb.append(',');
         sb.append("url");
         sb.append('=');
-        sb.append(((this.url == null)?"<null>":this.url));
+        sb.append(((this.url == null) ? "<null>" : this.url));
         sb.append(',');
-        if (sb.charAt((sb.length()- 1)) == ',') {
-            sb.setCharAt((sb.length()- 1), ']');
+        if (sb.charAt((sb.length() - 1)) == ',') {
+            sb.setCharAt((sb.length() - 1), ']');
         } else {
             sb.append(']');
         }
@@ -73,8 +69,8 @@ public class License {
     @Override
     public int hashCode() {
         int result = 1;
-        result = ((result* 31)+((this.type == null)? 0 :this.type.hashCode()));
-        result = ((result* 31)+((this.url == null)? 0 :this.url.hashCode()));
+        result = ((result * 31) + ((this.type == null) ? 0 : this.type.hashCode()));
+        result = ((result * 31) + ((this.url == null) ? 0 : this.url.hashCode()));
         return result;
     }
 
@@ -87,14 +83,14 @@ public class License {
             return false;
         }
         License rhs = ((License) other);
-        return (((this.type == rhs.type)||((this.type!= null)&&this.type.equals(rhs.type)))
-                &&((this.url == rhs.url)||((this.url!= null)&&this.url.equals(rhs.url))));
+        return (((this.type == rhs.type) || ((this.type != null) && this.type.equals(rhs.type)))
+            && ((this.url == rhs.url) || ((this.url != null) && this.url.equals(rhs.url))));
     }
 
     @JsonIgnore
     public boolean isValid() {
         return this.type != null
-                && this.url != null
-                && this.url.length() != 0;
+            && this.url != null
+            && this.url.length() != 0;
     }
 }

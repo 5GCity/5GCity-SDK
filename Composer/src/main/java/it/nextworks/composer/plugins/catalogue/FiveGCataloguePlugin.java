@@ -25,7 +25,7 @@ import it.nextworks.composer.plugins.catalogue.invoker.nsd.ApiClient;
 import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
 
 
-public class FiveGCataloguePlugin extends CataloguePlugin{
+public class FiveGCataloguePlugin extends CataloguePlugin {
 
 	private static final Logger log = LoggerFactory.getLogger(FiveGCataloguePlugin.class);
 	
@@ -89,7 +89,6 @@ public class FiveGCataloguePlugin extends CataloguePlugin{
 	}
 	
 	public String uploadNetworkService(File descriptor, String contentType, KeyValuePairs userDefinedData) throws RestClientException, IOException {
-
 		
 		/* Create CreateNsInfoRequest */
 		CreateNsdInfoRequest request = new CreateNsdInfoRequest();

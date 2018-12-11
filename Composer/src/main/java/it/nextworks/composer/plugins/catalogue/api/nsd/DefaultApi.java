@@ -1,7 +1,5 @@
 package it.nextworks.composer.plugins.catalogue.api.nsd;
 
-import it.nextworks.composer.plugins.catalogue.invoker.nsd.ApiClient;
-import it.nextworks.composer.executor.repositories.CatalogueRepository;
 import it.nextworks.composer.plugins.catalogue.Catalogue;
 import it.nextworks.composer.plugins.catalogue.FiveGCataloguePlugin;
 import it.nextworks.composer.plugins.catalogue.elements.nsd.CreateNsdInfoRequest;
@@ -42,11 +40,24 @@ import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
+import it.nextworks.composer.plugins.catalogue.invoker.nsd.ApiClient;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
+import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2018-11-21T15:01:43.121+01:00")
 @Component("it.nextworks.composer.plugins.catalogue.api.nsd.DefaultApi")
@@ -1105,5 +1116,6 @@ public class DefaultApi {
 		apiClient.invokeAPI(path, HttpMethod.PUT, queryParams, postBody, headerParams, formParams, accept,
 				finalContentType, authNames, returnType);
 	}
+
 
 }

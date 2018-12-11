@@ -15,7 +15,6 @@ public enum ConnectionPointType {
 
     INTERNAL("INTERNAL"),
     EXTERNAL("EXTERNAL");
-    private final String value;
     private final static Map<String, ConnectionPointType> CONSTANTS = new HashMap<>();
 
     static {
@@ -24,18 +23,10 @@ public enum ConnectionPointType {
         }
     }
 
+    private final String value;
+
     private ConnectionPointType(String value) {
         this.value = value;
-    }
-
-    @Override
-    public String toString() {
-        return this.value;
-    }
-
-    @JsonValue
-    public String value() {
-        return this.value;
     }
 
     @JsonCreator
@@ -46,6 +37,16 @@ public enum ConnectionPointType {
         } else {
             return constant;
         }
+    }
+
+    @Override
+    public String toString() {
+        return this.value;
+    }
+
+    @JsonValue
+    public String value() {
+        return this.value;
     }
 
 }

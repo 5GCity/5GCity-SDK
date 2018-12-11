@@ -5,7 +5,6 @@ package it.nextworks.sdk;
  *
  * @author Marco Capitani <m.capitani AT nextworks.it>
  */
-public interface SdkComponentInstance<T> {
+public interface SdkComponentInstance<T extends SdkComponentCandidate> {
 
-    ServiceInformation makeInformation();
 }

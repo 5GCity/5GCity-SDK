@@ -2,7 +2,6 @@ package it.nextworks.sdk.enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import it.nextworks.sdk.MonitoringParameter;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,7 +15,6 @@ public enum Direction {
 
     GREATER_THAN("GREATER_THAN"),
     LOWER_THAN("LOWER_THAN");
-    private final String value;
     private final static Map<String, Direction> CONSTANTS = new HashMap<String, Direction>();
 
     static {
@@ -25,18 +23,10 @@ public enum Direction {
         }
     }
 
+    private final String value;
+
     private Direction(String value) {
         this.value = value;
-    }
-
-    @Override
-    public String toString() {
-        return this.value;
-    }
-
-    @JsonValue
-    public String value() {
-        return this.value;
     }
 
     @JsonCreator
@@ -47,6 +37,16 @@ public enum Direction {
         } else {
             return constant;
         }
+    }
+
+    @Override
+    public String toString() {
+        return this.value;
+    }
+
+    @JsonValue
+    public String value() {
+        return this.value;
     }
 
 }

@@ -15,7 +15,6 @@ public enum LinkType {
 
     INTERNAL("INTERNAL"),
     EXTERNAL("EXTERNAL");
-    private final String value;
     private final static Map<String, LinkType> CONSTANTS = new HashMap<String, LinkType>();
 
     static {
@@ -24,18 +23,10 @@ public enum LinkType {
         }
     }
 
+    private final String value;
+
     private LinkType(String value) {
         this.value = value;
-    }
-
-    @Override
-    public String toString() {
-        return this.value;
-    }
-
-    @JsonValue
-    public String value() {
-        return this.value;
     }
 
     @JsonCreator
@@ -46,6 +37,16 @@ public enum LinkType {
         } else {
             return constant;
         }
+    }
+
+    @Override
+    public String toString() {
+        return this.value;
+    }
+
+    @JsonValue
+    public String value() {
+        return this.value;
     }
 
 }

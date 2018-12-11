@@ -30,42 +30,43 @@ public class StringValuedExpression implements ExtendedExpression<String> {
 
     /**
      * Create an expression (optionally) returning a string and accepting string inputs.
-     *
+     * <p>
      * The return values should be provided as strings in the "expression"
      * argument. Also, the return values should not be used as "proper" variables.
      * The string inputs should be enumerated and given a numeric value via the
      * "stringInputs" argument. Note that all stringInputs keys should appear in
      * "usedVariables".
-     *
+     * <p>
      * This expression has numeric output if and only if all variables appearing
      * in the "expression" argument are input variables (i.e. appearing in "usedVariables"),
      * otherwise this expression must have string output (it will raise exception if a numeric
      * value is returned by the evaluation).
-     *
+     * <p>
      * Example:
      * ```
-     * List\<String\> results = Arrays.asList("yes", "no");
-     * StringExpression e = new StringExpression("IF(a+b>3, yes, no)", results);
+     * List\<String\> used = Arrays.asList("a", "b");
+     * StringExpression e = new StringExpression("IF(a+b>3, yes, no)", used);
      * e.with("a", 1).with("b", 1);
      * System.out.println(e.eval());
      * // prints "no"
      * ```
-     * @param expression the expression
+     *
+     * @param expression    the expression
      * @param usedVariables the non-return variables in the expression
-     * @param stringInputs maps variables to string -> value maps for substitution
+     * @param stringInputs  maps variables to string -> value maps for substitution
      */
     public StringValuedExpression(
-            String expression,
-            List<String> usedVariables,
-            Map<String, Map<String, BigDecimal>> stringInputs
+        String expression,
+        List<String> usedVariables,
+        Map<String, Map<String, BigDecimal>> stringInputs
     ) {
         this.expression = new Expression(expression, BASE_CONTEXT);
         if (!(usedVariables.containsAll(stringInputs.keySet()))) {
             Set<String> errorVars = new HashSet<>(stringInputs.keySet());
             errorVars.removeAll(usedVariables);
             throw new IllegalArgumentException(String.format(
-                    "String inputs registered for variables '%s' which are not declared",
-                    errorVars
+                "String inputs registered for variables '%s' which are not declared",
+                errorVars
             ));
         }
         this.usedVariables = usedVariables;
@@ -74,7 +75,6 @@ public class StringValuedExpression implements ExtendedExpression<String> {
     }
 
     private void populateResults() {
-        // Check that all results appear in the expression
         List<String> exprVars = expression.getUsedVariables();
         // Check which are the actual variables of the expression
         exprVars.removeAll(usedVariables); // Leave only results
@@ -84,25 +84,23 @@ public class StringValuedExpression implements ExtendedExpression<String> {
     /**
      * Provides a value to a string variable in the expression.
      *
-     *
-     *
      * @param varName the name of the variable to populate
-     * @param value the desired value
+     * @param value   the desired value
      * @return this StringExpression instance, for chaining
      */
     public StringValuedExpression with(String varName, String value) {
         if (!stringInputs.containsKey(varName)) {
             throw new IllegalArgumentException(String.format(
-                    "Variable '%s' does not accept string values",
-                    varName
+                "Variable '%s' does not accept string values",
+                varName
             ));
         }
         if (!stringInputs.get(varName).containsKey(value)) {
             throw new IllegalArgumentException(String.format(
-                    "Illegal value '%s' for variable '%s'. Accepted: '%s'",
-                    value,
-                    varName,
-                    stringInputs.get(varName).keySet()
+                "Illegal value '%s' for variable '%s'. Accepted: '%s'",
+                value,
+                varName,
+                stringInputs.get(varName).keySet()
             ));
         }
         with(varName, stringInputs.get(varName).get(value));
@@ -114,7 +112,7 @@ public class StringValuedExpression implements ExtendedExpression<String> {
      * Provides a value to a variable in the expression
      *
      * @param varName the name of the variable to populate
-     * @param value the desired value
+     * @param value   the desired value
      * @return this StringExpression instance, for chaining
      */
     public StringValuedExpression with(String varName, int value) {
@@ -126,7 +124,7 @@ public class StringValuedExpression implements ExtendedExpression<String> {
      * Provides a value to a variable in the expression
      *
      * @param varName the name of the variable to populate
-     * @param value the desired value
+     * @param value   the desired value
      * @return this StringExpression instance, for chaining
      */
     public StringValuedExpression with(String varName, long value) {
@@ -138,14 +136,14 @@ public class StringValuedExpression implements ExtendedExpression<String> {
      * Provides a value to a variable in the expression
      *
      * @param varName the name of the variable to populate
-     * @param value the desired value
+     * @param value   the desired value
      * @return this StringExpression instance, for chaining
      */
     public StringValuedExpression with(String varName, BigDecimal value) {
         if (resultVars.contains(varName)) {
             throw new IllegalArgumentException(String.format(
-                    "Cannot assign value to %s, it's a result variable.",
-                    varName
+                "Cannot assign value to %s, it's a result variable.",
+                varName
             ));
         }
         expression.with(varName, value);
@@ -154,6 +152,7 @@ public class StringValuedExpression implements ExtendedExpression<String> {
 
     /**
      * Evaluates the expression, returning the String result
+     *
      * @return the result of the expression
      */
     public String eval() {
@@ -172,9 +171,9 @@ public class StringValuedExpression implements ExtendedExpression<String> {
         String stringResult = resultDecoder.get(numResult);
         if (stringResult == null) {
             throw new IllegalStateException(String.format(
-                    "The result is not a result variable. Expression '%s'. Numeric result '%s'",
-                    expression.toString(),
-                    numResult
+                "The result is not a result variable. Expression '%s'. Numeric result '%s'",
+                expression.toString(),
+                numResult
             ));
         }
         return stringResult;
