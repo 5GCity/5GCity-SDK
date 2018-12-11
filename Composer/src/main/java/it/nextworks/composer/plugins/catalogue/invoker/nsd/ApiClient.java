@@ -1,9 +1,15 @@
 package it.nextworks.composer.plugins.catalogue.invoker.nsd;
 
+import org.apache.commons.fileupload.disk.DiskFileItem;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpRequest;
@@ -23,9 +29,13 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -46,10 +56,13 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.TimeZone;
 
+import javax.swing.text.Document;
+
 import it.nextworks.composer.plugins.catalogue.invoker.nsd.auth.Authentication;
 import it.nextworks.composer.plugins.catalogue.invoker.nsd.auth.HttpBasicAuth;
 import it.nextworks.composer.executor.repositories.CatalogueRepository;
 import it.nextworks.composer.plugins.catalogue.Catalogue;
+import it.nextworks.composer.plugins.catalogue.FiveGCataloguePlugin;
 import it.nextworks.composer.plugins.catalogue.invoker.nsd.auth.ApiKeyAuth;
 import it.nextworks.composer.plugins.catalogue.invoker.nsd.auth.OAuth;
 
@@ -68,6 +81,8 @@ public class ApiClient {
             return StringUtils.collectionToDelimitedString(collection, separator);
         }
     }
+    
+    private static final Logger log = LoggerFactory.getLogger(ApiClient.class);
     
     private boolean debugging = false;
     
@@ -494,7 +509,9 @@ public class ApiClient {
      * @param returnType The return type into which to deserialize the response
      * @return The response body in chosen type
      */
-    public <T> T invokeAPI(String path, HttpMethod method, MultiValueMap<String, String> queryParams, Object body, HttpHeaders headerParams, MultiValueMap<String, Object> formParams, List<MediaType> accept, MediaType contentType, String[] authNames, ParameterizedTypeReference<T> returnType) throws RestClientException {
+    public <T> T invokeAPI(String path, HttpMethod method, MultiValueMap<String, String> queryParams, Object body, HttpHeaders headerParams, 
+    		MultiValueMap<String, Object> formParams, List<MediaType> accept, MediaType contentType, String[] authNames, 
+    		ParameterizedTypeReference<T> returnType) throws RestClientException {
         updateParamsForAuth(authNames, queryParams, headerParams);
         
         final UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(basePath).path(path);
@@ -512,9 +529,9 @@ public class ApiClient {
         
         addHeadersToRequest(headerParams, requestBuilder);
         addHeadersToRequest(defaultHeaders, requestBuilder);
-        
+        		
         RequestEntity<Object> requestEntity = requestBuilder.body(selectBody(body, formParams, contentType));
-
+        
         ResponseEntity<T> responseEntity = restTemplate.exchange(requestEntity, returnType);
         
         statusCode = responseEntity.getStatusCode();
@@ -531,6 +548,39 @@ public class ApiClient {
             // The error handler built into the RestTemplate should handle 400 and 500 series errors.
             throw new RestClientException("API returned " + statusCode + " and it wasn't handled by the RestTemplate error handler");
         }
+    }
+    
+    public Object invokeApi(String path, HttpMethod method,  Object body) throws RestClientException {
+    	File tempFile = null;
+    	MultipartFile multipartFile = (MultipartFile) body;
+        try {
+            String extension = "." + multipartFile.getOriginalFilename();
+            tempFile = File.createTempFile("temp", extension);
+            multipartFile.transferTo(tempFile);
+        } catch (IOException e) {
+        	log.error("Something went wrong with conversion from multipartfile to File");
+            e.printStackTrace();
+        }
+    	LinkedMultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+        log.debug("Adding filesystemresource to multivaluemap");
+    	map.add("file", new FileSystemResource(tempFile));
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        final UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(basePath).path(path);
+        HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
+        Document document = null;
+        try {
+            ResponseEntity<Document> responseEntity =
+                    restTemplate.exchange(builder.build().toUri(), method, requestEntity, Document.class);
+            document = responseEntity.getBody();
+        } catch (Exception e) {
+            log.debug("Got exception when sending request. " + e.getMessage());
+            throw new RestClientException("Got exception when sending request. " + e.getMessage());
+        }
+
+        return document;
+        
     }
     
     /**

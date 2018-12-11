@@ -15,11 +15,22 @@
 */
 package it.nextworks.composer;
 
+import java.io.File;
+import java.io.FileInputStream;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
+
+import it.nextworks.composer.plugins.catalogue.Catalogue;
+import it.nextworks.composer.plugins.catalogue.CatalogueType;
+import it.nextworks.composer.plugins.catalogue.DescriptorsParser;
+import it.nextworks.composer.plugins.catalogue.FiveGCataloguePlugin;
+import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
+
 
 
 
@@ -28,6 +39,10 @@ import org.springframework.test.context.web.WebAppConfiguration;
 @WebAppConfiguration
 public class ComposerApplicationTests {
 
+	@Value("${catalogue.host}")
+	private String catalogueHost;
+	
+
 	
 	@Test
 	public void contextLoads() {
@@ -35,7 +50,21 @@ public class ComposerApplicationTests {
 		
 	}
 	
-	
+	@Test
+	public void testPostToCatalogue() throws Exception {
+		
+		Catalogue catalogue = new Catalogue("5gCatalogue", catalogueHost, false, null, null);
+		FiveGCataloguePlugin plugin = new FiveGCataloguePlugin(CatalogueType.FIVEG_CATALOGUE, catalogue);
+			
+		File file = new File("vCDN_UC3_5GMEDIA.yaml");
+		
+		DescriptorTemplate template = DescriptorsParser.fileToDescriptorTemplate(file);
+		
+		plugin.uploadNetworkService(template, "multipart/form-data", null);
+		
+		
+		
+	}
 
 
 }

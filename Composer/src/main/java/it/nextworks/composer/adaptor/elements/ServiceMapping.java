@@ -1,4 +1,4 @@
-package it.nextworks.composer.adaptor.interfaces.elements;
+package it.nextworks.composer.adaptor.elements;
 
 import it.nextworks.sdk.SDKFunction;
 import it.nextworks.sdk.SDKService;

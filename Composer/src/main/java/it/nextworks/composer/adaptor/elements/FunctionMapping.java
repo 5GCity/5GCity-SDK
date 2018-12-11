@@ -1,4 +1,4 @@
-package it.nextworks.composer.adaptor.interfaces.elements;
+package it.nextworks.composer.adaptor.elements;
 
 import it.nextworks.composer.evalex.StringExpression;
 import it.nextworks.sdk.SDKFunction;
@@ -73,21 +73,21 @@ public class FunctionMapping {
         }
     }
 
-    /**
-     *
-     * @return a mappingResult containing computed dfId and ilId
-     */
-    public MappingResult map() { // TODO: see how to get input parameters
-
-    }
-
-    public static final class MappingResult {
-        public final String dfId;
-        public final String ilId;
-
-        public MappingResult(String dfId, String ilId) {
-            this.dfId = dfId;
-            this.ilId = ilId;
-        }
-    }
+//    /**
+//     *
+//     * @return a mappingResult containing computed dfId and ilId
+//     */
+//    public MappingResult map() { // TODO: see how to get input parameters
+//
+//    }
+//
+//    public static final class MappingResult {
+//        public final String dfId;
+//        public final String ilId;
+//
+//        public MappingResult(String dfId, String ilId) {
+//            this.dfId = dfId;
+//            this.ilId = ilId;
+//        }
+//    }
 }
