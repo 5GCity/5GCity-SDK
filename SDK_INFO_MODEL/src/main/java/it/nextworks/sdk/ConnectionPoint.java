@@ -33,7 +33,8 @@ import java.util.stream.Collectors;
 @JsonPropertyOrder({
     "id",
     "name",
-    "type"
+    "type",
+    "required_port"
 })
 @Entity
 public class ConnectionPoint {
@@ -42,7 +43,7 @@ public class ConnectionPoint {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    private String name;
+    private String name; // Should be unique in the parent entity (function/service)
 
     @JsonProperty("type")
     private ConnectionPointType type;
@@ -50,14 +51,29 @@ public class ConnectionPoint {
     @ManyToOne
     private SdkFunction sdkFunction;
 
+    @ManyToOne
+    private SdkService sdkService;
+
+    @ManyToOne
+    private Link link;
+
+    @ManyToOne
+    private L3Connectivity l3Connectivity;
+
+    private Long internalCpId;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @Fetch(FetchMode.SELECT)
     @Cascade(org.hibernate.annotations.CascadeType.ALL)
-    private Set<Integer> port = new HashSet<>();
+    private Set<Integer> requiredPort = new HashSet<>();
 
     @JsonProperty("id")
     public Long getId() {
         return id;
+    }
+
+    void setId(Long id) {
+        this.id = id;
     }
 
     @JsonProperty("name")
@@ -70,6 +86,16 @@ public class ConnectionPoint {
         this.name = name;
     }
 
+    @JsonProperty("internal_cp_id")
+    public Long getInternalCpId() {
+        return internalCpId;
+    }
+
+    @JsonProperty("internal_cp_id")
+    public void setInternalCpId(Long internalCpId) {
+        this.internalCpId = internalCpId;
+    }
+
     @JsonProperty("type")
     public ConnectionPointType getType() {
         return type;
@@ -80,19 +106,19 @@ public class ConnectionPoint {
         this.type = type;
     }
 
-    @JsonProperty("port")
-    public Set<Integer> getPort() {
-        return port;
+    @JsonProperty("required_port")
+    public Set<Integer> getRequiredPort() {
+        return requiredPort;
     }
 
     @JsonIgnore
-    public void setPort(Integer... port) {
-        this.port = Arrays.stream(port).collect(Collectors.toSet());
+    public void setRequiredPort(Integer... requiredPort) {
+        this.requiredPort = Arrays.stream(requiredPort).collect(Collectors.toSet());
     }
 
-    @JsonProperty("port")
-    public void setPort(Set<Integer> port) {
-        this.port = port;
+    @JsonProperty("required_port")
+    public void setRequiredPort(Set<Integer> port) {
+        this.requiredPort = port;
     }
 
     @JsonIgnore
@@ -106,10 +132,44 @@ public class ConnectionPoint {
     }
 
     @JsonIgnore
+    public SdkService getSdkService() {
+        return sdkService;
+    }
+
+    @JsonIgnore
+    public void setSdkService(SdkService sdkService) {
+        this.sdkService = sdkService;
+    }
+
+    @JsonIgnore
+    public Link getLink() {
+        return link;
+    }
+
+    @JsonIgnore
+    public void setLink(Link link) {
+        this.link = link;
+    }
+
+    @JsonIgnore
+    public L3Connectivity getL3Connectivity() {
+        return l3Connectivity;
+    }
+
+    @JsonIgnore
+    public void setL3Connectivity(L3Connectivity l3Connectivity) {
+        this.l3Connectivity = l3Connectivity;
+    }
+
+    @JsonIgnore
     public boolean isValid() {
-        return this.type != null
-            && this.name != null
-            && this.name.length() >= 2;
+        return type != null
+            && name != null
+            && requiredPort != null
+            // internal -> intCpId == null
+            && (!type.equals(ConnectionPointType.INTERNAL) || internalCpId == null)
+            // external -> intCpId != null
+            && (!type.equals(ConnectionPointType.EXTERNAL) || internalCpId != null);
     }
 
     @Override
@@ -129,9 +189,9 @@ public class ConnectionPoint {
         sb.append('=');
         sb.append(((this.type == null) ? "<null>" : this.type));
         sb.append(',');
-        sb.append("port");
+        sb.append("required_port");
         sb.append('=');
-        sb.append(((this.port == null) ? "<null>" : this.port));
+        sb.append(((this.requiredPort == null) ? "<null>" : this.requiredPort));
         sb.append(',');
         if (sb.charAt((sb.length() - 1)) == ',') {
             sb.setCharAt((sb.length() - 1), ']');
@@ -147,7 +207,7 @@ public class ConnectionPoint {
         result = ((result * 31) + ((this.name == null) ? 0 : this.name.hashCode()));
         result = ((result * 31) + ((this.id == null) ? 0 : this.id.hashCode()));
         result = ((result * 31) + ((this.type == null) ? 0 : this.type.hashCode()));
-        result = ((result * 31) + ((this.port == null) ? 0 : this.port.hashCode()));
+        result = ((result * 31) + ((this.requiredPort == null) ? 0 : this.requiredPort.hashCode()));
         return result;
     }
 
@@ -163,7 +223,7 @@ public class ConnectionPoint {
         return (((this.name == rhs.name) || ((this.name != null) && this.name.equals(rhs.name)))
             && ((this.id == rhs.id) || ((this.id != null) && this.id.equals(rhs.id)))
             && ((this.type == rhs.type) || ((this.type != null) && this.type.equals(rhs.type))))
-            && ((this.port == rhs.port) || ((this.port != null) && this.port.equals(rhs.port)));
+            && ((this.requiredPort == rhs.requiredPort) || ((this.requiredPort != null) && this.requiredPort.equals(rhs.requiredPort)));
     }
 
     @PostLoad
@@ -171,7 +231,7 @@ public class ConnectionPoint {
     @PostUpdate
     private void postLoad() {
         // Cleanup persistence artifacts and weird collection implementations
-        port = new HashSet<>(port);
+        requiredPort = new HashSet<>(requiredPort);
     }
 
 }

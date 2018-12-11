@@ -17,6 +17,7 @@ package it.nextworks.composer;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.net.URI;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -56,8 +57,10 @@ public class ComposerApplicationTests {
 		
 		Catalogue catalogue = new Catalogue("5gCatalogue", catalogueHost, false, null, null);
 		FiveGCataloguePlugin plugin = new FiveGCataloguePlugin(CatalogueType.FIVEG_CATALOGUE, catalogue);
-			
-		File file = new File("vCDN_UC3_5GMEDIA.yaml");
+
+        URI uri = this.getClass().getClassLoader().getResource("vCDN_UC3_5GMEDIA.yaml").toURI();
+
+		File file = new File(uri);
 		
 		DescriptorTemplate template = DescriptorsParser.fileToDescriptorTemplate(file);
 		

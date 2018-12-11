@@ -20,6 +20,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.PostLoad;
 import javax.persistence.PostPersist;
 import javax.persistence.PostUpdate;
+import javax.persistence.PrePersist;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -159,6 +160,13 @@ public class ScalingAspect {
             && ((this.action == rhs.action) || ((this.action != null) && this.action.equals(rhs.action))))
             && ((this.id == rhs.id) || ((this.id != null) && this.id.equals(rhs.id))))
             && ((this.monitoringParameter == rhs.monitoringParameter) || ((this.monitoringParameter != null) && this.monitoringParameter.equals(rhs.monitoringParameter))));
+    }
+
+    @PrePersist
+    private void prePersist() {
+        for (MonitoringParameter mp : monitoringParameter) {
+            mp.setScalingAspect(this);
+        }
     }
 
     @PostLoad

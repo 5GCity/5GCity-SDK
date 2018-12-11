@@ -33,22 +33,21 @@ public class LinkTest {
     @Autowired
     private SdkServiceRepository serviceRepository;
 
-    public static Link makeTestObject(SdkService service, Long... cps) {
+    public static Link makeTestObject(SdkService service, String... cps) {
         Link link = new Link();
         link.setName("test-link");
         link.setService(service);
         link.setType(LinkType.EXTERNAL);
-        link.setConnectionPointIds(cps);
+        link.setConnectionPointNames(cps);
         return link;
     }
 
     @Test
     @Ignore // requires DB
     public void testPersist() {
-        SdkService service = new SdkService();
-        Link link = makeTestObject(service, 10L, 100L, 1000L);
+        Link link = makeTestObject(null, "T1", "T2", "T3");
 
-        serviceRepository.save(service);
+        assertTrue(link.isValid());
 
         linkRepository.saveAndFlush(link);
 

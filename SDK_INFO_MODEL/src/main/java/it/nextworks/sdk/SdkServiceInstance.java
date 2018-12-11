@@ -78,6 +78,10 @@ public class SdkServiceInstance implements SdkComponentInstance<SdkService> {
         return id;
     }
 
+    void setId(Long id) {
+        this.id = id;
+    }
+
     public SdkService getTemplate() {
         return template;
     }

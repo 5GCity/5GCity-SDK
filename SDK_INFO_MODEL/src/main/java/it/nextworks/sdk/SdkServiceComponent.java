@@ -1,5 +1,6 @@
 package it.nextworks.sdk;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -21,6 +22,7 @@ import javax.persistence.OrderColumn;
 import javax.persistence.PostLoad;
 import javax.persistence.PostPersist;
 import javax.persistence.PostUpdate;
+import javax.persistence.PrePersist;
 import javax.persistence.Transient;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -35,6 +37,7 @@ import java.util.Map;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
+    "id",
     "component_id",
     "component_type",
     "mapping_expression"
@@ -68,7 +71,7 @@ abstract public class SdkServiceComponent<S extends SdkComponentCandidate, T ext
         // JPA only
     }
 
-    @JsonIgnore
+    @JsonProperty("id")
     public Long getId() {
         return id;
     }
@@ -231,7 +234,7 @@ abstract public class SdkServiceComponent<S extends SdkComponentCandidate, T ext
                 HashSet<String> innerParams = new HashSet<>(compiled.getUsedVariables());
                 // Set for ease of "contains" usage
                 if (innerParams.contains(entry.getKey())) {
-                    // Check that the param is used in this expression
+                    // If param is used in this expression, valorize it
                     compiled.with(entry.getKey(), entry.getValue());
                 }
             }
@@ -240,8 +243,15 @@ abstract public class SdkServiceComponent<S extends SdkComponentCandidate, T ext
         return output;
     }
 
-    public SdkComponentInstance instantiate(Map<String, BigDecimal> parameterValues, SdkServiceInstance outerService) {
+    public SdkComponentInstance<S> instantiate(Map<String, BigDecimal> parameterValues, SdkServiceInstance outerService) {
         return getComponent().instantiate(computeParams(parameterValues), outerService);
+    }
+
+    @PrePersist
+    private void prePersist() {
+        if (!isResolved()) {
+            throw new IllegalStateException("Cannot persist, component is not resolved");
+        }
     }
 
     @PostLoad

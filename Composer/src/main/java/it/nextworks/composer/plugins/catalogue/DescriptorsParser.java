@@ -24,6 +24,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -57,6 +59,7 @@ public class DescriptorsParser {
 			throws JsonParseException, JsonMappingException, IOException {
 		log.debug("Trying to convert file to DescriptorTemplate");
 		ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
 		DescriptorTemplate descriptorTemplate = mapper.readValue(file, DescriptorTemplate.class);
 		log.debug("Converted file to DescriptorTemplate");

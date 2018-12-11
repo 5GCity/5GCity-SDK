@@ -20,7 +20,5 @@ public interface SdkComponentCandidate {
 
     Long getId();
 
-    Map<Long, ConnectionPoint> getConnectionPointMap();
-
     SdkServiceComponentType getType();
 }

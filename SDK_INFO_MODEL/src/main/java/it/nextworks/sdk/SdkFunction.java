@@ -26,6 +26,7 @@ import javax.persistence.OrderColumn;
 import javax.persistence.PostLoad;
 import javax.persistence.PostPersist;
 import javax.persistence.PostUpdate;
+import javax.persistence.PrePersist;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -98,13 +99,6 @@ public class SdkFunction implements InstantiableCandidate<SdkFunction> {
 
     private String version;
 
-    @Override
-    @JsonIgnore
-    public Map<Long, ConnectionPoint> getConnectionPointMap() {
-        return connectionPoint.stream()
-            .collect(Collectors.toMap(ConnectionPoint::getId, Function.identity()));
-    }
-
     @JsonProperty("connection_point")
     public Set<ConnectionPoint> getConnectionPoint() {
         return connectionPoint;
@@ -128,14 +122,14 @@ public class SdkFunction implements InstantiableCandidate<SdkFunction> {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    @JsonProperty("parameters")
+    @JsonProperty("parameter")
     @Override
     public List<String> getParameters() {
         return parameters;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    @JsonProperty("parameters")
+    @JsonProperty("parameter")
     public void setParameters(List<String> parameters) {
         this.parameters = parameters;
     }
@@ -150,22 +144,22 @@ public class SdkFunction implements InstantiableCandidate<SdkFunction> {
         this.vnfdId = vnfdId;
     }
 
-    @JsonProperty("flavourExpression")
+    @JsonProperty("flavour_expression")
     public String getFlavourExpression() {
         return flavourExpression;
     }
 
-    @JsonProperty("flavourExpression")
+    @JsonProperty("flavour_expression")
     public void setFlavourExpression(String flavourExpression) {
         this.flavourExpression = flavourExpression;
     }
 
-    @JsonProperty("instantiationLevelExpression")
+    @JsonProperty("instantiation_level_expression")
     public String getInstantiationLevelExpression() {
         return instantiationLevelExpression;
     }
 
-    @JsonProperty("instantiationLevelExpression")
+    @JsonProperty("instantiation_level_expression")
     public void setInstantiationLevelExpression(String instantiationLevelExpression) {
         this.instantiationLevelExpression = instantiationLevelExpression;
     }
@@ -174,6 +168,10 @@ public class SdkFunction implements InstantiableCandidate<SdkFunction> {
     @Override
     public Long getId() {
         return id;
+    }
+
+    void setId(Long id) {
+        this.id = id;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -191,13 +189,13 @@ public class SdkFunction implements InstantiableCandidate<SdkFunction> {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    @JsonProperty("monitoringParameters")
+    @JsonProperty("monitoring_parameter")
     public Set<MonitoringParameter> getMonitoringParameters() {
         return monitoringParameters;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    @JsonProperty("monitoringParameters")
+    @JsonProperty("monitoring_parameter")
     public void setMonitoringParameters(Set<MonitoringParameter> monitoringParameters) {
         this.monitoringParameters = monitoringParameters;
     }
@@ -362,8 +360,7 @@ public class SdkFunction implements InstantiableCandidate<SdkFunction> {
     @Override
     public boolean isValid() {
         return name != null && name.length() > 0
-            && connectionPoint != null && connectionPoint.size() > 0
-            && connectionPoint.stream().allMatch(ConnectionPoint::isValid)
+            && validateCps()
             && version != null && version.length() > 0
             && vendor != null && vendor.length() > 0
             && vnfdId != null && vnfdId.length() > 0
@@ -371,6 +368,18 @@ public class SdkFunction implements InstantiableCandidate<SdkFunction> {
             && flavourExpression != null
             && metadata != null
             && validateExpressions();
+    }
+
+    private boolean validateCps() {
+        return connectionPoint != null
+            && connectionPoint.size() > 0
+            && connectionPoint.stream().allMatch(ConnectionPoint::isValid)
+            && connectionPoint.stream()
+            .map(ConnectionPoint::getName)
+            .distinct()
+            .count()
+            ==
+            connectionPoint.size();  // I.e. cp names are unique in the service
     }
 
     private boolean validateExpressions() {
@@ -384,6 +393,19 @@ public class SdkFunction implements InstantiableCandidate<SdkFunction> {
             // vnfd.getDfs().containsAll(((StringValuedExpression) getFlavourCompiledExpression()).getResultVars())
         } catch (Exception exc) {
             return false;
+        }
+    }
+
+    @PrePersist
+    private void prePersist() {
+        for (ConnectionPoint cp : connectionPoint) {
+            cp.setSdkFunction(this);
+        }
+        for (MonitoringParameter mp : monitoringParameters) {
+            mp.setFunction(this);
+        }
+        for (Metadata metadatum : metadata) {
+            metadatum.setFunction(this);
         }
     }
 

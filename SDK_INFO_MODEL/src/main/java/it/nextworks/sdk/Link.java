@@ -20,9 +20,11 @@ import javax.persistence.ManyToOne;
 import javax.persistence.PostLoad;
 import javax.persistence.PostPersist;
 import javax.persistence.PostUpdate;
+import javax.persistence.PrePersist;
+import javax.persistence.Transient;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -47,7 +49,10 @@ public class Link {
     @ElementCollection(fetch = FetchType.EAGER)
     @Fetch(FetchMode.SELECT)
     @Cascade(org.hibernate.annotations.CascadeType.ALL)
-    private Set<Long> connectionPointIds = new HashSet<>();
+    private Set<String> connectionPointNames = new HashSet<>();
+
+    @Transient
+    private Set<ConnectionPoint> connectionPoints = new HashSet<>();
 
     private String name;
 
@@ -57,18 +62,18 @@ public class Link {
     private SdkService service;
 
     @JsonProperty("connection_point_ids")
-    public Set<Long> getConnectionPointIds() {
-        return connectionPointIds;
+    public Set<String> getConnectionPointNames() {
+        return connectionPointNames;
     }
 
     @JsonIgnore
-    public void setConnectionPointIds(Long... cps) {
+    public void setConnectionPointNames(String... cps) {
         setConnectionPointIds(Arrays.stream(cps).collect(Collectors.toSet()));
     }
 
     @JsonProperty("connection_point_ids")
-    public void setConnectionPointIds(Set<Long> connectionPointIds) {
-        this.connectionPointIds = connectionPointIds;
+    public void setConnectionPointIds(Set<String> connectionPointIds) {
+        this.connectionPointNames = connectionPointIds;
     }
 
     @JsonIgnore
@@ -107,31 +112,68 @@ public class Link {
     }
 
     @JsonIgnore
+    public Set<ConnectionPoint> getConnectionPoints() {
+        return connectionPoints;
+    }
+
+    @JsonIgnore
+    public void setConnectionPoints(Set<ConnectionPoint> connectionPoints) {
+        Objects.requireNonNull(
+            connectionPoints,
+            "Invalid connection points: null"
+        );
+        Set<String> names = connectionPoints.stream().map(ConnectionPoint::getName).collect(Collectors.toSet());
+        if (names.size() != connectionPoints.size()) {
+            throw new IllegalArgumentException(
+                "Invalid connection points: duplicates present"
+            );
+        }
+        if (!names.containsAll(connectionPointNames)) {
+            throw new IllegalArgumentException(String.format(
+                "Invalid connection points: ids missing. Expected: %s; got: %s",
+                connectionPointNames,
+                names
+            ));
+        }
+        HashSet<ConnectionPoint> linkCPs = new HashSet<>(connectionPoints);
+        linkCPs.removeIf(cp -> !connectionPointNames.contains(cp.getName()));
+        this.connectionPoints = linkCPs;
+        validateCpsOrException();
+    }
+
+
+    @JsonIgnore
     public boolean isValid() {
         return this.name != null && this.name.length() != 0
-            && connectionPointIds != null
-            && !(connectionPointIds.isEmpty());
+            && connectionPointNames != null
+            && !(connectionPointNames.isEmpty());
     }
 
-    private boolean validateCpType(ConnectionPointType cpType) {
-        switch (type) {
-            case INTERNAL:
-                return cpType.equals(ConnectionPointType.INTERNAL);
-            case EXTERNAL:
-                return cpType.equals(ConnectionPointType.EXTERNAL);
-            default:
-                throw new IllegalArgumentException(String.format(
-                    "Unexpected connection link type %s",
-                    type.toString()
-                ));
+    private void validateCpsOrException() {
+        // Internal links are completely inside the Service (i.e. touch only internal cps)
+        // External links can touch both internal and external cps
+        for (ConnectionPoint cp : connectionPoints) {
+            ConnectionPointType cpType = cp.getType();
+            switch (this.type) {
+                case INTERNAL:
+                    if (!cpType.equals(ConnectionPointType.INTERNAL)) {
+                        throw new IllegalArgumentException(String.format(
+                            "Invalid connection point %s: types not valid. Expected %s, got %s",
+                            cp.getName(),
+                            ConnectionPointType.INTERNAL,
+                            cpType
+                        ));
+                    }
+                    continue;
+                case EXTERNAL:
+                    continue;
+                default:
+                    throw new IllegalArgumentException(String.format(
+                        "Unexpected connection link type %s",
+                        this.type.toString()
+                    ));
+            }
         }
-    }
-
-    boolean validateAgainstCpMap(Map<Long, ConnectionPoint> cpMap) {
-        return connectionPointIds.stream().allMatch(
-            cpId -> cpMap.containsKey(cpId)
-                && validateCpType(cpMap.get(cpId).getType())
-        );
     }
 
     @Override
@@ -141,7 +183,7 @@ public class Link {
             .append('[');
         sb.append("connectionPointIds");
         sb.append('=');
-        sb.append(((this.connectionPointIds == null) ? "<null>" : this.connectionPointIds));
+        sb.append(((this.connectionPointNames == null) ? "<null>" : this.connectionPointNames));
         sb.append(',');
         sb.append("id");
         sb.append('=');
@@ -169,7 +211,7 @@ public class Link {
         result = ((result * 31) + ((this.name == null) ? 0 : this.name.hashCode()));
         result = ((result * 31) + ((this.id == null) ? 0 : this.id.hashCode()));
         result = ((result * 31) + ((this.type == null) ? 0 : this.type.hashCode()));
-        result = ((result * 31) + ((this.connectionPointIds == null) ? 0 : this.connectionPointIds.hashCode()));
+        result = ((result * 31) + ((this.connectionPointNames == null) ? 0 : this.connectionPointNames.hashCode()));
         return result;
     }
 
@@ -185,13 +227,27 @@ public class Link {
         return (((((this.name == rhs.name) || ((this.name != null) && this.name.equals(rhs.name)))
             && ((this.id == rhs.id) || ((this.id != null) && this.id.equals(rhs.id))))
             && ((this.type == rhs.type) || ((this.type != null) && this.type.equals(rhs.type))))
-            && ((this.connectionPointIds == rhs.connectionPointIds) || ((this.connectionPointIds != null) && this.connectionPointIds.equals(rhs.connectionPointIds))));
+            && ((this.connectionPointNames == rhs.connectionPointNames) || ((this.connectionPointNames != null) && this.connectionPointNames.equals(rhs.connectionPointNames))));
+    }
+
+    private boolean isResolved() {
+        return connectionPoints != null;
+    }
+
+    @PrePersist
+    private void prePersist() {
+        if (!isResolved()) {
+            throw new IllegalStateException("Cannot persist, component is not resolved");
+        }
+        for (ConnectionPoint connectionPoint : connectionPoints) {
+            connectionPoint.setLink(this);
+        }
     }
 
     @PostLoad
     @PostPersist
     @PostUpdate
     private void fixPersistence() {
-        connectionPointIds = new HashSet<>(connectionPointIds);
+        connectionPointNames = new HashSet<>(connectionPointNames);
     }
 }

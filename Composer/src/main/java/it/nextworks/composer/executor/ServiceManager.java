@@ -26,15 +26,15 @@ import it.nextworks.composer.executor.repositories.ScalingAspectRepository;
 import it.nextworks.composer.executor.repositories.SdkFunctionRepository;
 import it.nextworks.composer.executor.repositories.SdkServiceInstanceRepository;
 import it.nextworks.composer.executor.repositories.SdkServiceRepository;
-import it.nextworks.nfvmano.libs.descriptors.nsd.nodes.NS.NSNode;
-import it.nextworks.sdk.Link;
+import it.nextworks.composer.plugins.catalogue.FiveGCataloguePlugin;
+import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
 import it.nextworks.sdk.MonitoringParameter;
 import it.nextworks.sdk.ScalingAspect;
 import it.nextworks.sdk.SdkFunction;
 import it.nextworks.sdk.SdkService;
 import it.nextworks.sdk.SdkServiceComponent;
 import it.nextworks.sdk.SdkServiceInstance;
-import it.nextworks.sdk.enums.LinkType;
+import it.nextworks.sdk.enums.SdkServiceComponentType;
 import it.nextworks.sdk.enums.SdkServiceStatus;
 import it.nextworks.sdk.exceptions.AlreadyPublishedServiceException;
 import it.nextworks.sdk.exceptions.ExistingEntityException;
@@ -49,53 +49,77 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
 public class ServiceManager implements ServiceManagerProviderInterface {
 
     private static final Logger log = LoggerFactory.getLogger(ServiceManager.class);
+
     @Autowired
     @Qualifier("expression-adapter")
     private ServicesAdaptorProviderInterface adapter;
+
     @Autowired
     private SdkServiceRepository serviceRepository;
+
     @Autowired
     private SdkServiceInstanceRepository serviceInstanceRepository;
+
     @Autowired
     private SdkFunctionRepository functionRepository;
+
     @Autowired
     private LinkRepository linkRepository;
+
     @Autowired
     private ConnectionpointRepository cpRepository;
+
     @Autowired
     private MonitoringParameterRepository monitoringParamRepository;
+
     @Autowired
     private ScalingAspectRepository scalingRepository;
+
     @Autowired
     private FunctionManagerProviderInterface functionManager;
+
     @Value("${catalogue.host}")
     private String hostname;
-//
-//	@Autowired
-//	private FunctionInstanceManagerProviderInterface functionInstanceManager;
+
     @Autowired
     private CatalogueRepository catalogueRepo;
 
+    private FiveGCataloguePlugin cataloguePlugin;
+
     public ServiceManager() {
+
     }
 
-    private static Stream<SdkFunction> getFunctionComponents(SdkService service) {
+    public void setCataloguePlugin(FiveGCataloguePlugin cataloguePlugin) {
+        this.cataloguePlugin = cataloguePlugin;
+    }
+
+    private static Stream<Long> getSubFunctionIds(SdkService service) {
         return service.getComponents().stream()
-            .map(SdkServiceComponent::getComponent)
-            .filter(c -> c instanceof SdkFunction)
-            .map(c -> (SdkFunction) c);
+            .filter(c -> c.getType().equals(SdkServiceComponentType.SDK_FUNCTION))
+            .map(SdkServiceComponent::getComponentId);
+    }
+
+    private static Stream<Long> getSubServiceIds(SdkService service) {
+        return service.getComponents().stream()
+            .filter(c -> c.getType().equals(SdkServiceComponentType.SDK_SERVICE))
+            .map(SdkServiceComponent::getComponentId);
     }
 
 //	@PostConstruct
@@ -116,10 +140,14 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     public List<SdkService> getServicesUsingFunction(Long functionId) {
         // TODO usare una join
         log.info("Request for all services which are using function with uuid: " + functionId);
+        if (functionId == null) {
+            log.warn("Requested NULL function id.");
+            return Collections.emptyList();
+        }
         List<SdkService> serviceList = new ArrayList<>();
         List<SdkService> services = serviceRepository.findAll();
         for (SdkService service : services) {
-            if (getFunctionComponents(service).anyMatch(f -> f.getId().equals(functionId))) {
+            if (getSubFunctionIds(service).anyMatch(functionId::equals)) {
                 serviceList.add(service);
             }
         }
@@ -136,18 +164,58 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         // TODO Find a way to check if service already exists
         // TODO: should we really? We could check the name, but this is the user's responsibility
         SdkService response;
-        if (service.isValid()) {
-            log.debug("Storing into database service with name: " + service.getName());
-            // Saving the service
-            response = serviceRepository.saveAndFlush(service);
-        } else {
-            log.error("Malformatted SdkService");
-            throw new MalformedElementException("Malformatted SdkService");
+        if (!service.isValid()) {
+            log.error("Malformed SdkService");
+            throw new MalformedElementException("Malformed SdkService");
+        }
+        log.debug("Checking component availability");
+        // TODO do in a more efficient way
+        List<SdkFunction> availableF = functionManager.getFunctions();
+        Set<Long> availableFIds = availableF.stream()
+            .map(SdkFunction::getId)
+            .collect(Collectors.toSet());
+        Set<Long> requiredFIds = getSubFunctionIds(service).collect(Collectors.toSet());
+        // Check the functions are available
+        if (!availableFIds.containsAll(requiredFIds)) {
+            requiredFIds.removeAll(availableFIds);
+            throw new MalformedElementException(String.format(
+                "Malformed service: functions %s are not available",
+                requiredFIds
+            ));
+        }
+        List<SdkService> availableS = this.getServices();
+        Set<Long> availableSIds = availableS.stream()
+            .map(SdkService::getId)
+            .collect(Collectors.toSet());
+        Set<Long> requiredSIds = getSubServiceIds(service).collect(Collectors.toSet());
+        // Check if the services are available
+        if (!availableSIds.containsAll(requiredSIds)) {
+            requiredSIds.removeAll(availableSIds);
+            throw new MalformedElementException(String.format(
+                "Malformed service: functions %s are not available",
+                requiredSIds
+            ));
+        }
+        log.debug("Resolving service components");
+        try {
+            service.resolveComponents(new HashSet<>(availableF), new HashSet<>(availableS));
+        } catch (Exception e) {
+            throw new MalformedElementException(
+                String.format(
+                    "Error while resolving service: %s",
+                    e.getMessage()
+                ),
+                e
+            );
         }
 
-        // Saving the functions
-        getFunctionComponents(service).forEach(f -> functionManager.createFunction(f));
+        log.debug("Storing into database service with name: " + service.getName());
+        // Saving the service
+        serviceRepository.saveAndFlush(service);
+        return service.getId().toString();
 
+/*
+        // ** Old code, not yet removed ** //
         // Saving Links
         Set<Link> links = service.getLink();
         for (Link link : links) {
@@ -155,8 +223,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
                 link.setService(service);
                 linkRepository.saveAndFlush(link);
                 // Saving ConnectionPoints
-                for (Long id : link.getConnectionPointIds()) {
-                    // TODO -> or maybe save all in one shot
+                for (String name : link.getConnectionPointNames()) {
+                    // TODO
                 }
             } else {
                 serviceRepository.delete(response);
@@ -186,7 +254,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
                 monitoringParamRepository.saveAndFlush(param);
             }
         }
-        return service.getId().toString();
+*/
     }
 
     @Override
@@ -282,19 +350,19 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         // asynchronously.
         SdkServiceInstance instance = adapter.instantiateSdkService(service, parameterValues);
         instance.setStatus(SdkServiceStatus.CHANGING);
-        serviceInstanceRepository.save(instance);
+        serviceInstanceRepository.saveAndFlush(instance);
         String serviceInstanceId = instance.getId().toString();
-        NSNode nsNode = adapter.generateNetworkServiceDescriptor(instance);
+        DescriptorTemplate nsd = adapter.generateNetworkServiceDescriptor(instance);
         dispatchPublishRequest(
-            nsNode,
+            nsd,
             successful -> {
                 if (successful) {
                     log.info("Service instance {} successfully published", serviceInstanceId);
                     instance.setStatus(SdkServiceStatus.COMMITTED);
-                    serviceInstanceRepository.save(instance);
+                    serviceInstanceRepository.saveAndFlush(instance);
                 } else {
                     instance.setStatus(SdkServiceStatus.SAVED);
-                    serviceInstanceRepository.save(instance);
+                    serviceInstanceRepository.saveAndFlush(instance);
                     log.error("Error while publishing service instance {}", serviceInstanceId);
                 }
             }
@@ -328,9 +396,9 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             // After setting the status, no one can operate on this anymore (except us)
         }
 
-        NSNode nsNode = adapter.generateNetworkServiceDescriptor(instance);
+        DescriptorTemplate nsd = adapter.generateNetworkServiceDescriptor(instance);
         dispatchPublishRequest(
-            nsNode,
+            nsd,
             successful -> {
                 if (successful) {
                     log.info("Service instance {} successfully published", serviceInstanceId);
@@ -345,9 +413,13 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         );
     }
 
-    private void dispatchPublishRequest(NSNode nsNode, Consumer<Boolean> callback) {
+    private void dispatchPublishRequest(DescriptorTemplate nsd, Consumer<Boolean> callback) {
         // TODO: dispatch publish operation to driver, then return immediately
-        throw new NotYetImplementedException();
+        try {
+            cataloguePlugin.uploadNetworkService(nsd, "application/json", null);
+        } catch (IOException exc) {
+            log.error("Operation failed.");
+        }
     }
 
     private void dispatchUnPublishRequest(Long serviceInstanceId, Consumer<Boolean> callback) {

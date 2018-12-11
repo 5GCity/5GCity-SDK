@@ -1,5 +1,7 @@
 package it.nextworks.sdk;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -55,6 +57,26 @@ public class Metadata {
 
     public String getValue() {
         return value;
+    }
+
+    @JsonIgnore
+    public SdkFunction getFunction() {
+        return function;
+    }
+
+    @JsonIgnore
+    public void setFunction(SdkFunction function) {
+        this.function = function;
+    }
+
+    @JsonIgnore
+    public SdkService getService() {
+        return service;
+    }
+
+    @JsonIgnore
+    public void setService(SdkService service) {
+        this.service = service;
     }
 
     @Override

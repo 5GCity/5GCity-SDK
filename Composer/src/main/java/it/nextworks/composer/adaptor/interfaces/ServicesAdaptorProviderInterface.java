@@ -1,7 +1,7 @@
 package it.nextworks.composer.adaptor.interfaces;
 
 
-import it.nextworks.nfvmano.libs.descriptors.nsd.nodes.NS.NSNode;
+import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
 import it.nextworks.sdk.SdkService;
 import it.nextworks.sdk.SdkServiceInstance;
 
@@ -26,7 +26,7 @@ public interface ServicesAdaptorProviderInterface {
      * @param serviceInstance Sdk Service instance
      * @return the new Network Service
      */
-    NSNode generateNetworkServiceDescriptor(SdkServiceInstance serviceInstance);
+    DescriptorTemplate generateNetworkServiceDescriptor(SdkServiceInstance serviceInstance);
 
     // Should there be a "publish" op? Isn't that for the service?
     /* *

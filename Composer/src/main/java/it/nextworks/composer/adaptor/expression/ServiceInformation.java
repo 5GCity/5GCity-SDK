@@ -1,21 +1,12 @@
 package it.nextworks.composer.adaptor.expression;
 
-import it.nextworks.sdk.L3Connectivity;
-import it.nextworks.sdk.Link;
-import it.nextworks.sdk.MonitoringParameter;
-import it.nextworks.sdk.ScalingAspect;
-import it.nextworks.sdk.SdkFunction;
-import it.nextworks.sdk.SdkFunctionInstance;
-import it.nextworks.sdk.SdkService;
-import it.nextworks.sdk.SdkServiceInstance;
+import it.nextworks.sdk.*;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static java.util.Collections.addAll;
 
 /**
  * Created by Marco Capitani on 23/11/18.
@@ -34,9 +25,13 @@ public class ServiceInformation {
 
     private Map<Long, String> func2level = new HashMap<>();
 
+    private Map<Long, FunctionMetadata> functionMetadata = new HashMap<>();
+
+    private ServiceMetadata serviceMetadata = new ServiceMetadata();
+
     private Map<Long, Set<L3Connectivity>> service2Rules = new HashMap<>();
 
-    private Map<Long, Set<Link>> links = new HashMap<>();
+    private Map<Long, Set<Link>> func2links = new HashMap<>();
 
     private Set<MonitoringParameter> monitoringParameters = new HashSet<>();
 
@@ -55,19 +50,31 @@ public class ServiceInformation {
         func2flavour.put(id, function.getFlavour());
         func2level.put(id, function.getLevel());
         monitoringParameters.addAll(template.getMonitoringParameters());
+        functionMetadata.put(
+            id,
+            new FunctionMetadata()
+                .name(template.getName())
+                .version(template.getVersion())
+                .description(template.getDescription())
+                .vendor(template.getVendor())
+                .metadata(template.getMetadata())
+        );
     }
 
-    public VnfdData getVnfdData(Long functionId) {
+    private VnfdData getVnfdData(Long functionId) {
         SdkFunction function = functions.get(functionId);
-        List<L3Connectivity> rules = service2Rules.get(funcId2Service.get(functionId)).stream()
+        Set<L3Connectivity> rules = service2Rules.values().stream()
+            .flatMap(Collection::stream)
             .filter(
-                c -> function.getConnectionPoint().stream()
-                    .anyMatch(fc -> fc.getId().equals(c.getConnectionPointId()))
-            ).collect(Collectors.toList());
+                r -> false // TODO
+            )
+            .collect(Collectors.toSet());
         return new VnfdData(
+            function.getName(),
             func2vnfd.get(functionId),
             func2flavour.get(functionId),
             func2level.get(functionId),
+            func2links.get(functionId).stream().map(Link::getName).collect(Collectors.toSet()),
             rules
         );
     }
@@ -76,32 +83,44 @@ public class ServiceInformation {
         return functions.keySet().stream().map(this::getVnfdData);
     }
 
-    public Map<Long, Set<Link>> getLinks() {
-        return links;
-    }
-
-    public Set<MonitoringParameter> getMonitoringParameters() {
-        return monitoringParameters;
-    }
-
-    public Set<ScalingAspect> getScalingAspects() {
-        return scalingAspects;
-    }
-
-    public void addRule(Long serviceId, Set<L3Connectivity> rules) {
+    private void addRule(Long serviceId, Set<L3Connectivity> rules) {
         this.service2Rules.put(serviceId, rules);
     }
 
-    public void addLink(Long serviceId, Set<Link> links) {
-        this.links.put(serviceId, links);
+    private void addLinks(Set<Link> links) { // TODO NO! duplicate functions in different services
+        for (Map.Entry<Long, SdkFunction> e : functions.entrySet()) {
+            func2links.putIfAbsent(e.getKey(), new HashSet<>());
+            Set<Link> currentFuncLinks = func2links.get(e.getKey());
+            links.stream()
+                .filter( // the ones mentioning a connection point in the function
+                    l -> {
+                        HashSet<ConnectionPoint> linkCP = new HashSet<>(l.getConnectionPoints());
+                        linkCP.retainAll(e.getValue().getConnectionPoint());
+                        return !linkCP.isEmpty();
+                    }
+                )
+                .forEach(currentFuncLinks::add);
+        }
     }
 
-    public void addMonitoringParameter(MonitoringParameter monitoringParameter) {
-        this.monitoringParameters.add(monitoringParameter);
+    public String getName() {
+        return serviceMetadata.name;
     }
 
-    public void addScalingAspect(ScalingAspect scalingAspect) {
-        this.scalingAspects.add(scalingAspect);
+    public String getVersion() {
+        return serviceMetadata.version;
+    }
+
+    public String getDesigner() {
+        return serviceMetadata.designer;
+    }
+
+    public String getLicense() {
+        return serviceMetadata.license;
+    }
+
+    public Map<String, String> getMetadata() {
+        return serviceMetadata.metadata;
     }
 
     public ServiceInformation merge(ServiceInformation other) {
@@ -111,38 +130,141 @@ public class ServiceInformation {
         func2flavour.putAll(other.func2flavour);
         func2level.putAll(other.func2level);
         service2Rules.putAll(other.service2Rules);
-        links.putAll(other.links);
+        func2links.putAll(other.func2links);
         monitoringParameters.addAll(other.monitoringParameters);
         scalingAspects.addAll(other.scalingAspects);
+        functionMetadata.putAll(other.functionMetadata);
+        serviceMetadata.merge(other.serviceMetadata);
         return this;
     }
 
     public ServiceInformation addServiceRelatedInfo(SdkServiceInstance service) {
         Long id = service.getId();
         SdkService template = service.getTemplate();
-        addLink(id, template.getLink());
+        addLinks(template.getLink());
         addRule(id, template.getL3Connectivity());
         scalingAspects.addAll(template.getScalingAspect());
         monitoringParameters.addAll(template.getMonitoringParameters());
+
+        serviceMetadata.setName(template.getName());
+        serviceMetadata.setVersion(template.getVersion());
+        serviceMetadata.setDesigner(template.getDesigner());
+        serviceMetadata.setLicense(template.getLicense().getUrl());
+        serviceMetadata.addMetadata(template.getMetadata());
+
         return this; // For chaining methods together
     }
 
     public static class VnfdData {
+        public final String name;
         public final String vnfd;
         public final String flavour;
         public final String instantiationLevel;
-        public final List<L3Connectivity> rules;
+        public final Set<String> vLinks;
+        public final Set<L3Connectivity> rules;
 
         public VnfdData(
+            String name,
             String vnfd,
             String flavour,
             String instantiationLevel,
-            List<L3Connectivity> rules
+            Set<String> vLinks,
+            Set<L3Connectivity> rules
         ) {
+            this.name = name;
             this.vnfd = vnfd;
             this.flavour = flavour;
             this.instantiationLevel = instantiationLevel;
+            this.vLinks = vLinks;
             this.rules = rules;
+        }
+    }
+
+    public static class ServiceMetadata {
+        public String name;
+        public String version;
+        public String designer;
+        public String license;
+        public Map<String, String> metadata = new HashMap<>();
+
+        public ServiceMetadata() {
+
+        }
+
+        public ServiceMetadata(String name, String version, String designer, String license, Map<String, String> metadata) {
+            this.name = name;
+            this.version = version;
+            this.designer = designer;
+            this.license = license;
+            this.metadata = metadata;
+        }
+
+        public ServiceMetadata setName(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public ServiceMetadata setVersion(String version) {
+            this.version = version;
+            return this;
+        }
+
+        public ServiceMetadata setDesigner(String designer) {
+            this.designer = designer;
+            return this;
+        }
+
+        public ServiceMetadata setLicense(String license) {
+            // validate licensing issues?
+            this.license = license;
+            return this;
+        }
+
+        public ServiceMetadata addMetadata(Map<String, String> metadata) {
+            this.metadata.putAll(metadata);
+            return this;
+        }
+
+        private ServiceMetadata merge(ServiceMetadata other) {
+            setName(other.name);
+            setVersion(other.version);
+            setDesigner(other.designer);
+            setLicense(other.license);
+            addMetadata(other.metadata);
+            return this;
+        }
+    }
+
+    public static class FunctionMetadata {
+        public String name;
+        public String description;
+        public String vendor;
+        public String version;
+        public Map<String, String> metadata;
+
+        public FunctionMetadata name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public FunctionMetadata description(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public FunctionMetadata vendor(String vendor) {
+            this.vendor = vendor;
+            return this;
+        }
+
+        public FunctionMetadata version(String version) {
+            this.version = version;
+            return this;
+        }
+
+        public FunctionMetadata metadata(Map<String, String> metadata) {
+            this.metadata = metadata;
+            return this;
         }
     }
 }

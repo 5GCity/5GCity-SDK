@@ -4,11 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import it.nextworks.composer.ComposerApplication;
 import it.nextworks.composer.executor.repositories.SdkFunctionRepository;
 import it.nextworks.composer.executor.repositories.SdkServiceRepository;
+import it.nextworks.sdk.enums.ConnectionPointType;
 import it.nextworks.sdk.enums.Direction;
 import it.nextworks.sdk.enums.LicenseType;
 import it.nextworks.sdk.enums.MonitoringParameterName;
 import it.nextworks.sdk.enums.Protocol;
 import it.nextworks.sdk.enums.ScalingAction;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +27,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -46,12 +50,22 @@ public class SdkServiceTest {
     @Autowired
     private SdkFunctionRepository functionRepository;
 
+    public static SdkService setServiceId(SdkService service, Long id) {
+        service.setId(id);
+        return service;
+    }
+
+    public static SdkServiceInstance setInstanceId(SdkServiceInstance instance, Long id) {
+        instance.setId(id);
+        return instance;
+    }
+
     /*
     service parameters are param1 and param2
      */
-    public SdkService makeTestObject(Long functionId, List<String> mappingExpressions, Long... connectionPoints) {
+    public static SdkService makeTestObject(Long functionId, List<String> mappingExpressions, Map<String, Long> intCpMap) {
 
-        assertTrue(connectionPoints.length > 0);
+        assertTrue(intCpMap.size() > 0);
 
         SdkService service = new SdkService();
 
@@ -75,16 +89,36 @@ public class SdkServiceTest {
             service
         );
 
-        service.setComponents(Collections.singletonList(subFunction));
+        service.setComponents(Collections.singleton(subFunction));
 
         Link link = LinkTest.makeTestObject(
             service,
-            connectionPoints
+            intCpMap.keySet().toArray(new String[] {})
         );
+
+        Set<ConnectionPoint> cps = new HashSet<>();
+
+        for (Map.Entry<String, Long> e : intCpMap.entrySet()) {
+            ConnectionPoint intCp = new ConnectionPoint();
+            intCp.setName(e.getKey());
+            intCp.setInternalCpId(e.getValue());
+            intCp.setType(ConnectionPointType.INTERNAL);
+            intCp.setRequiredPort(e.getValue().intValue() % 1000 + 8000);
+            cps.add(intCp);
+        }
+
+        ConnectionPoint extCp = new ConnectionPoint();
+        extCp.setName("EXT_CP");
+        extCp.setType(ConnectionPointType.EXTERNAL);
+        extCp.setRequiredPort(9042);
+        cps.add(extCp);
+
+        service.setConnectionPoint(cps);
+
         service.setLink(new HashSet<>(Collections.singletonList(link)));
 
         L3Connectivity l3Connectivity = new L3Connectivity();
-        l3Connectivity.setConnectionPointId(connectionPoints[0]);
+        l3Connectivity.setConnectionPointName("EXT_CP");
         L3ConnectivityRule rule = new L3ConnectivityRule();
         rule.setProtocol(Protocol.TCP);
         rule.setDstIp("10.0.0.42");
@@ -127,6 +161,8 @@ public class SdkServiceTest {
     //@Ignore // requires DB
     public void testPersist() throws Exception {
 
+        // TODO manage CPs in the service!
+
         SdkFunction function = SdkFunctionTest.makeTestObject();
         functionRepository.saveAndFlush(function);
 
@@ -135,8 +171,13 @@ public class SdkServiceTest {
         SdkService service = makeTestObject(
             functionId,
             Arrays.asList("param1", "param2"), // I.e. param1 == secure and param2 == small
-            function.getConnectionPointMap().keySet().toArray(new Long[]{})
+            function.getConnectionPoint().stream().collect(Collectors.toMap(
+                ConnectionPoint::getName,
+                ConnectionPoint::getId
+            ))
         );
+
+        assertTrue(service.isValid());
 
         service.resolveComponents(Collections.singleton(function), Collections.emptySet());
 
@@ -153,5 +194,8 @@ public class SdkServiceTest {
         ObjectMapper mapper = new ObjectMapper();
         byte[] bytes = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(service);
         Files.write(file.toPath(), bytes);
+        File fileF = new File("/tmp/function.json");
+        byte[] bytesF = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(function);
+        Files.write(fileF.toPath(), bytesF);
     }
 }

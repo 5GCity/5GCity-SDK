@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import it.nextworks.sdk.enums.LinkType;
+import it.nextworks.sdk.enums.ConnectionPointType;
 import it.nextworks.sdk.enums.SdkServiceComponentType;
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.Fetch;
@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * SDKServiceTemplate
@@ -49,13 +50,14 @@ import java.util.stream.Collectors;
     "name",
     "version",
     "designer",
-    "parameters",
+    "parameter",
     "license",
     "link",
-    "components",
+    "component",
     "metadata",
+    "connection_point",
     "l3_connectivity",
-    "monitoring_parameters",
+    "monitoring_parameter",
     "scaling_aspect"
 
 })
@@ -65,44 +67,61 @@ public class SdkService implements InstantiableCandidate<SdkService> {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
+
     private String name;
+
     private String version;
+
     private String designer;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @Fetch(FetchMode.SELECT)
     @Cascade(org.hibernate.annotations.CascadeType.ALL)
     @OrderColumn
     private List<String> parameters = new ArrayList<>();
+
     @OneToMany(mappedBy = "outerService", cascade = CascadeType.ALL)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<SubFunction> subFunctions = new HashSet<>();
+
     @OneToMany(mappedBy = "outerService", cascade = CascadeType.ALL)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<SubService> subServices = new HashSet<>();
+
     @Embedded
     private License license;
+
     @OneToMany(mappedBy = "service", cascade = CascadeType.ALL)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<Link> link = new HashSet<>();
+
     @OneToMany(mappedBy = "service", cascade = CascadeType.ALL)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<L3Connectivity> l3Connectivity = new HashSet<>();
+
     @OneToMany(mappedBy = "service", cascade = CascadeType.ALL)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<Metadata> metadata = new HashSet<>();
+
     @OneToMany(mappedBy = "service", cascade = CascadeType.ALL)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<MonitoringParameter> monitoringParameters = new HashSet<>();
+
     @OneToMany(mappedBy = "service", cascade = CascadeType.ALL)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<ScalingAspect> scalingAspect = new HashSet<>();
+
+    @OneToMany(mappedBy = "sdkService", cascade = CascadeType.ALL)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @LazyCollection(LazyCollectionOption.FALSE)
+    private Set<ConnectionPoint> connectionPoint = new HashSet<>();
 
     public SdkServiceInstance instantiate(List<BigDecimal> parameterValues) {
         return new SdkServiceInstance(this, parameterValues, null);
@@ -113,22 +132,39 @@ public class SdkService implements InstantiableCandidate<SdkService> {
         return new SdkServiceInstance(this, parameterValues, outerService);
     }
 
-    @Override
-    @JsonIgnore
-    public Map<Long, ConnectionPoint> getConnectionPointMap() {
-        return getComponents().stream()
-            .map(SdkServiceComponent<SdkComponentCandidate, InstantiableCandidate<SdkComponentCandidate>>::getComponent)
-            .flatMap(c -> c.getConnectionPointMap().entrySet().stream())
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    @JsonProperty("connection_point")
+    public Set<ConnectionPoint> getConnectionPoint() {
+        return connectionPoint;
     }
 
-    @JsonProperty("parameters")
+    @JsonProperty("connection_point")
+    public void setConnectionPoint(Set<ConnectionPoint> connectionPoint) {
+        this.connectionPoint = connectionPoint;
+    }
+
+    @JsonIgnore
+    private Set<ConnectionPoint> getLowerCPs() {
+        if (!isResolved()) {
+            throw new IllegalStateException("Internal cps not available: service not resolved");
+        }
+        Stream<ConnectionPoint> servicesCp = subServices.stream()
+            .flatMap(ss -> ss.getComponent().getConnectionPoint().stream()
+                .filter(cp -> cp.getType().equals(ConnectionPointType.EXTERNAL))
+            );
+        Stream<ConnectionPoint> funcCp = subFunctions.stream()
+            .flatMap(sf -> sf.getComponent().getConnectionPoint().stream()
+                .filter(cp -> cp.getType().equals(ConnectionPointType.EXTERNAL))
+            );
+        return Stream.concat(servicesCp, funcCp).collect(Collectors.toSet());
+    }
+
+    @JsonProperty("parameter")
     @Override
     public List<String> getParameters() {
         return parameters;
     }
 
-    @JsonProperty("parameters")
+    @JsonProperty("parameter")
     public void setParameters(List<String> parameters) {
         this.parameters = parameters;
     }
@@ -149,15 +185,15 @@ public class SdkService implements InstantiableCandidate<SdkService> {
         this.designer = designer;
     }
 
-    @JsonProperty("components")
-    public List<SdkServiceComponent> getComponents() {
-        ArrayList<SdkServiceComponent> output = new ArrayList<>(subFunctions);
+    @JsonProperty("component")
+    public Set<SdkServiceComponent> getComponents() {
+        Set<SdkServiceComponent> output = new HashSet<>(subFunctions);
         output.addAll(subServices);
         return output;
     }
 
-    @JsonProperty("components")
-    public void setComponents(List<SdkServiceComponent> components) {
+    @JsonProperty("component")
+    public void setComponents(Set<SdkServiceComponent> components) {
         Map<? extends Class<?>, List<SdkServiceComponent>> byClass =
             components.stream().collect(Collectors.groupingBy(SdkServiceComponent::getClass));
         if (byClass.size() > 2) {
@@ -175,7 +211,7 @@ public class SdkService implements InstantiableCandidate<SdkService> {
             .collect(Collectors.toSet());
         if (!validateComponents()) {
             throw new IllegalArgumentException(
-                "Invalid components provided. Make sure all are valid and saved."
+                "Invalid components provided. Make sure all are valid and pointing to saved entities."
             );
         }
     }
@@ -184,6 +220,10 @@ public class SdkService implements InstantiableCandidate<SdkService> {
     @Override
     public Long getId() {
         return id;
+    }
+
+    void setId(Long id) {
+        this.id = id;
     }
 
     @JsonProperty("license")
@@ -231,13 +271,13 @@ public class SdkService implements InstantiableCandidate<SdkService> {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    @JsonProperty("monitoring_parameters")
+    @JsonProperty("monitoring_parameter")
     public Set<MonitoringParameter> getMonitoringParameters() {
         return monitoringParameters;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    @JsonProperty("monitoring_parameters")
+    @JsonProperty("monitoring_parameter")
     public void setMonitoringParameters(Set<MonitoringParameter> monitoringParameters) {
         this.monitoringParameters = monitoringParameters;
     }
@@ -305,9 +345,39 @@ public class SdkService implements InstantiableCandidate<SdkService> {
             }
             subService.setComponent(service);
         }
-        if (!validateLinks()) {
-            throw new IllegalArgumentException("Invalid links");
+        resolveCps();
+        for (L3Connectivity l3c : l3Connectivity) {
+            Map<String, ConnectionPoint> byName = getConnectionPoint().stream().collect(Collectors.toMap(
+                ConnectionPoint::getName,
+                Function.identity()
+            ));
+            l3c.setConnectionPoint(byName.get(l3c.getConnectionPointName()));
         }
+    }
+
+    private void resolveCps() {
+        // Note: services can "forget" lower CPs, if they don't plan to connect to them
+        Set<Long> lowerCPIds = getLowerCPs().stream().map(ConnectionPoint::getId).collect(Collectors.toSet());
+        connectionPoint.stream()
+            .filter(cp -> cp.getType().equals(ConnectionPointType.INTERNAL))
+            .forEach(
+                cp -> {
+                    if (!lowerCPIds.contains(cp.getInternalCpId())) {
+                        throw new IllegalStateException(String.format(
+                            "Invalid connection points: internal CP %s referencing invalid lower cp %s",
+                            cp.getId(),
+                            cp.getInternalCpId()
+                        ));
+                    }
+                }
+            );
+    }
+
+    private boolean resolveLinks() {
+        link.forEach(l -> {
+            l.setConnectionPoints(getConnectionPoint());
+        });
+        return true;
     }
 
     private boolean validateExpressions() {
@@ -315,7 +385,6 @@ public class SdkService implements InstantiableCandidate<SdkService> {
     }
 
     private boolean validateComponents() {
-
         return // pre-check
             subFunctions != null
                 && subServices != null
@@ -329,15 +398,29 @@ public class SdkService implements InstantiableCandidate<SdkService> {
     }
 
     private boolean validateLinks() {
-        Map<Long, ConnectionPoint> cpMap = getConnectionPointMap();
-        return link != null
-            && link.size() > 0
-            &&
-            link.stream().allMatch(
-                l -> l.isValid()
-                    && l.getType() == LinkType.EXTERNAL
-                    && l.validateAgainstCpMap(cpMap)
-            );
+        boolean preCheck = link != null
+            && !link.isEmpty();
+        if (!preCheck) {
+            return false;
+        }
+        Set<String> thisCpIds = getConnectionPoint().stream().map(ConnectionPoint::getName).collect(Collectors.toSet());
+        if (!link.stream().allMatch(l -> thisCpIds.containsAll(l.getConnectionPointNames()))) {
+            return false;
+        }
+        if (!resolveLinks()) {
+            throw new IllegalStateException("Invalid links/connection points");
+        }
+        return true;
+    }
+
+    private boolean validateCps() {
+        return connectionPoint != null
+            && connectionPoint.stream()
+            .map(ConnectionPoint::getName)
+            .distinct()
+            .count()
+            ==
+            connectionPoint.size();  // I.e. cp names are unique in the service
     }
 
     @JsonIgnore
@@ -356,6 +439,7 @@ public class SdkService implements InstantiableCandidate<SdkService> {
             && scalingAspect != null
             && scalingAspect.stream().allMatch(ScalingAspect::isValid)
             && parameters != null
+            && validateLinks()
             && validateExpressions();
     }
 
@@ -482,10 +566,39 @@ public class SdkService implements InstantiableCandidate<SdkService> {
             && ((this.parameters == rhs.parameters) || ((this.parameters != null) && this.parameters.equals(rhs.parameters)));
     }
 
+    @JsonIgnore
+    private boolean isResolved() {
+        return getComponents().stream().allMatch(SdkServiceComponent::isResolved);
+    }
+
     @PrePersist
     private void prePersist() {
-        if (!getComponents().stream().allMatch(SdkServiceComponent::isResolved)) {
-            throw new IllegalStateException("Cannot persist, there are unresolved components");
+        if (!isResolved()) {
+            throw new IllegalStateException("Cannot persist service: not resolved");
+        }
+        for (ConnectionPoint cp : connectionPoint) {
+            cp.setSdkService(this);
+        }
+        for (Link l : link) {
+            l.setService(this);
+        }
+        for (L3Connectivity l3c : l3Connectivity) {
+            l3c.setService(this);
+        }
+        for (MonitoringParameter mp : monitoringParameters) {
+            mp.setService(this);
+        }
+        for (ScalingAspect sa : scalingAspect) {
+            sa.setService(this);
+        }
+        for (SubFunction subFunction : subFunctions) {
+            subFunction.setOuterService(this);
+        }
+        for (SubService subService : subServices) {
+            subService.setOuterService(this);
+        }
+        for (Metadata metadatum : metadata) {
+            metadatum.setService(this);
         }
     }
 
@@ -494,9 +607,20 @@ public class SdkService implements InstantiableCandidate<SdkService> {
     @PostUpdate
     private void fixPersistence() {
         // Cleanup persistence artifacts and weird collection implementations
+        Map<String, ConnectionPoint> byName = getConnectionPoint().stream().collect(Collectors.toMap(
+            ConnectionPoint::getName,
+            Function.identity()
+        ));
         parameters = new ArrayList<>(parameters);
+        connectionPoint = new HashSet<>(connectionPoint);
         link = new HashSet<>(link);
+        for (Link l : link) {
+            l.setConnectionPoints(connectionPoint);
+        }
         l3Connectivity = new HashSet<>(l3Connectivity);
+        for (L3Connectivity c : l3Connectivity) {
+            c.setConnectionPoint(byName.get(c.getConnectionPointName()));
+        }
         monitoringParameters = new HashSet<>(monitoringParameters);
         scalingAspect = new HashSet<>(scalingAspect);
         subFunctions = new HashSet<>(subFunctions);

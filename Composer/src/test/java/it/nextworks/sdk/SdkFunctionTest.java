@@ -64,12 +64,19 @@ public class SdkFunctionTest {
         monitoringParameter.setDirection(Direction.LOWER_THAN);
         function.setMonitoringParameters(Collections.singleton(monitoringParameter));
 
-        ConnectionPoint cp1 = ConnectionPointTest.makeTestObject1(function);
-        ConnectionPoint cp2 = ConnectionPointTest.makeTestObject2(function);
-        ConnectionPoint cp3 = ConnectionPointTest.makeTestObject3(function);
-        ConnectionPoint cp4 = ConnectionPointTest.makeTestObject4(function);
+        ConnectionPoint cp1 = ConnectionPointTest.makeTestObject1();
+        ConnectionPoint cp2 = ConnectionPointTest.makeTestObject2();
+        ConnectionPoint cp3 = ConnectionPointTest.makeTestObject3();
+        ConnectionPoint cp4 = ConnectionPointTest.makeTestObject4();
 
         function.setConnectionPoint(new HashSet<>(Arrays.asList(cp1, cp2, cp3, cp4)));
+        return function;
+    }
+
+    public static SdkFunction makeTestObject(Long id, Long cpId) {
+        SdkFunction function = makeTestObject();
+        function.setConnectionPoint(Collections.singleton(ConnectionPointTest.makeTestObjectId(cpId)));
+        function.setId(id);
         return function;
     }
 
