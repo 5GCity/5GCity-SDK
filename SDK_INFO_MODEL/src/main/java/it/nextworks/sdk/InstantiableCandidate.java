@@ -1,5 +1,8 @@
 package it.nextworks.sdk;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -8,7 +11,7 @@ import java.util.List;
  *
  * @author Marco Capitani <m.capitani AT nextworks.it>
  */
-public interface InstantiableCandidate<T extends SdkComponentCandidate> extends SdkComponentCandidate {
+public interface InstantiableCandidate extends SdkComponentCandidate {
 
-    SdkComponentInstance<T> instantiate(List<BigDecimal> parameterValues, SdkServiceInstance outerService);
+    SdkComponentInstance instantiate(List<BigDecimal> parameterValues);
 }

@@ -27,7 +27,7 @@ import org.springframework.web.client.RestTemplate;
 
 @SpringBootApplication
 @ComponentScan(basePackages = {"it.nextworks.composer", "it.nextworks.sdk"})
-@EntityScan({"it.nextworks.sdk", "it.nextworks.composer.plugins.catalogue"})
+@EntityScan(basePackages = {"it.nextworks.sdk", "it.nextworks.composer"})
 @EnableJpaRepositories("it.nextworks.composer.executor.repositories")
 public class ComposerApplication {
 

@@ -11,10 +11,10 @@ import java.util.List;
  * @author Marco Capitani <m.capitani AT nextworks.it>
  */
 @Entity
-public class SubFunction extends SdkServiceComponent<SdkFunction, SdkFunction> {
+public class SubFunction extends SdkServiceComponent<SdkFunction> {
 
     private SubFunction() {
-        // JPA only
+        this.type = SdkServiceComponentType.SDK_FUNCTION;
     }
 
     /**

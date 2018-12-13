@@ -1,10 +1,12 @@
 package it.nextworks.sdk;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import it.nextworks.sdk.enums.SdkServiceComponentType;
 import it.nextworks.sdk.evalex.ExtendedExpression;
 import org.hibernate.annotations.Cascade;
@@ -42,8 +44,16 @@ import java.util.Map;
     "component_type",
     "mapping_expression"
 })
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.NAME,
+    include = JsonTypeInfo.As.EXISTING_PROPERTY,
+    property = "component_type")
+@JsonSubTypes({
+    @Type(value = SubFunction.class, name = "SDK_FUNCTION"),
+    @Type(value = SubService.class, name = "SDK_SERVICE")
+})
 @MappedSuperclass
-abstract public class SdkServiceComponent<S extends SdkComponentCandidate, T extends InstantiableCandidate<S>> {
+abstract public class SdkServiceComponent<T extends InstantiableCandidate> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -243,8 +253,8 @@ abstract public class SdkServiceComponent<S extends SdkComponentCandidate, T ext
         return output;
     }
 
-    public SdkComponentInstance<S> instantiate(Map<String, BigDecimal> parameterValues, SdkServiceInstance outerService) {
-        return getComponent().instantiate(computeParams(parameterValues), outerService);
+    public SdkComponentInstance instantiate(Map<String, BigDecimal> parameterValues) {
+        return getComponent().instantiate(computeParams(parameterValues));
     }
 
     @PrePersist

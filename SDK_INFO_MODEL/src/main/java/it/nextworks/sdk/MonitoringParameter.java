@@ -112,14 +112,6 @@ public class MonitoringParameter {
     }
 
     @JsonIgnore
-    public boolean isValidForScalingPurpose() {
-        return this.isValid()
-            && this.threshold > 0
-            && this.direction != null
-            && this.scalingAspect != null;
-    }
-
-    @JsonIgnore
     public boolean isValid() {
         return this.name != null;
     }

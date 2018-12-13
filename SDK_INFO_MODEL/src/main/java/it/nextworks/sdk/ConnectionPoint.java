@@ -34,6 +34,8 @@ import java.util.stream.Collectors;
     "id",
     "name",
     "type",
+    "internal_cp_name",
+    "internal_cp_id",
     "required_port"
 })
 @Entity
@@ -61,6 +63,8 @@ public class ConnectionPoint {
     private L3Connectivity l3Connectivity;
 
     private Long internalCpId;
+
+    private String internalCpName;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @Fetch(FetchMode.SELECT)
@@ -94,6 +98,16 @@ public class ConnectionPoint {
     @JsonProperty("internal_cp_id")
     public void setInternalCpId(Long internalCpId) {
         this.internalCpId = internalCpId;
+    }
+
+    @JsonProperty("internal_cp_name")
+    public String getInternalCpName() {
+        return internalCpName;
+    }
+
+    @JsonProperty("internal_cp_name")
+    public void setInternalCpName(String internalCpName) {
+        this.internalCpName = internalCpName;
     }
 
     @JsonProperty("type")
@@ -165,11 +179,7 @@ public class ConnectionPoint {
     public boolean isValid() {
         return type != null
             && name != null
-            && requiredPort != null
-            // internal -> intCpId == null
-            && (!type.equals(ConnectionPointType.INTERNAL) || internalCpId == null)
-            // external -> intCpId != null
-            && (!type.equals(ConnectionPointType.EXTERNAL) || internalCpId != null);
+            && requiredPort != null;
     }
 
     @Override

@@ -158,7 +158,7 @@ public class SdkServiceTest {
     }
 
     @Test
-    //@Ignore // requires DB
+    @Ignore // requires DB
     public void testPersist() throws Exception {
 
         // TODO manage CPs in the service!

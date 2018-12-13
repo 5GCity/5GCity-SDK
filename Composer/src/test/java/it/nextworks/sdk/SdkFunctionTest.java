@@ -56,6 +56,7 @@ public class SdkFunctionTest {
         function.setInstantiationLevelExpression("IF(small != 0, small_il, big_il)");
         function.setParameters(Arrays.asList("secure", "small"));
         function.setVnfdId("vnfd_id");
+        function.setVnfdVersion("vnfd_version");
 
         MonitoringParameter monitoringParameter = new MonitoringParameter();
         monitoringParameter.setName(MonitoringParameterName.AVERAGE_MEMORY_UTILIZATION);

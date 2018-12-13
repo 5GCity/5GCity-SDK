@@ -11,10 +11,10 @@ import java.util.List;
  * @author Marco Capitani <m.capitani AT nextworks.it>
  */
 @Entity
-public class SubService extends SdkServiceComponent<SdkService, SdkService> {
+public class SubService extends SdkServiceComponent<SdkService> {
 
     private SubService() {
-        // JPA only
+        type = SdkServiceComponentType.SDK_SERVICE;
     }
 
     /**

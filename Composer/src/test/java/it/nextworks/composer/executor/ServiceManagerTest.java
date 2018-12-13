@@ -25,11 +25,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.io.InputStream;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -156,6 +156,10 @@ public class ServiceManagerTest {
             ),
             serviceId
         );
+
+        SdkFunction function = SdkFunctionTest.makeTestObject(1L, 2L);
+
+        service.resolveComponents(Collections.singleton(function), new HashSet<>());
 
         List<BigDecimal> paramValues = Arrays.asList(new BigDecimal(1), new BigDecimal(1));
         SdkServiceInstance instance = service.instantiate(paramValues);

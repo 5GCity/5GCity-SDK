@@ -67,7 +67,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     private static final Logger log = LoggerFactory.getLogger(ServiceManager.class);
 
     @Autowired
-    @Qualifier("expression-adapter")
+    @Qualifier("expressionAdapter")
     private ServicesAdaptorProviderInterface adapter;
 
     @Autowired
@@ -163,7 +163,6 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         log.info("Storing into database a new service");
         // TODO Find a way to check if service already exists
         // TODO: should we really? We could check the name, but this is the user's responsibility
-        SdkService response;
         if (!service.isValid()) {
             log.error("Malformed SdkService");
             throw new MalformedElementException("Malformed SdkService");

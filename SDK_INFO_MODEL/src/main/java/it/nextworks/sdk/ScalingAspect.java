@@ -105,7 +105,7 @@ public class ScalingAspect {
             && action != null
             && monitoringParameter != null && monitoringParameter.size() > 0
             && monitoringParameter.stream()
-            .allMatch(m -> m.isValidForScalingPurpose() && m.getScalingAspect() == this);
+            .allMatch(MonitoringParameter::isValid);
     }
 
     @Override

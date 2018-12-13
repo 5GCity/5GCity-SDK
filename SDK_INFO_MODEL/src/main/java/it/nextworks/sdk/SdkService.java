@@ -28,13 +28,16 @@ import javax.persistence.PostLoad;
 import javax.persistence.PostPersist;
 import javax.persistence.PostUpdate;
 import javax.persistence.PrePersist;
+import javax.persistence.Transient;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -62,7 +65,7 @@ import java.util.stream.Stream;
 
 })
 @Entity
-public class SdkService implements InstantiableCandidate<SdkService> {
+public class SdkService implements InstantiableCandidate {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -123,13 +126,28 @@ public class SdkService implements InstantiableCandidate<SdkService> {
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<ConnectionPoint> connectionPoint = new HashSet<>();
 
-    public SdkServiceInstance instantiate(List<BigDecimal> parameterValues) {
-        return new SdkServiceInstance(this, parameterValues, null);
-    }
-
     @Override
-    public SdkServiceInstance instantiate(List<BigDecimal> parameterValues, SdkServiceInstance outerService) {
-        return new SdkServiceInstance(this, parameterValues, outerService);
+    public SdkServiceInstance instantiate(List<BigDecimal> parameterValues) {
+        Set<SdkComponentInstance> subInstances = new HashSet<>();
+        Map<String, BigDecimal> parameterMap = new HashMap<>();
+        if (!(parameters.size() == parameterValues.size())) {
+            throw new IllegalArgumentException(String.format(
+                "Parameter values amount invalid. Expected %d, got %s",
+                parameters.size(),
+                parameterValues.size()
+            ));
+        }
+        for (int i = 0; i < parameters.size(); i++) {
+            parameterMap.put(parameters.get(i), parameterValues.get(i));
+        }
+        for (SdkServiceComponent component : getComponents()) {
+            subInstances.add(component.instantiate(parameterMap));
+        }
+        return new SdkServiceInstance(
+            this,
+            parameterValues,
+            subInstances
+        );
     }
 
     @JsonProperty("connection_point")
@@ -321,6 +339,11 @@ public class SdkService implements InstantiableCandidate<SdkService> {
     }
 
     public void resolveComponents(Set<SdkFunction> functions, Set<SdkService> services) {
+        if (!isValid()) {
+            throw new IllegalStateException(
+                "Cannot resolve components: service is not valid"
+            );
+        }
         Map<Long, SdkFunction> functionMap = functions.stream()
             .collect(Collectors.toMap(SdkFunction::getId, Function.identity()));
         for (SubFunction subFunction : subFunctions) {
@@ -373,13 +396,6 @@ public class SdkService implements InstantiableCandidate<SdkService> {
             );
     }
 
-    private boolean resolveLinks() {
-        link.forEach(l -> {
-            l.setConnectionPoints(getConnectionPoint());
-        });
-        return true;
-    }
-
     private boolean validateExpressions() {
         return getComponents().stream().allMatch(c -> c.validateParameters(parameters));
     }
@@ -397,24 +413,101 @@ public class SdkService implements InstantiableCandidate<SdkService> {
                 && subServices.stream().map(SdkServiceComponent::getComponentId).count() == subServices.size();
     }
 
+    @Transient
+    @JsonIgnore
+    private Map<String, String> associateCpCache = new HashMap<>();
+
+    @JsonIgnore
+    private boolean isNotPartOfIntToExtBridge(ConnectionPoint cp) {
+        String cpName = cp.getName();
+        if (associateCpCache.containsKey(cpName)) {
+            return associateCpCache.get(cpName) == null;
+        }
+        switch (cp.getType()) {
+            case EXTERNAL:
+                 if (cp.getInternalCpName() == null) {
+                     associateCpCache.put(cpName, null);
+                     return true;
+                 } else {
+                     String otherCp = cp.getInternalCpName();
+                     associateCpCache.put(cpName, otherCp);
+                     associateCpCache.put(otherCp, cpName);
+                     return false;
+                 }
+            case INTERNAL:
+                Optional<ConnectionPoint> match = connectionPoint.stream()
+                    .filter(otherCp ->
+                        otherCp.getType().equals(ConnectionPointType.EXTERNAL)
+                            && cpName.equals(otherCp.getInternalCpName())
+                    )
+                    .findAny();
+                if (match.isPresent()) {
+                    String otherCp = match.get().getName();
+                    associateCpCache.put(cpName, otherCp);
+                    associateCpCache.put(otherCp, cpName);
+                    return false;
+                } else {
+                    associateCpCache.put(cpName, null);
+                    return true;
+                }
+            default:
+                throw new IllegalStateException(String.format(
+                    "unknown cp type %s on cp %s",
+                    cp.getType(),
+                    cpName
+                ));
+        }
+    }
+
     private boolean validateLinks() {
         boolean preCheck = link != null
             && !link.isEmpty();
         if (!preCheck) {
             return false;
         }
-        Set<String> thisCpIds = getConnectionPoint().stream().map(ConnectionPoint::getName).collect(Collectors.toSet());
-        if (!link.stream().allMatch(l -> thisCpIds.containsAll(l.getConnectionPointNames()))) {
-            return false;
-        }
-        if (!resolveLinks()) {
-            throw new IllegalStateException("Invalid links/connection points");
+        Set<ConnectionPoint> thisCps = getConnectionPoint();
+        Set<String> availableCpIds = thisCps.stream()
+            .filter(this::isNotPartOfIntToExtBridge)
+            .map(ConnectionPoint::getName)
+            .collect(Collectors.toSet());
+        // Check correspondence between links and cps
+        Set<String> takenCps = new HashSet<>();
+        for (Link l : link) {
+            Set<String> linkCps = new HashSet<>(l.getConnectionPointNames());
+            if (!availableCpIds.containsAll(linkCps)) {
+                // some cp is missing
+                linkCps.removeAll(availableCpIds);
+                if (takenCps.containsAll(linkCps)) {
+                    // already used
+                    throw new IllegalStateException(String.format(
+                        "Invalid links, CPs '%s' are connected to multiple links",
+                        linkCps
+                    ));
+                } else {
+                    // some are unknown
+                    linkCps.removeAll(takenCps);
+                    throw new IllegalStateException(String.format(
+                        "Invalid links, CPs '%s' are not available for linking " +
+                            "(unknown? part of an int-to-ext bridge?)",
+                        linkCps
+                    ));
+                }
+            }
+            availableCpIds.removeAll(linkCps);
+            takenCps.addAll(linkCps);
         }
         return true;
     }
 
     private boolean validateCps() {
         return connectionPoint != null
+            &&
+            connectionPoint.stream().allMatch(
+                cp -> cp.isValid() && (
+                    // internal => internalCpId != null
+                    !(cp.getType() == ConnectionPointType.INTERNAL) || cp.getInternalCpId() != null
+                )
+            )
             && connectionPoint.stream()
             .map(ConnectionPoint::getName)
             .distinct()
@@ -440,7 +533,8 @@ public class SdkService implements InstantiableCandidate<SdkService> {
             && scalingAspect.stream().allMatch(ScalingAspect::isValid)
             && parameters != null
             && validateLinks()
-            && validateExpressions();
+            && validateExpressions()
+            && validateCps();
     }
 
     private void appendContents(StringBuilder sb) {
@@ -581,6 +675,7 @@ public class SdkService implements InstantiableCandidate<SdkService> {
         }
         for (Link l : link) {
             l.setService(this);
+            l.setConnectionPoints(connectionPoint);
         }
         for (L3Connectivity l3c : l3Connectivity) {
             l3c.setService(this);
@@ -626,5 +721,10 @@ public class SdkService implements InstantiableCandidate<SdkService> {
         subFunctions = new HashSet<>(subFunctions);
         subServices = new HashSet<>(subServices);
         metadata = new HashSet<>(metadata);
+        for (ConnectionPoint cp : connectionPoint) {
+            if (cp.getType().equals(ConnectionPointType.EXTERNAL) && (cp.getInternalCpName() != null)) {
+                cp.setInternalCpId(byName.get(cp.getInternalCpName()).getId());
+            }
+        }
     }
 }

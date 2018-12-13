@@ -33,7 +33,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
@@ -48,17 +47,17 @@ import java.util.stream.Collectors;
     "description",
     "vendor",
     "version",
-    "parameters",
+    "parameter",
     "vnfdId",
-    "flavourExpression",
-    "instantiationLevelExpression",
+    "vnfd_version",
+    "flavour_expression",
+    "instantiation_level_expression",
     "metadata",
     "connection_point",
-    "monitoringParameters",
-    "requiredPorts"
+    "monitoring_parameter"
 })
 @Entity
-public class SdkFunction implements InstantiableCandidate<SdkFunction> {
+public class SdkFunction implements InstantiableCandidate {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -78,6 +77,8 @@ public class SdkFunction implements InstantiableCandidate<SdkFunction> {
     private List<String> parameters = new ArrayList<>();
 
     private String vnfdId;
+
+    private String vnfdVersion;
 
     private String flavourExpression;
 
@@ -142,6 +143,16 @@ public class SdkFunction implements InstantiableCandidate<SdkFunction> {
     @JsonProperty("vnfdId")
     public void setVnfdId(String vnfdId) {
         this.vnfdId = vnfdId;
+    }
+
+    @JsonProperty("vnfd_version")
+    public String getVnfdVersion() {
+        return vnfdVersion;
+    }
+
+    @JsonProperty("vnfd_version")
+    public void setVnfdVersion(String vnfdVersion) {
+        this.vnfdVersion = vnfdVersion;
     }
 
     @JsonProperty("flavour_expression")
@@ -247,11 +258,10 @@ public class SdkFunction implements InstantiableCandidate<SdkFunction> {
     }
 
     @Override
-    public SdkComponentInstance<SdkFunction> instantiate(
-        List<BigDecimal> parameterValues,
-        SdkServiceInstance outerService
+    public SdkComponentInstance instantiate(
+        List<BigDecimal> parameterValues
     ) {
-        return new SdkFunctionInstance(this, parameterValues, outerService);
+        return new SdkFunctionInstance(this, parameterValues);
     }
 
     @Override
@@ -373,7 +383,10 @@ public class SdkFunction implements InstantiableCandidate<SdkFunction> {
     private boolean validateCps() {
         return connectionPoint != null
             && connectionPoint.size() > 0
-            && connectionPoint.stream().allMatch(ConnectionPoint::isValid)
+            &&
+            connectionPoint.stream().allMatch(
+                cp -> cp.isValid() && cp.getInternalCpId() == null && cp.getInternalCpName() == null
+            )
             && connectionPoint.stream()
             .map(ConnectionPoint::getName)
             .distinct()
