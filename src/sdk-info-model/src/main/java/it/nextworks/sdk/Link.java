@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 @JsonPropertyOrder({
     "name",
     "type",
-    "connection_point_ids"
+    "connection_point_names"
 })
 @Entity
 public class Link {
@@ -61,18 +61,18 @@ public class Link {
     @ManyToOne
     private SdkService service;
 
-    @JsonProperty("connection_point_ids")
+    @JsonProperty("connection_point_names")
     public Set<String> getConnectionPointNames() {
         return connectionPointNames;
     }
 
     @JsonIgnore
     public void setConnectionPointNames(String... cps) {
-        setConnectionPointIds(Arrays.stream(cps).collect(Collectors.toSet()));
+        setConnectionPointNames(Arrays.stream(cps).collect(Collectors.toSet()));
     }
 
-    @JsonProperty("connection_point_ids")
-    public void setConnectionPointIds(Set<String> connectionPointIds) {
+    @JsonProperty("connection_point_names")
+    public void setConnectionPointNames(Set<String> connectionPointIds) {
         this.connectionPointNames = connectionPointIds;
     }
 
@@ -164,9 +164,9 @@ public class Link {
                             cpType
                         ));
                     }
-                    continue;
+                    break;
                 case EXTERNAL:
-                    continue;
+                    break;
                 default:
                     throw new IllegalArgumentException(String.format(
                         "Unexpected connection link type %s",

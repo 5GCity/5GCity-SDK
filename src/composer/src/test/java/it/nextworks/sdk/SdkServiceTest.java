@@ -20,6 +20,7 @@ import org.springframework.test.context.web.WebAppConfiguration;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -91,9 +92,12 @@ public class SdkServiceTest {
 
         service.setComponents(Collections.singleton(subFunction));
 
+        ArrayList<String> cpNames = new ArrayList<>(intCpMap.keySet());
+        cpNames.add("EXT_CP");
+
         Link link = LinkTest.makeTestObject(
             service,
-            intCpMap.keySet().toArray(new String[] {})
+            cpNames.toArray(new String[]{})
         );
 
         Set<ConnectionPoint> cps = new HashSet<>();
@@ -160,8 +164,6 @@ public class SdkServiceTest {
     @Test
     @Ignore // requires DB
     public void testPersist() throws Exception {
-
-        // TODO manage CPs in the service!
 
         SdkFunction function = SdkFunctionTest.makeTestObject();
         functionRepository.saveAndFlush(function);

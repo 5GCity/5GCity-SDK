@@ -9,6 +9,7 @@ import it.nextworks.sdk.SdkFunction;
 import it.nextworks.sdk.SdkFunctionInstance;
 import it.nextworks.sdk.SdkService;
 import it.nextworks.sdk.SdkServiceInstance;
+import it.nextworks.sdk.enums.ConnectionPointType;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -24,11 +25,7 @@ import java.util.stream.Collectors;
  */
 class ServiceInfoBuilder {
 
-    // TODO make SAP by appending _mgmt to the appropriate link
-
     private Map<Long, SdkFunctionInstance> functions = new HashMap<>();
-
-    private Map<Long, Long> funcId2Service = new HashMap<>();
 
     private Map<Long, String> func2vnfd = new HashMap<>();
 
@@ -48,10 +45,13 @@ class ServiceInfoBuilder {
 
     private Map<Long, Set<ConnectionPoint>> service2Cp = new HashMap<>();
 
+    private Map<Long, ConnectionPoint> cpsById = new HashMap<>();
+
     private Set<MonitoringParameter> monitoringParameters = new HashSet<>();
 
     private Set<ScalingAspect> scalingAspects = new HashSet<>();
 
+    // Used only at last -> not to be merged
     private Set<AdapterLink> adapterLinks = new HashSet<>();
 
     private Map<Long, Set<AdapterLink>> function2Link = new HashMap<>();
@@ -66,12 +66,14 @@ class ServiceInfoBuilder {
         Long id = function.getId();
         SdkFunction template = function.getTemplate();
         functions.put(id, function);
-        funcId2Service.put(id, function.getOuterServiceId());
         func2vnfd.put(id, template.getVnfdId());
         func2vnfdVersion.put(id, template.getVnfdVersion());
         func2flavour.put(id, function.getFlavour());
         func2level.put(id, function.getLevel());
         monitoringParameters.addAll(template.getMonitoringParameters());
+        for (ConnectionPoint cp : template.getConnectionPoint()) {
+            cpsById.put(cp.getId(), cp);
+        }
         functionMetadata.put(
             id,
             new FunctionMetadata()
@@ -85,17 +87,18 @@ class ServiceInfoBuilder {
 
     ServiceInfoBuilder merge(ServiceInfoBuilder other) {
         functions.putAll(other.functions);
-        funcId2Service.putAll(other.funcId2Service);
         func2vnfd.putAll(other.func2vnfd);
         func2vnfdVersion.putAll(other.func2vnfdVersion);
         func2flavour.putAll(other.func2flavour);
         func2level.putAll(other.func2level);
-        service2Rules.putAll(other.service2Rules);
-        service2Link.putAll(other.service2Link);
-        monitoringParameters.addAll(other.monitoringParameters);
-        scalingAspects.addAll(other.scalingAspects);
         functionMetadata.putAll(other.functionMetadata);
         serviceMetadata.merge(other.serviceMetadata);
+        service2Rules.putAll(other.service2Rules);
+        service2Link.putAll(other.service2Link);
+        service2Cp.putAll(other.service2Cp);
+        cpsById.putAll(other.cpsById);
+        monitoringParameters.addAll(other.monitoringParameters);
+        scalingAspects.addAll(other.scalingAspects);
         return this;
     }
 
@@ -129,10 +132,12 @@ class ServiceInfoBuilder {
 
     private void addCps(Long serviceId, Set<ConnectionPoint> cps) {
         service2Cp.put(serviceId, cps);
+        for (ConnectionPoint cp : cps) {
+            cpsById.put(cp.getId(), cp);
+        }
     }
 
     private VnfdData getVnfdData(Long functionId) {
-        SdkFunctionInstance functionInstance = functions.get(functionId);
         Set<L3Connectivity> rules = service2Rules.values().stream()
             .flatMap(Collection::stream)
             .filter(
@@ -172,21 +177,67 @@ class ServiceInfoBuilder {
             }
         }
 
-        for (Set<ConnectionPoint> cpSet : service2Cp.values()) {
-            for (ConnectionPoint cp : cpSet) {
-                builder.addCp(cp);
-            }
+        for (ConnectionPoint cp : cpsById.values()) {
+            builder.addCp(cp);
         }
 
         adapterLinks = builder.build();
 
-        for (Long functionId : functions.keySet()) {
+        for (SdkFunctionInstance functionInstance : functions.values()) {
+            Long functionInstanceId = functionInstance.getId();
+            Long functionId = functionInstance.getTemplate().getId();
             for (AdapterLink aLink : adapterLinks) {
                 if (aLink.function2CpName.containsKey(functionId)) {
-                    function2Link.putIfAbsent(functionId, new HashSet<>());
-                    function2Link.get(functionId).add(aLink);
+                    function2Link.putIfAbsent(functionInstanceId, new HashSet<>());
+                    function2Link.get(functionInstanceId).add(aLink);
                 }
             }
+        }
+        for (ConnectionPoint connectionPoint : service2Cp.get(lastService)) {
+            if (connectionPoint.getType().equals(ConnectionPointType.EXTERNAL)) {
+                // Mark containing link as needing a SAP (i.e. _mgmt)
+                Link externalLink = findFirstAttachedLink(connectionPoint);
+                for (AdapterLink adapterLink : adapterLinks) {
+                    if (adapterLink.linkIds.contains(externalLink.getId())) {
+                        adapterLink.name = String.format("%s_mgmt", adapterLink.name);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    private Link findFirstAttachedLink(ConnectionPoint cp) {
+        if (cp.getLink() != null) {
+            return cp.getLink();
+        } else if (cp.getInternalCpId() != null) {
+            ConnectionPoint intCp = cpsById.get(cp.getInternalCpId());
+            if (intCp == null) {
+                throw new IllegalStateException(String.format(
+                    "Declared CP %s not found",
+                    cp.getInternalCpId()
+                ));
+            }
+            Long lowerCpId = intCp.getInternalCpId();
+            if (lowerCpId == null) {
+                throw new IllegalStateException(String.format(
+                    "Internal CP %s without corresponding lower CP",
+                    intCp.getId()
+                ));
+            }
+            ConnectionPoint lowerCp = cpsById.get(lowerCpId);
+            if (lowerCp == null) {
+                throw new IllegalStateException(String.format(
+                    "Declared CP %s not found",
+                    lowerCpId
+                ));
+            }
+            return findFirstAttachedLink(lowerCp);
+        } else {
+            throw new IllegalStateException(String.format(
+                "Orphan external CP %s",
+                cp.getId()
+            ));
         }
     }
 

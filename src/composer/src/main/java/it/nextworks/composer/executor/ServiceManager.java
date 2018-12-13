@@ -158,8 +158,6 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     public String createService(SdkService service)
         throws ExistingEntityException, NotExistingEntityException, MalformedElementException {
 
-        // TODO change into a save all-at-once
-
         log.info("Storing into database a new service");
         // TODO Find a way to check if service already exists
         // TODO: should we really? We could check the name, but this is the user's responsibility
@@ -168,13 +166,13 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             throw new MalformedElementException("Malformed SdkService");
         }
         log.debug("Checking component availability");
-        // TODO do in a more efficient way
         List<SdkFunction> availableF = functionManager.getFunctions();
         Set<Long> availableFIds = availableF.stream()
             .map(SdkFunction::getId)
             .collect(Collectors.toSet());
         Set<Long> requiredFIds = getSubFunctionIds(service).collect(Collectors.toSet());
-        // Check the functions are available
+        // TODO: optimize via repo method?
+        // Check if the functions are available
         if (!availableFIds.containsAll(requiredFIds)) {
             requiredFIds.removeAll(availableFIds);
             throw new MalformedElementException(String.format(
@@ -212,48 +210,6 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         // Saving the service
         serviceRepository.saveAndFlush(service);
         return service.getId().toString();
-
-/*
-        // ** Old code, not yet removed ** //
-        // Saving Links
-        Set<Link> links = service.getLink();
-        for (Link link : links) {
-            if (link.getType() == LinkType.EXTERNAL) {
-                link.setService(service);
-                linkRepository.saveAndFlush(link);
-                // Saving ConnectionPoints
-                for (String name : link.getConnectionPointNames()) {
-                    // TODO
-                }
-            } else {
-                serviceRepository.delete(response);
-                log.error("Malformed request: internal link in service");
-                throw new MalformedElementException("Malformed request: internal link in service");
-            }
-        }
-
-        // Saving Monitoring Parameters
-        if (service.getMonitoringParameters() != null) {
-            Set<MonitoringParameter> monitoringParameters = service.getMonitoringParameters();
-            for (MonitoringParameter param : monitoringParameters) {
-                param.setService(service);
-                monitoringParamRepository.saveAndFlush(param);
-            }
-        }
-
-        // Saving Scaling Aspects
-        Set<ScalingAspect> scalingAspects = service.getScalingAspect();
-        for (ScalingAspect scalingAspect : scalingAspects) {
-            scalingAspect.setService(service);
-            scalingRepository.saveAndFlush(scalingAspect);
-            // Saving Monitoring Parameters related to ScalingAspect
-            Set<MonitoringParameter> monitoringParams = scalingAspect.getMonitoringParameter();
-            for (MonitoringParameter param : monitoringParams) {
-                param.setScalingAspect(scalingAspect);
-                monitoringParamRepository.saveAndFlush(param);
-            }
-        }
-*/
     }
 
     @Override

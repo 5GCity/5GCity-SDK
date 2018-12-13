@@ -91,6 +91,7 @@ public class ExpressionAdapterTest {
     }
 
     @Test
+    @Ignore // needs DB
     public void generateNetworkServiceDescriptor() throws Exception {
         SdkServiceInstance instance = adapter.instantiateSdkService(
             service,
