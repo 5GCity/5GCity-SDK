@@ -3,14 +3,14 @@ How to run and test SDK NBI
 -> Download software
 	-> git clone https://github.com/5GCity/5GCity-SDK-Composer -b devel
 
+-> Install
+    -> cd src
+    -> mvn clean install
+        -> will install both libraries and composer
+
 -> Run software
-    -> Install libraries
-		-> cd SDK_INFO_MODEL
-		-> mvn install
-	-> Compile SDK Code
-		-> cd Composer
-		-> mvn package
 	-> Run Code
+	    -> cd src
 		-> mvn spring-boot:run
 		-> SDK will be running on localhost port 8081	
 

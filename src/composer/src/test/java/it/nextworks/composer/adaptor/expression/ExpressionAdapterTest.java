@@ -81,7 +81,7 @@ public class ExpressionAdapterTest {
     }
 
     @Test
-    //@Ignore // needs DB
+    @Ignore // needs DB
     public void instantiateSdkService() {
         SdkServiceInstance instance = adapter.instantiateSdkService(
             service,
