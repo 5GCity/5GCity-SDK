@@ -102,4 +102,5 @@ public class ExpressionAdapterTest {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         mapper.writeValue(System.out, descriptorTemplate);
     }
+
 }

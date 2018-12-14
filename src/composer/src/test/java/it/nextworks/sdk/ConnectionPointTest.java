@@ -9,6 +9,40 @@ import it.nextworks.sdk.enums.ConnectionPointType;
  */
 public class ConnectionPointTest {
 
+	public static ConnectionPoint makeFirewallDemobject1() {
+        ConnectionPoint cp = new ConnectionPoint();
+        cp.setName("Management_net");
+        cp.setType(ConnectionPointType.EXTERNAL);
+        return cp;
+    }
+	public static ConnectionPoint makeFirewallDemobject2() {
+        ConnectionPoint cp = new ConnectionPoint();
+        cp.setName("Media_presentation_net");
+        cp.setType(ConnectionPointType.EXTERNAL);
+        return cp;
+    }
+	public static ConnectionPoint makeFirewallDemobject3() {
+        ConnectionPoint cp = new ConnectionPoint();
+        cp.setName("Central_service_net");
+        cp.setType(ConnectionPointType.EXTERNAL);
+        return cp;
+    }
+	public static ConnectionPoint makeFirewallDemobject4() {
+        ConnectionPoint cp = new ConnectionPoint();
+        cp.setName("External_net");
+        cp.setType(ConnectionPointType.EXTERNAL);
+        cp.setRequiredPort(22, 80, 443);
+        return cp;
+    }
+	
+	public static ConnectionPoint makeMiniwebDemobject1() {
+        ConnectionPoint cp = new ConnectionPoint();
+        cp.setName("Media_miniweb");
+        cp.setType(ConnectionPointType.EXTERNAL);
+        cp.setRequiredPort(80, 443);
+        return cp;
+    }
+	
     public static ConnectionPoint makeTestObject1() {
         ConnectionPoint cp = new ConnectionPoint();
         cp.setName("MGMT");

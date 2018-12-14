@@ -92,7 +92,7 @@ public class DescriptorsParser {
 		String textDescriptor = DescriptorsParser.descriptorTemplateToString(descriptor);
 		try {
             UUID uuid = UUID.randomUUID();
-            file = new File(String.format("/tmp/%s", uuid));
+            file = new File(String.format("/tmp/%s.yaml", uuid));
 			FileWriter fileWriter = new FileWriter(file);
 			fileWriter.write(textDescriptor);
 			fileWriter.flush();
@@ -117,4 +117,3 @@ public class DescriptorsParser {
 
 	}
 }
-

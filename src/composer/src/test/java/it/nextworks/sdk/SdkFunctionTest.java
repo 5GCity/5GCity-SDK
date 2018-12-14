@@ -73,6 +73,72 @@ public class SdkFunctionTest {
         function.setConnectionPoint(new HashSet<>(Arrays.asList(cp1, cp2, cp3, cp4)));
         return function;
     }
+    
+    public static SdkFunction makeDemoFirewallObject() {
+        Map<String, String> metadata = new HashMap<>();
+        metadata.put("cloud-init", "#!/bin/vbash\n"
+        		+ "source /opt/vyatta/etc/functions/script-template\n"
+        		+ "configure\n"
+        		+ "set interfaces ethernet eth1  address 192.168.200.1/24\n"
+        		+ "commit"
+        		+ "exit");
+
+        SdkFunction function = new SdkFunction();
+        function.setName("vFirewall-v5");
+        function.setVersion("v5.0");
+        function.setVendor("NXW");
+        function.setDescription("Virtual Firewall");
+        function.setMetadata(metadata);
+        function.setFlavourExpression("IF(secure != 0, secure_df, insecure_df)");
+        function.setInstantiationLevelExpression("IF(small != 0, small_il, big_il)");
+        function.setParameters(Arrays.asList("secure", "small"));
+        function.setVnfdId("vfirewall_v5");
+        function.setVnfdVersion("vnfd_version");
+
+        MonitoringParameter monitoringParameter = new MonitoringParameter();
+        monitoringParameter.setName(MonitoringParameterName.AVERAGE_MEMORY_UTILIZATION);
+        monitoringParameter.setFunction(function);
+        monitoringParameter.setThreshold(142.0);
+        monitoringParameter.setDirection(Direction.LOWER_THAN);
+        function.setMonitoringParameters(Collections.singleton(monitoringParameter));
+
+        ConnectionPoint cp1 = ConnectionPointTest.makeFirewallDemobject1();
+        ConnectionPoint cp2 = ConnectionPointTest.makeFirewallDemobject2();
+        ConnectionPoint cp3 = ConnectionPointTest.makeFirewallDemobject3();
+        ConnectionPoint cp4 = ConnectionPointTest.makeFirewallDemobject4();
+
+        function.setConnectionPoint(new HashSet<>(Arrays.asList(cp1, cp2, cp3, cp4)));
+        return function;
+    }
+    
+    
+    
+    public static SdkFunction makeDemoMiniwebObject() {
+        Map<String, String> metadata = new HashMap<>();
+        SdkFunction function = new SdkFunction();
+        function.setName("miniweb-server");
+        function.setVersion("v1.0");
+        function.setVendor("NXW");
+        function.setDescription("Mini web Server.");
+        function.setMetadata(metadata);
+        function.setFlavourExpression("IF(video != 0, video_df, images_df)");
+        function.setInstantiationLevelExpression("IF(small != 0, small_il, big_il)");
+        function.setParameters(Arrays.asList("video", "small"));
+        function.setVnfdId("minicache-web-vdu");
+        function.setVnfdVersion("vnfd_version");
+
+        MonitoringParameter monitoringParameter = new MonitoringParameter();
+        monitoringParameter.setName(MonitoringParameterName.AVERAGE_MEMORY_UTILIZATION);
+        monitoringParameter.setFunction(function);
+        monitoringParameter.setThreshold(102.0);
+        monitoringParameter.setDirection(Direction.LOWER_THAN);
+        function.setMonitoringParameters(Collections.singleton(monitoringParameter));
+
+        ConnectionPoint cp1 = ConnectionPointTest.makeMiniwebDemobject1();
+
+        function.setConnectionPoint(new HashSet<>(Arrays.asList(cp1)));
+        return function;
+    }
 
     public static SdkFunction makeTestObject(Long id, Long cpId) {
         SdkFunction function = makeTestObject();

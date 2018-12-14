@@ -29,7 +29,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.client.RestTemplate;
 
-import static javafx.scene.input.KeyCode.T;
+//import static javafx.scene.input.KeyCode.T;
 
 @SpringBootApplication
 @ComponentScan(basePackages = {"it.nextworks.composer", "it.nextworks.sdk"})
@@ -78,3 +78,4 @@ public class ComposerApplication {
         return output;
     }
 }
+

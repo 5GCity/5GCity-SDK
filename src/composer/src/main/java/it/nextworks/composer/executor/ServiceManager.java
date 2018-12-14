@@ -547,3 +547,4 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         return new ArrayList<>(service.get().getMonitoringParameters());
     }
 }
+

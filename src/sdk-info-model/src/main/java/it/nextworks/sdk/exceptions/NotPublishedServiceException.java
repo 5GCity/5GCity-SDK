@@ -46,3 +46,4 @@ public class NotPublishedServiceException extends Exception {
     }
 
 }
+
