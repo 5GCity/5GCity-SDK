@@ -24,7 +24,6 @@ import it.nextworks.sdk.SdkComponentInstance;
 import it.nextworks.sdk.SdkFunctionInstance;
 import it.nextworks.sdk.SdkService;
 import it.nextworks.sdk.SdkServiceInstance;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -74,7 +73,6 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
         if (service.getId() == null) {
             throw new IllegalStateException("Not persisted, cannot create information");
         }
-        SdkService template = service.getTemplate();
         return service.getSubInstances().stream()
             .map(this::consumeComponent)
             // Merge all info into one
@@ -112,11 +110,11 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
 
     private NSNode makeNsNode(ServiceInformation info) {
         NSProperties nsProperties = new NSProperties(
-            "SDK_" + info.getName(),
+            info.getUniqueId(),
             info.getDesigner(),
             info.getVersion(),
             info.getName(),
-            "SDK_" + info.getName() + "_" + info.getVersion()
+            info.getUniqueId()
         );
         NSRequirements nsRequirements = new NSRequirements(
             new ArrayList<>(info.getServiceLinks())
@@ -183,7 +181,7 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
             null,
             String.format("NS descriptor: %s. Generated with 5G-City SDK", info.getName()),
             new Metadata(
-                info.getName(),
+                info.getUniqueId(),
                 info.getDesigner(),
                 info.getVersion()
             ),

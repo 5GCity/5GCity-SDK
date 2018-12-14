@@ -9,6 +9,7 @@ import java.util.Map;
  * @author Marco Capitani <m.capitani AT nextworks.it>
  */
 class ServiceMetadata {
+    public String instanceId;
     public String name;
     public String version;
     public String designer;
@@ -19,12 +20,29 @@ class ServiceMetadata {
 
     }
 
-    ServiceMetadata(String name, String version, String designer, String license, Map<String, String> metadata) {
+    ServiceMetadata(
+        String instanceId,
+        String name,
+        String version,
+        String designer,
+        String license,
+        Map<String, String> metadata
+    ) {
+        this.instanceId = instanceId;
         this.name = name;
         this.version = version;
         this.designer = designer;
         this.license = license;
         this.metadata = metadata;
+    }
+
+    String getUniqueId() {
+        return String.format("%s_%s_%s", name, version, instanceId);
+    }
+
+    ServiceMetadata setInstanceId(String instanceId) {
+        this.instanceId = instanceId;
+        return this;
     }
 
     ServiceMetadata setName(String name) {

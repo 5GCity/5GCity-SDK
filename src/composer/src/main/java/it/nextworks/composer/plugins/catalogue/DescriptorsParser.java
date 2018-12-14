@@ -23,6 +23,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.UUID;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -90,7 +91,8 @@ public class DescriptorsParser {
 		File file = null;
 		String textDescriptor = DescriptorsParser.descriptorTemplateToString(descriptor);
 		try {
-			file = new File("/tmp/tmp-descriptor.yaml");
+            UUID uuid = UUID.randomUUID();
+            file = new File(String.format("/tmp/%s", uuid));
 			FileWriter fileWriter = new FileWriter(file);
 			fileWriter.write(textDescriptor);
 			fileWriter.flush();
@@ -99,6 +101,7 @@ public class DescriptorsParser {
 			log.error("Impossible to write descriptor to file. " + e.getMessage());
 			return null;
 		}
+		/*
 		BufferedReader br;
 		try {
 			br = new BufferedReader(new FileReader("/tmp/tmp-descriptor.yaml"));
@@ -109,7 +112,7 @@ public class DescriptorsParser {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-        
+        */
 		return file;
 
 	}

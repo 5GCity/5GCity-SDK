@@ -111,11 +111,12 @@ class ServiceInfoBuilder {
         scalingAspects.addAll(template.getScalingAspect());
         monitoringParameters.addAll(template.getMonitoringParameters());
 
-        serviceMetadata.setName(template.getName());
-        serviceMetadata.setVersion(template.getVersion());
-        serviceMetadata.setDesigner(template.getDesigner());
-        serviceMetadata.setLicense(template.getLicense().getUrl());
-        serviceMetadata.addMetadata(template.getMetadata());
+        serviceMetadata.setName(template.getName())
+            .setVersion(template.getVersion())
+            .setDesigner(template.getDesigner())
+            .setLicense(template.getLicense().getUrl())
+            .addMetadata(template.getMetadata())
+            .setInstanceId(service.getId().toString());
 
         lastService = id;
 

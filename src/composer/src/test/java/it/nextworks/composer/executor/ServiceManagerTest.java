@@ -24,6 +24,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.core.task.TaskExecutor;
 
 import java.math.BigDecimal;
 import java.net.URL;
@@ -76,6 +77,9 @@ public class ServiceManagerTest {
 
     @Mock
     private FiveGCataloguePlugin cataloguePlugin;
+
+    @Mock
+    private TaskExecutor executor;
 
     @InjectMocks
     ServiceManager manager;
@@ -145,7 +149,6 @@ public class ServiceManagerTest {
 
     @Test
     public void publishService() throws Exception {
-        manager.setCataloguePlugin(cataloguePlugin);
 
         // Setup
         Long serviceId = 1L;
@@ -176,8 +179,6 @@ public class ServiceManagerTest {
             .thenReturn(fakeNsd);
         when(serviceInstanceRepository.saveAndFlush(instance))
             .thenReturn(SdkServiceTest.setInstanceId(instance, instanceId)); // ID needed?
-        when(cataloguePlugin.uploadNetworkService(fakeNsd, "application/json", null))
-            .thenReturn("NSInfoId");
 
         // test
         String ret = manager.publishService(serviceId, paramValues);
@@ -188,6 +189,7 @@ public class ServiceManagerTest {
         verify(serviceRepository).findById(serviceId);
         verify(adapter).instantiateSdkService(service, paramValues);
         verify(serviceInstanceRepository).saveAndFlush(instance);
+        verify(executor).execute(any());
     }
 
     @Test

@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -100,14 +101,14 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     @Autowired
     private CatalogueRepository catalogueRepo;
 
+    @Autowired
     private FiveGCataloguePlugin cataloguePlugin;
+
+    @Autowired
+    private TaskExecutor executor;
 
     public ServiceManager() {
 
-    }
-
-    public void setCataloguePlugin(FiveGCataloguePlugin cataloguePlugin) {
-        this.cataloguePlugin = cataloguePlugin;
     }
 
     private static Stream<Long> getSubFunctionIds(SdkService service) {
@@ -214,10 +215,10 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
     @Override
     public String updateService(SdkService service) throws NotExistingEntityException, MalformedElementException {
-		/*log.info("Updating an existing service with id: " + service.getId());
+		log.info("Updating an existing service with id: " + service.getId());
 		if (!service.isValid()) {
-			log.error("Service id " + service.getId() + " is malformatted");
-			throw new MalformedElementException("Service id " + service.getId() + " is malformatted");
+			log.error("Service id " + service.getId() + " is malformed");
+			throw new MalformedElementException("Service id " + service.getId() + " is malformed");
 		}
 		log.debug("Service is valid");
 		// Check if service exists
@@ -233,36 +234,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 		// Update del service su DB
 		serviceRepository.saveAndFlush(service);
 
-		// Update instances (or add new ones)
-		for (SdkFunctionInstance instance : service.getFunctions()) {
-			Optional<SdkFunctionInstance> dbInstance = functionInstanceRepository.findById(instance.getId());
-			if (!dbInstance.isPresent())
-				functionInstanceManager.updateInstance(instance, service);
-			else
-				try {
-					functionInstanceManager.createInstance(instance, service);
-				} catch (ExistingEntityException e) {
-					log.error("This has not to happen");
-				}
-		}
-		// Removing cancelled SdkFunctionInstances
-		Optional<SdkService> dbService = serviceRepository.findById(service.getId());
-		for (SdkFunctionInstance instance : srv.get().getFunctions()) {
-			if (!service.getFunctions().contains(instance)) {
-				functionInstanceManager.deleteInstance(instance.getId());
-			}
-		}
-		// Update MonitoringParameters
-		updateMonitoringParameters(service.getId(), service.getMonitoringParameters());
-		// Update ScalingAspects
-		updateScalingAspect(service.getId(), service.getScalingAspects());
-		// Update links
-		updateLinks(oldList, service);
-
-		serviceRepository.saveAndFlush(service);
-
-		return service.getId().toString();*/
-        return null;
+		return service.getId().toString();
     }
 
     @Override
@@ -290,9 +262,10 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     }
 
     @Override
-    public String publishService(Long serviceId, List<BigDecimal> parameterValues)
-        throws NotExistingEntityException {
-        log.info("Request for publication of service with uuid: " + serviceId);
+    public String instantiateService(Long serviceId, List<BigDecimal> parameterValues)
+        throws NotExistingEntityException, MalformedElementException {
+        log.info("Request for instantiation of service with uuid: " + serviceId);
+
         // Check if service exists
         Optional<SdkService> optService = serviceRepository.findById(serviceId);
 
@@ -301,13 +274,48 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             return new NotExistingEntityException("The Service with UUID: " + serviceId + " is not present in database");
         });
 
-        // A thread will be created to handle this request in order to perform it
-        // asynchronously.
-        SdkServiceInstance instance = adapter.instantiateSdkService(service, parameterValues);
+        SdkServiceInstance instance;
+        try {
+            instance = adapter.instantiateSdkService(service, parameterValues);
+        } catch (IllegalArgumentException exc) {
+            log.error("Malformed instantiation request: {}", exc.getMessage());
+            throw new MalformedElementException(exc.getMessage(), exc);
+        }
+        instance.setStatus(SdkServiceStatus.SAVED);
+        serviceInstanceRepository.saveAndFlush(instance);
+        log.info(
+            "Service {} successfully instantiated. Instance ID {}.",
+            serviceId,
+            instance.getId()
+        );
+        return instance.getId().toString();
+    }
+
+    @Override
+    public String publishService(Long serviceId, List<BigDecimal> parameterValues)
+        throws NotExistingEntityException, MalformedElementException {
+        log.info("Request for publication of service with uuid: " + serviceId);
+        // Check if service exists
+        Optional<SdkService> optService = serviceRepository.findById(serviceId);
+
+        SdkService service = optService.orElseThrow(() -> {
+            log.error("The Service with UUID: " + serviceId + " is not present in database");
+            return new NotExistingEntityException("The Service with UUID: " + serviceId + " is not present in database");
+        });
+        SdkServiceInstance instance;
+        try {
+            instance = adapter.instantiateSdkService(service, parameterValues);
+        } catch (IllegalArgumentException e) {
+            log.error("Malformed instantiation request: {}", e.getMessage());
+            throw new MalformedElementException(e.getMessage(), e);
+        }
         instance.setStatus(SdkServiceStatus.CHANGING);
         serviceInstanceRepository.saveAndFlush(instance);
         String serviceInstanceId = instance.getId().toString();
         DescriptorTemplate nsd = adapter.generateNetworkServiceDescriptor(instance);
+
+        // A thread will be created to handle this request in order to perform it
+        // asynchronously.
         dispatchPublishRequest(
             nsd,
             successful -> {
@@ -370,11 +378,16 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
     private void dispatchPublishRequest(DescriptorTemplate nsd, Consumer<Boolean> callback) {
         // TODO: dispatch publish operation to driver, then return immediately
-        try {
-            cataloguePlugin.uploadNetworkService(nsd, "application/json", null);
-        } catch (IOException exc) {
-            log.error("Operation failed.");
-        }
+        executor.execute(() -> {
+                try {
+                    String s = cataloguePlugin.uploadNetworkService(nsd, "application/json", null);
+                    callback.accept(true);
+                } catch (IOException exc) {
+                    log.error("Could not push descriptor %s.", nsd.getMetadata().getDescriptorId());
+                    callback.accept(false);
+                }
+            }
+        );
     }
 
     private void dispatchUnPublishRequest(Long serviceInstanceId, Consumer<Boolean> callback) {

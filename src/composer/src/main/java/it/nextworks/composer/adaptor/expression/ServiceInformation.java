@@ -27,6 +27,10 @@ public class ServiceInformation {
         this.vnfdData = vnfdData;
     }
 
+    public String getUniqueId() {
+        return serviceMetadata.getUniqueId();
+    }
+
     public Set<VnfdData> getVnfdData() {
         return vnfdData;
     }

@@ -30,34 +30,52 @@ import java.util.Set;
 
 public interface ServiceManagerProviderInterface {
 
-    SdkService getServiceById(Long id) throws NotExistingEntityException;
+    SdkService getServiceById(Long id)
+        throws NotExistingEntityException;
 
-    List<SdkService> getServices() throws NotExistingEntityException;
+    List<SdkService> getServices()
+        throws NotExistingEntityException;
 
-    List<SdkService> getServicesUsingFunction(Long functionId) throws NotExistingEntityException;
+    List<SdkService> getServicesUsingFunction(Long functionId)
+        throws NotExistingEntityException;
 
-    String createService(SdkService service) throws ExistingEntityException, NotExistingEntityException, MalformedElementException;
+    String createService(SdkService service)
+        throws ExistingEntityException, NotExistingEntityException, MalformedElementException;
 
-    String updateService(SdkService service) throws NotExistingEntityException, MalformedElementException;
+    String updateService(SdkService service)
+        throws NotExistingEntityException, MalformedElementException;
 
-    void deleteService(Long serviceId) throws NotExistingEntityException;
+    void deleteService(Long serviceId)
+        throws NotExistingEntityException;
 
-    String publishService(Long serviceId, List<BigDecimal> parameterValues) throws NotExistingEntityException;
+    String instantiateService(Long serviceId, List<BigDecimal> parameterValues)
+        throws NotExistingEntityException, MalformedElementException;
 
-    void publishService(Long serviceInstanceId) throws NotExistingEntityException, AlreadyPublishedServiceException;
+    String publishService(Long serviceId, List<BigDecimal> parameterValues)
+        throws NotExistingEntityException, MalformedElementException;
 
-    void unPublishService(Long serviceInstanceId) throws NotExistingEntityException, NotPublishedServiceException;
+    void publishService(Long serviceInstanceId)
+        throws NotExistingEntityException, AlreadyPublishedServiceException;
 
-    void updateScalingAspect(Long serviceId, Set<ScalingAspect> scalingAspects) throws NotExistingEntityException, MalformedElementException;
+    void unPublishService(Long serviceInstanceId)
+        throws NotExistingEntityException, NotPublishedServiceException;
 
-    void deleteScalingAspect(Long serviceId, Set<ScalingAspect> scalingAspects) throws NotExistingEntityException, MalformedElementException;
+    void updateScalingAspect(Long serviceId, Set<ScalingAspect> scalingAspects)
+        throws NotExistingEntityException, MalformedElementException;
 
-    List<ScalingAspect> getScalingAspect(Long serviceId) throws NotExistingEntityException;
+    void deleteScalingAspect(Long serviceId, Set<ScalingAspect> scalingAspects)
+        throws NotExistingEntityException, MalformedElementException;
 
-    void updateMonitoringParameters(Long serviceId, Set<MonitoringParameter> monitoringParameters) throws NotExistingEntityException, MalformedElementException;
+    List<ScalingAspect> getScalingAspect(Long serviceId)
+        throws NotExistingEntityException;
 
-    void deleteMonitoringParameters(Long serviceId, Set<MonitoringParameter> monitoringParameters) throws NotExistingEntityException, MalformedElementException;
+    void updateMonitoringParameters(Long serviceId, Set<MonitoringParameter> monitoringParameters)
+        throws NotExistingEntityException, MalformedElementException;
 
-    List<MonitoringParameter> getMonitoringParameters(Long serviceId) throws NotExistingEntityException;
+    void deleteMonitoringParameters(Long serviceId, Set<MonitoringParameter> monitoringParameters)
+        throws NotExistingEntityException, MalformedElementException;
+
+    List<MonitoringParameter> getMonitoringParameters(Long serviceId)
+        throws NotExistingEntityException;
 
 }

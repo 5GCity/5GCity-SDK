@@ -16,8 +16,6 @@
 package it.nextworks.composer.executor;
 
 import it.nextworks.composer.executor.interfaces.FunctionManagerProviderInterface;
-import it.nextworks.composer.executor.repositories.ConnectionpointRepository;
-import it.nextworks.composer.executor.repositories.MonitoringParameterRepository;
 import it.nextworks.composer.executor.repositories.SdkFunctionRepository;
 import it.nextworks.sdk.ConnectionPoint;
 import it.nextworks.sdk.SdkFunction;
@@ -40,12 +38,6 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
     @Autowired
     private SdkFunctionRepository functionRepository;
-
-    @Autowired
-    private ConnectionpointRepository cpRepository;
-
-    @Autowired
-    private MonitoringParameterRepository monitoringParamRepository;
 
     public FunctionManager() {
 
@@ -114,10 +106,6 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         cp4.setSdkFunction(function);
 
         functionRepository.saveAndFlush(function);
-        cpRepository.saveAndFlush(cp1);
-        cpRepository.saveAndFlush(cp2);
-        cpRepository.saveAndFlush(cp3);
-        cpRepository.saveAndFlush(cp4);
 
 //
 //		MonitoringParameter param1 = new MonitoringParameter(MonitoringParameterType.AVERAGE_MEMORY_UTILIZATION, null, function, null);
@@ -140,7 +128,6 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         cp12.setSdkFunction(function2);
 
         functionRepository.saveAndFlush(function2);
-        cpRepository.saveAndFlush(cp12);
 
 //		MonitoringParameter param12 = new MonitoringParameter(MonitoringParameterType.AVERAGE_MEMORY_UTILIZATION, null, function2, null);
 //		monitoringParamRepository.saveAndFlush(param12);

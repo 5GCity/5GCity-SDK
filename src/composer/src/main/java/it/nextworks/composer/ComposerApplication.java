@@ -16,14 +16,20 @@
 package it.nextworks.composer;
 
 import it.nextworks.composer.plugins.catalogue.Catalogue;
+import it.nextworks.composer.plugins.catalogue.CatalogueType;
+import it.nextworks.composer.plugins.catalogue.FiveGCataloguePlugin;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.client.RestTemplate;
+
+import static javafx.scene.input.KeyCode.T;
 
 @SpringBootApplication
 @ComponentScan(basePackages = {"it.nextworks.composer", "it.nextworks.sdk"})
@@ -50,5 +56,25 @@ public class ComposerApplication {
     @Bean
     public Catalogue catalogue() {
         return new Catalogue("5g-catalogue", hostname, false, "admin", "admin");
+    }
+
+    @Bean
+    public FiveGCataloguePlugin fiveGCataloguePlugin() {
+        return new FiveGCataloguePlugin(
+            CatalogueType.FIVEG_CATALOGUE,
+            catalogue()
+        );
+    }
+
+    @Bean
+    public TaskExecutor taskExecutor() {
+        int proc = Runtime.getRuntime().availableProcessors();
+        ThreadPoolTaskExecutor output = new ThreadPoolTaskExecutor();
+        output.setCorePoolSize(4 * proc);
+        output.setMaxPoolSize(8 * proc);
+        output.setQueueCapacity(0);
+        output.setAllowCoreThreadTimeOut(true);
+        output.setKeepAliveSeconds(30);
+        return output;
     }
 }

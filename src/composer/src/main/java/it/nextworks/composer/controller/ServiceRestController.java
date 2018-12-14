@@ -40,6 +40,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 
@@ -187,19 +188,92 @@ public class ServiceRestController {
         }
     }
 
+    @ApiOperation(value = "Instantiate Service")
+    @ApiResponses(value = {@ApiResponse(code = 200, message = ""),
+        @ApiResponse(code = 404, message = "Entity to be instantiated not found"),
+        @ApiResponse(code = 400, message = "Null service or invalid parameters provided")})
+    @RequestMapping(value = "/services/{serviceId}/instantiate", method = RequestMethod.POST)
+    public ResponseEntity<?> instantiateService(
+        @PathVariable Long serviceId,
+        @PathVariable List<BigDecimal> parameterValues
+    ) {
+        log.info("Request for instantiation of a service with id: {}, params: {}.", serviceId, parameterValues);
+        if (serviceId == null) {
+            log.error("Instantiation request without parameter serviceId");
+            return new ResponseEntity<>(
+                "Instantiation request without parameter serviceId",
+                HttpStatus.BAD_REQUEST
+            );
+        }
+        // else:
+        try {
+            String instanceId = serviceManager.instantiateService(serviceId, parameterValues);
+            return new ResponseEntity<>(instanceId, HttpStatus.OK);
+        } catch (NotExistingEntityException e) {
+            return new ResponseEntity<>(
+                e.getMessage(),
+                HttpStatus.NOT_FOUND
+            );
+        } catch (MalformedElementException e) {
+            return new ResponseEntity<>(
+                e.getMessage(),
+                HttpStatus.BAD_REQUEST
+            );
+        }
+    }
+
+    @ApiOperation(value = "Publish Service to Public Catalogue")
+    @ApiResponses(value = {
+        @ApiResponse(
+            code = 202,
+            message = "Instance created with returned id. The service will be published to the public catalogue"
+        ),
+        @ApiResponse(code = 404, message = "Entity to be instantiated not found"),
+        @ApiResponse(code = 400, message = "Null service or invalid parameters provided")})
+    @RequestMapping(value = "/service/{serviceId}/publish", method = RequestMethod.POST)
+    public ResponseEntity<?> publishService(@PathVariable Long serviceId, List<BigDecimal> parameterValues) {
+        log.info(
+            "Request for instantiation and publication of a service with id: {}, params: {}.",
+            serviceId,
+            parameterValues
+        );
+        if (serviceId == null) {
+            log.error("Instantiation request without parameter serviceId");
+            return new ResponseEntity<>(
+                "Instantiation/publication request without parameter serviceId",
+                HttpStatus.BAD_REQUEST
+            );
+        }
+        // else:
+        try {
+            serviceManager.publishService(serviceId, parameterValues);
+            return new ResponseEntity<>(HttpStatus.ACCEPTED);
+        } catch (NotExistingEntityException e) {
+            return new ResponseEntity<>(
+                e.getMessage(),
+                HttpStatus.NOT_FOUND
+            );
+        } catch (MalformedElementException e) {
+            return new ResponseEntity<>(
+                e.getMessage(),
+                HttpStatus.BAD_REQUEST
+            );
+        }
+    }
+
     @ApiOperation(value = "Publish Service to Public Catalogue")
     @ApiResponses(value = {@ApiResponse(code = 202, message = "The service will be published to the public catalogue"),
         @ApiResponse(code = 404, message = "Entity to be published not found"),
         @ApiResponse(code = 400, message = "Publication request without parameter serviceId or already published service")})
-    @RequestMapping(value = "/services/{serviceId}/publish", method = RequestMethod.PUT)
-    public ResponseEntity<?> publishService(@PathVariable Long serviceId) {
-        log.info("Request to publish the service " + serviceId + " to the public catalogue");
-        if (serviceId == null) {
+    @RequestMapping(value = "/service-instance/{serviceId}/publish", method = RequestMethod.POST)
+    public ResponseEntity<?> publishService(@PathVariable Long serviceInstanceId) {
+        log.info("Request to publish the service " + serviceInstanceId + " to the public catalogue");
+        if (serviceInstanceId == null) {
             log.error("Publishing request without parameter serviceId");
             return new ResponseEntity<String>("Publishing request without parameter serviceId", HttpStatus.BAD_REQUEST);
         } else {
             try {
-                serviceManager.publishService(serviceId);
+                serviceManager.publishService(serviceInstanceId);
                 return new ResponseEntity<>(HttpStatus.ACCEPTED);
             } catch (NotExistingEntityException e1) {
                 log.error("Requested publication for an entity which doesn't exist");
@@ -211,22 +285,21 @@ public class ServiceRestController {
                     HttpStatus.BAD_REQUEST);
             }
         }
-
     }
 
     @ApiOperation(value = "Unpublish Service from Public Catalogue")
     @ApiResponses(value = {@ApiResponse(code = 202, message = "The service will be removed from the public catalogue"),
         @ApiResponse(code = 404, message = "Entity to be unpublished not found"),
         @ApiResponse(code = 400, message = "Request without parameter serviceId or not yet published service")})
-    @RequestMapping(value = "/services/{serviceId}/unpublish", method = RequestMethod.PUT)
-    public ResponseEntity<?> unPublishService(@PathVariable Long serviceId) {
-        log.info("Request to unpublish the service " + serviceId + " from the public catalogue");
-        if (serviceId == null) {
+    @RequestMapping(value = "/service-instance/{serviceId}/unpublish", method = RequestMethod.POST)
+    public ResponseEntity<?> unPublishService(@PathVariable Long serviceInstanceId) {
+        log.info("Request to unpublish the service " + serviceInstanceId + " from the public catalogue");
+        if (serviceInstanceId == null) {
             log.error("Request without parameter serviceId");
             return new ResponseEntity<String>("Request without parameter serviceId", HttpStatus.BAD_REQUEST);
         } else {
             try {
-                serviceManager.unPublishService(serviceId);
+                serviceManager.unPublishService(serviceInstanceId);
                 return new ResponseEntity<>(HttpStatus.ACCEPTED);
             } catch (NotExistingEntityException e1) {
                 log.error("Requested deletion of publication for an entity which doesn't exist");
