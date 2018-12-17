@@ -20,6 +20,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import it.nextworks.composer.executor.ServiceManager;
+import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
 import it.nextworks.sdk.MonitoringParameter;
 import it.nextworks.sdk.ScalingAspect;
 import it.nextworks.sdk.SdkService;
@@ -115,7 +116,7 @@ public class ServiceRestController {
             try {
                 serviceManager.createService(request);
                 log.debug("Service entity created");
-                return new ResponseEntity<>(HttpStatus.CREATED);
+                return new ResponseEntity<>(request.getId(), HttpStatus.CREATED);
             } catch (ExistingEntityException e) {
                 log.error("Service with id " + request.getId() + " is already present in database");
                 return new ResponseEntity<String>(
@@ -127,9 +128,9 @@ public class ServiceRestController {
                     "Function id used to build one of the SdkFunctionInstances is not present in database",
                     HttpStatus.BAD_REQUEST);
             } catch (MalformedElementException e3) {
-                log.error("Malformatted request");
+                log.error("Malformatted request: {}", e3.getMessage());
                 return new ResponseEntity<String>(
-                    "Malformatted request",
+                    String.format("Malformatted request: %s", e3.getMessage()),
                     HttpStatus.BAD_REQUEST);
             }
         } else {
@@ -195,8 +196,9 @@ public class ServiceRestController {
     @RequestMapping(value = "/services/{serviceId}/instantiate", method = RequestMethod.POST)
     public ResponseEntity<?> instantiateService(
         @PathVariable Long serviceId,
-        @PathVariable List<BigDecimal> parameterValues
+        @RequestBody InstantiationRequest instantiationRequest
     ) {
+        List<BigDecimal> parameterValues = instantiationRequest.parameterValues;
         log.info("Request for instantiation of a service with id: {}, params: {}.", serviceId, parameterValues);
         if (serviceId == null) {
             log.error("Instantiation request without parameter serviceId");
@@ -265,7 +267,7 @@ public class ServiceRestController {
     @ApiResponses(value = {@ApiResponse(code = 202, message = "The service will be published to the public catalogue"),
         @ApiResponse(code = 404, message = "Entity to be published not found"),
         @ApiResponse(code = 400, message = "Publication request without parameter serviceId or already published service")})
-    @RequestMapping(value = "/service-instance/{serviceId}/publish", method = RequestMethod.POST)
+    @RequestMapping(value = "/service-instances/{serviceInstanceId}/publish", method = RequestMethod.POST)
     public ResponseEntity<?> publishService(@PathVariable Long serviceInstanceId) {
         log.info("Request to publish the service " + serviceInstanceId + " to the public catalogue");
         if (serviceInstanceId == null) {
@@ -284,6 +286,38 @@ public class ServiceRestController {
                 return new ResponseEntity<String>("Requested publication for an entity already has been published",
                     HttpStatus.BAD_REQUEST);
             }
+        }
+    }
+
+    @ApiOperation(value = "Publish Service to Public Catalogue")
+    @ApiResponses(value = {@ApiResponse(code = 202, message = "The service will be published to the public catalogue"),
+        @ApiResponse(code = 404, message = "Entity to be published not found"),
+        @ApiResponse(code = 400, message = "Publication request without parameter serviceId or already published service")})
+    @RequestMapping(value = "/service-instances/{serviceInstanceId}", method = RequestMethod.GET)
+    public ResponseEntity<?> getInstance(@PathVariable Long serviceInstanceId) {
+        log.info("Request GET instance " + serviceInstanceId);
+        if (serviceInstanceId == null) {
+            log.error("GET Instance request without parameter serviceInstanceId");
+            return new ResponseEntity<String>("GET Instance request without parameter serviceInstanceId", HttpStatus.BAD_REQUEST);
+        } else {
+            // TODO
+            return new ResponseEntity<>("Net yet implemented", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @ApiOperation(value = "Write descriptorin the response")
+    @ApiResponses(value = {@ApiResponse(code = 202, message = "The service will be published to the public catalogue"),
+        @ApiResponse(code = 404, message = "Entity to be published not found"),
+        @ApiResponse(code = 400, message = "Publication request without parameter serviceId or already published service")})
+    @RequestMapping(value = "/service-instances/{serviceInstanceId}/descriptor", method = RequestMethod.GET)
+    public ResponseEntity<?> getInstanceDescriptor(@PathVariable Long serviceInstanceId) throws NotExistingEntityException {
+        log.info("Request GET instance descriptor " + serviceInstanceId);
+        if (serviceInstanceId == null) {
+            log.error("GET Instance descriptor request without parameter serviceInstanceId");
+            return new ResponseEntity<String>("GET Instance descriptor request without parameter serviceInstanceId", HttpStatus.BAD_REQUEST);
+        } else {
+            DescriptorTemplate descriptorTemplate = serviceManager.generateTemplate(serviceInstanceId);
+            return new ResponseEntity<>(descriptorTemplate, HttpStatus.OK);
         }
     }
 

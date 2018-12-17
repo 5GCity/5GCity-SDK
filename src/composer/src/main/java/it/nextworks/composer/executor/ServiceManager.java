@@ -333,6 +333,20 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         return serviceInstanceId;
     }
 
+    public DescriptorTemplate generateTemplate(Long serviceInstanceId)
+        throws NotExistingEntityException {
+        Optional<SdkServiceInstance> optInstance = serviceInstanceRepository.findById(serviceInstanceId);
+
+        SdkServiceInstance instance = optInstance.orElseThrow(() -> {
+            log.error("The Service Instance with UUID: {} is not present in database", serviceInstanceId);
+            return new NotExistingEntityException(String.format(
+                "The Service with UUID: %s is not present in database",
+                serviceInstanceId
+            ));
+        });
+        return adapter.generateNetworkServiceDescriptor(instance);
+    }
+
     @Override
     public void publishService(Long serviceInstanceId)
         throws NotExistingEntityException, AlreadyPublishedServiceException {

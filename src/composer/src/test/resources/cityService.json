@@ -1,0 +1,89 @@
+{
+    "name" : "5GCITY-NS2",
+    "version" : "0.2",
+    "designer" : "NXW",
+    "parameter" : [ "param1", "param2" ],
+    "license" : {
+        "type" : "PUBLIC",
+        "url" : "http://example.org"
+    },
+    "link" : [ {
+        "name" : "Management_net",
+        "type" : "EXTERNAL",
+        "connection_point_names" : [ "Management_net" ]
+    } , {
+        "name" : "Central_service_net",
+        "type" : "EXTERNAL",
+        "connection_point_names" : [ "Central_service_net" ]
+    }, {
+        "name" : "External_net",
+        "type" : "EXTERNAL",
+        "connection_point_names" : [ "External_net" ]
+    }, {
+        "name" : "Media_presentation_net",
+        "type" : "EXTERNAL",
+        "connection_point_names" : [ "Media_presentation_net", "Media_miniweb" ]
+    } ],
+    "component" : [ {
+        "component_id" : 1,
+        "component_type" : "SDK_FUNCTION",
+        "mapping_expression" : [ "param1", "param2" ]
+    }, {
+        "component_id" : 4,
+        "component_type" : "SDK_FUNCTION",
+        "mapping_expression" : [ "param1", "param2" ]
+    } ],
+    "metadata" : {
+        "use.spam" : "egg"
+    },
+    "connection_point" : [ {
+        "name" : "Management_net",
+        "type" : "INTERNAL",
+        "internal_cp_id" : 7,
+        "required_port" : []
+    }, {
+        "name" : "Central_service_net",
+        "type" : "INTERNAL",
+        "internal_cp_id" : 6,
+        "required_port" : [  ]
+    }, {
+        "name" : "External_net",
+        "type" : "INTERNAL",
+        "internal_cp_id" : 5,
+        "required_port" : [ 80, 22, 443 ]
+    }, {
+        "name" : "Media_presentation_net",
+        "type" : "INTERNAL",
+        "internal_cp_id" : 8,
+        "required_port" : [ ]
+    }, {
+        "name" : "Media_miniweb",
+        "type" : "INTERNAL",
+        "internal_cp_id" : 2,
+        "required_port" : [ 80, 443]
+    } ],
+    "l3_connectivity" : [ {
+        "connectionPointId" : "External_net",
+        "l3Rules" : [ {
+            "protocol" : "TCP",
+            "src_ip" : "0.0.0.0",
+            "src_port" : 8000,
+            "dst_ip" : "10.0.0.42",
+            "dst_port" : 8998
+        } ]
+    } ],
+    "monitoring_parameter" : [ {
+        "name" : "AVERAGE_MEMORY_UTILIZATION",
+        "direction" : "GREATER_THAN",
+        "threshold" : 123.0
+    } ],
+    "scaling_aspect" : [ {
+        "name" : "scaling-aspect-test",
+        "monitoring_parameter" : [ {
+            "name" : "AVERAGE_MEMORY_UTILIZATION",
+            "direction" : "GREATER_THAN",
+            "threshold" : 9.0
+        } ],
+        "action" : "SCALE_UP"
+    } ]
+}

@@ -111,8 +111,6 @@ public class SdkFunctionTest {
         return function;
     }
     
-    
-    
     public static SdkFunction makeDemoMiniwebObject() {
         Map<String, String> metadata = new HashMap<>();
         SdkFunction function = new SdkFunction();
@@ -165,5 +163,34 @@ public class SdkFunctionTest {
         assertEquals(4, function2.getConnectionPoint().size());
         assertEquals(function.getConnectionPoint(), function2.getConnectionPoint());
         assertEquals(function, function2);
+    }
+
+    @Test
+    //@Ignore // requires DB
+    public void testCityService() {
+
+        SdkFunction miniWeb = makeDemoMiniwebObject();
+
+        SdkFunction firewall = makeDemoFirewallObject();
+
+        assertTrue(miniWeb.isValid());
+        assertTrue(firewall.isValid());
+
+        functionRepository.saveAndFlush(miniWeb);
+
+        functionRepository.saveAndFlush(firewall);
+
+        Optional<SdkFunction> mwb = functionRepository.findById(miniWeb.getId());
+
+        Optional<SdkFunction> fwb = functionRepository.findById(firewall.getId());
+
+        assertTrue(mwb.isPresent());
+        assertTrue(fwb.isPresent());
+
+        SdkFunction mw2 = mwb.get();
+        assertEquals(miniWeb, mw2);
+
+        SdkFunction fw2 = fwb.get();
+        assertEquals(firewall, fw2);
     }
 }

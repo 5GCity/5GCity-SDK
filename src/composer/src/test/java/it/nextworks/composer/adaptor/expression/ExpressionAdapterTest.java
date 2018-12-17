@@ -23,6 +23,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.math.BigDecimal;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -88,6 +89,27 @@ public class ExpressionAdapterTest {
             Arrays.asList(new BigDecimal(1), new BigDecimal(1))
         );
         instanceRepo.saveAndFlush(instance);
+    }
+
+
+    @Test
+    @Ignore // needs DB
+    public void instantiateSdkServiceCity() throws Exception {
+        URL resource = this.getClass().getClassLoader().getResource("cityService.json");
+        ObjectMapper mapper = new ObjectMapper();
+        SdkService service = mapper.readValue(resource, SdkService.class);
+
+        HashSet<SdkFunction> sdkFunctions = new HashSet<>(functionRepo.findAll());
+        service.resolveComponents(sdkFunctions, Collections.emptySet());
+
+        serviceRepo.saveAndFlush(service);
+        // TODO push functions in DB
+        SdkServiceInstance instance = adapter.instantiateSdkService(
+            service,
+            Arrays.asList(new BigDecimal(1), new BigDecimal(1))
+        );
+        instanceRepo.saveAndFlush(instance);
+        System.out.println(instance.getId());
     }
 
     @Test

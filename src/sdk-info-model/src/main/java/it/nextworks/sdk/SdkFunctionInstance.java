@@ -128,12 +128,12 @@ public class SdkFunctionInstance extends SdkComponentInstance {
         if (!(o instanceof SdkFunctionInstance)) return false;
         SdkFunctionInstance that = (SdkFunctionInstance) o;
         return Objects.equals(getId(), that.getId()) &&
-            Objects.equals(getTemplate(), that.getTemplate()) &&
+            Objects.equals(getTemplate().getId(), that.getTemplate().getId()) &&
             Objects.equals(parameterValues, that.parameterValues);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getTemplate(), parameterValues);
+        return Objects.hash(getId(), getTemplate().getId(), parameterValues);
     }
 }

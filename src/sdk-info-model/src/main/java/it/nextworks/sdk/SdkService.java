@@ -212,19 +212,19 @@ public class SdkService implements InstantiableCandidate {
 
     @JsonProperty("component")
     public void setComponents(Set<SdkServiceComponent> components) {
-        Map<? extends Class<?>, List<SdkServiceComponent>> byClass =
-            components.stream().collect(Collectors.groupingBy(SdkServiceComponent::getClass));
-        if (byClass.size() > 2) {
+        Map<SdkServiceComponentType, List<SdkServiceComponent>> byType =
+            components.stream().collect(Collectors.groupingBy(SdkServiceComponent::getType));
+        if (byType.size() > 2) {
             throw new IllegalArgumentException(String.format(
                 "Unknown component type(s). Expected %s, got %s",
                 Arrays.asList(SubFunction.class.getSimpleName(), SubService.class.getSimpleName()),
-                byClass.keySet()
+                byType.keySet()
             ));
         }
-        subFunctions = byClass.getOrDefault(SubFunction.class, Collections.emptyList()).stream()
+        subFunctions = byType.getOrDefault(SdkServiceComponentType.SDK_FUNCTION, Collections.emptyList()).stream()
             .map(SubFunction.class::cast)
             .collect(Collectors.toSet());
-        subServices = byClass.getOrDefault(SubService.class, Collections.emptyList()).stream()
+        subServices = byType.getOrDefault(SdkServiceComponentType.SDK_SERVICE, Collections.emptyList()).stream()
             .map(SubService.class::cast)
             .collect(Collectors.toSet());
         if (!validateComponents()) {
@@ -388,7 +388,7 @@ public class SdkService implements InstantiableCandidate {
                     if (!lowerCPIds.contains(cp.getInternalCpId())) {
                         throw new IllegalStateException(String.format(
                             "Invalid connection points: internal CP %s referencing invalid lower cp %s",
-                            cp.getId(),
+                            cp.getName(),
                             cp.getInternalCpId()
                         ));
                     }
@@ -516,6 +516,12 @@ public class SdkService implements InstantiableCandidate {
             connectionPoint.size();  // I.e. cp names are unique in the service
     }
 
+    private boolean validateL3Connectivity() {
+        return l3Connectivity != null
+            && l3Connectivity.stream().allMatch(L3Connectivity::isValid);
+        // TODO check the connection point names match
+    }
+
     @JsonIgnore
     @Override
     public boolean isValid() {
@@ -524,9 +530,8 @@ public class SdkService implements InstantiableCandidate {
             && version != null && version.length() > 0
             && license != null && license.isValid()
             && validateComponents()
+            && validateL3Connectivity()
             && metadata != null
-            && l3Connectivity != null
-            && l3Connectivity.stream().allMatch(L3Connectivity::isValid)
             && monitoringParameters != null
             && monitoringParameters.stream().allMatch(MonitoringParameter::isValid)
             && scalingAspect != null
@@ -698,6 +703,34 @@ public class SdkService implements InstantiableCandidate {
     }
 
     @PostLoad
+    private void fixLoad() {
+        // Cleanup persistence artifacts and weird collection implementations
+        Map<String, ConnectionPoint> byName = getConnectionPoint().stream().collect(Collectors.toMap(
+            ConnectionPoint::getName,
+            Function.identity()
+        ));
+        parameters = new ArrayList<>(parameters);
+        connectionPoint = new HashSet<>(connectionPoint);
+        link = new HashSet<>(link);
+        for (Link l : link) {
+            l.setConnectionPoints(connectionPoint);
+        }
+        l3Connectivity = new HashSet<>(l3Connectivity);
+        for (L3Connectivity c : l3Connectivity) {
+            c.setConnectionPoint(byName.get(c.getConnectionPointName()));
+        }
+        monitoringParameters = new HashSet<>(monitoringParameters);
+        scalingAspect = new HashSet<>(scalingAspect);
+        subFunctions = new HashSet<>(subFunctions);
+        subServices = new HashSet<>(subServices);
+        metadata = new HashSet<>(metadata);
+        for (ConnectionPoint cp : connectionPoint) {
+            if (cp.getType().equals(ConnectionPointType.EXTERNAL) && (cp.getInternalCpName() != null)) {
+                cp.setInternalCpId(byName.get(cp.getInternalCpName()).getId());
+            }
+        }
+    }
+
     @PostPersist
     @PostUpdate
     private void fixPersistence() {

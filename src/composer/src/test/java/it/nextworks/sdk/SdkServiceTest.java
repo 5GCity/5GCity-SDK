@@ -19,6 +19,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 
 import java.io.File;
+import java.net.URL;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,8 +32,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static it.nextworks.sdk.SdkFunctionTest.makeDemoFirewallObject;
+import static it.nextworks.sdk.SdkFunctionTest.makeDemoMiniwebObject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
 /**
  * Created by Marco Capitani on 05/12/18.
@@ -200,5 +204,78 @@ public class SdkServiceTest {
         byte[] bytesF = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(function);
         Files.write(fileF.toPath(), bytesF);
     }
+
+    @Test
+    @Ignore
+    public void createCityServiceFromJson() throws Exception {
+        // Setup
+        URL resource = this.getClass().getClassLoader().getResource("cityService.json");
+        ObjectMapper mapper = new ObjectMapper();
+        SdkService service = mapper.readValue(resource, SdkService.class);
+
+        assertTrue(service.isValid());
+
+        Set<SdkFunction> functions = new HashSet<>(functionRepository.findAll());
+
+        service.resolveComponents(functions, Collections.emptySet());
+
+        serviceRepository.saveAndFlush(service);
+
+        SdkService sdkService2 = serviceRepository.findById(service.getId()).get();
+
+        assertEquals(service, sdkService2);
+
+    }
+
+/*
+    @Test
+    @Ignore // requires DB
+    public void testCityService() throws Exception {
+
+        SdkFunction miniWeb = makeDemoMiniwebObject();
+
+        SdkFunction firewall = makeDemoFirewallObject();
+
+        assertTrue(miniWeb.isValid());
+        assertTrue(firewall.isValid());
+
+        functionRepository.saveAndFlush(miniWeb);
+
+        functionRepository.saveAndFlush(firewall);
+
+        Long miniwebId = miniWeb.getId();
+        Long firewallId = firewall.getId();
+
+        SdkService service = makeTestObject(
+            functionId,
+            Arrays.asList("param1", "param2"), // I.e. param1 == secure and param2 == small
+            function.getConnectionPoint().stream().collect(Collectors.toMap(
+                ConnectionPoint::getName,
+                ConnectionPoint::getId
+            ))
+        );
+
+        assertTrue(service.isValid());
+
+        service.resolveComponents(Collections.singleton(function), Collections.emptySet());
+
+        serviceRepository.saveAndFlush(service);
+
+        Optional<SdkService> back = serviceRepository.findById(service.getId());
+
+        assertTrue(back.isPresent());
+
+        SdkService service2 = back.get();
+        assertEquals(service, service2);
+
+        File file = new File("/tmp/service.json");
+        ObjectMapper mapper = new ObjectMapper();
+        byte[] bytes = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(service);
+        Files.write(file.toPath(), bytes);
+        File fileF = new File("/tmp/function.json");
+        byte[] bytesF = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(function);
+        Files.write(fileF.toPath(), bytesF);
+    }
+    */
 }
 

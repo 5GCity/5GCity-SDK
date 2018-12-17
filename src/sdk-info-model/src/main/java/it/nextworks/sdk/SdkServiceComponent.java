@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 
 /**
@@ -216,24 +217,19 @@ abstract public class SdkServiceComponent<T extends InstantiableCandidate> {
     }
 
     @Override
-    public int hashCode() {
-        int result = 1;
-        result = ((result * 31) + ((this.mappingExpression == null) ? 0 : this.mappingExpression.hashCode()));
-        result = ((result * 31) + ((this.component == null) ? 0 : this.component.hashCode()));
-        return result;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof SdkServiceComponent)) return false;
+        SdkServiceComponent<?> that = (SdkServiceComponent<?>) o;
+        return getId().equals(that.getId()) &&
+            Objects.equals(getComponentId(), that.getComponentId()) &&
+            getType() == that.getType() &&
+            Objects.equals(getMappingExpression(), that.getMappingExpression());
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (other == this) {
-            return true;
-        }
-        if (!(other instanceof SdkServiceComponent)) {
-            return false;
-        }
-        SdkServiceComponent rhs = ((SdkServiceComponent) other);
-        return (((this.mappingExpression == rhs.mappingExpression) || ((this.mappingExpression != null) && this.mappingExpression.equals(rhs.mappingExpression)))
-            && ((this.component == rhs.component) || ((this.component != null) && this.component.equals(rhs.component))));
+    public int hashCode() {
+        return Objects.hash(getId(), getComponentId(), getType(), getMappingExpression());
     }
 
     private List<BigDecimal> computeParams(Map<String, BigDecimal> outerParams) {
