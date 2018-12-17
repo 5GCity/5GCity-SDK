@@ -112,4 +112,4 @@ $ sudo systemctl restart sdk-composer.service
 [Mariadb]: https://www.digitalocean.com/community/tutorials/how-to-create-and-manage-databases-in-mysql-and-mariadb-on-a-cloud-server
 [5G Apps and Services Catalogue]: https://github.com/nextworks-it/5g-catalogue
 [OSM Rel THREE]: https://osm.etsi.org/wikipub/index.php/OSM_Release_THREE#Install_OSM
-[bootstrap-deps.sh]: https://github.com/CORRECTLINK
+[bootstrap-deps.sh]: https://github.com/5GCity/5GCity-SDK-Composer/blob/devel/bootstrap-deps.sh
