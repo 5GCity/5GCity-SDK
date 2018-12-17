@@ -110,11 +110,11 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
 
     private NSNode makeNsNode(ServiceInformation info) {
         NSProperties nsProperties = new NSProperties(
-            info.getUniqueId(),
+            info.getUUID(),
             info.getDesigner(),
             info.getVersion(),
             info.getName(),
-            info.getUniqueId()
+            info.getinvariantId()
         );
         NSRequirements nsRequirements = new NSRequirements(
             new ArrayList<>(info.getServiceLinks())
@@ -181,12 +181,12 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
             null,
             String.format("NS descriptor: %s. Generated with 5G-City SDK", info.getName()),
             new Metadata(
-                info.getUniqueId(),
+                info.getUUID(),
                 info.getDesigner(),
                 info.getVersion()
             ),
-                topologyTemplate
-            );
+            topologyTemplate
+        );
     }
 
     @Override

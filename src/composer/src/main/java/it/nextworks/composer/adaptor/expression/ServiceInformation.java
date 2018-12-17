@@ -3,6 +3,7 @@ package it.nextworks.composer.adaptor.expression;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Created by Marco Capitani on 23/11/18.
@@ -17,6 +18,8 @@ public class ServiceInformation {
 
     private Set<VnfdData> vnfdData;
 
+    private UUID uuid;
+
     public ServiceInformation(
         ServiceMetadata serviceMetadata,
         Set<String> serviceLinks,
@@ -27,8 +30,15 @@ public class ServiceInformation {
         this.vnfdData = vnfdData;
     }
 
-    public String getUniqueId() {
+    public String getinvariantId() {
         return serviceMetadata.getUniqueId();
+    }
+
+    public synchronized String getUUID() {
+        if (uuid == null) {
+            uuid = UUID.randomUUID();
+        }
+        return uuid.toString();
     }
 
     public Set<VnfdData> getVnfdData() {

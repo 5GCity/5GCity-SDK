@@ -394,10 +394,15 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         // TODO: dispatch publish operation to driver, then return immediately
         executor.execute(() -> {
                 try {
-                    String s = cataloguePlugin.uploadNetworkService(nsd, "application/json", null);
+                    String s = cataloguePlugin.uploadNetworkService(nsd, "multipart/form-data", null);
                     callback.accept(true);
-                } catch (IOException exc) {
-                    log.error("Could not push descriptor %s.", nsd.getMetadata().getDescriptorId());
+                } catch (Exception exc) {
+                    log.error(
+                        "Could not push descriptor {}. Cause: {}",
+                        nsd.getMetadata().getDescriptorId(),
+                        exc.getMessage()
+                    );
+                    log.debug("Details: ", exc);
                     callback.accept(false);
                 }
             }
@@ -425,9 +430,9 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         synchronized (this) { // To avoid multiple simultaneous calls
             // Check if is already published
             if (!instance.getStatus().equals(SdkServiceStatus.COMMITTED)) {
-                log.error("The Service Instance with UUID: {} is not ins status COMMITTED.", serviceInstanceId);
+                log.error("The Service Instance with UUID: {} is not in status COMMITTED.", serviceInstanceId);
                 throw new NotPublishedServiceException(String.format(
-                    "The Service Instance with UUID: %s is not ins status COMMITTED",
+                    "The Service Instance with UUID: %s is not in status COMMITTED",
                     serviceInstanceId
                 ));
             }
