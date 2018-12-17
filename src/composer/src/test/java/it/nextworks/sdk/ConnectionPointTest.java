@@ -11,25 +11,25 @@ public class ConnectionPointTest {
 
 	public static ConnectionPoint makeFirewallDemobject1() {
         ConnectionPoint cp = new ConnectionPoint();
-        cp.setName("Management_net");
+        cp.setName("eth0");
         cp.setType(ConnectionPointType.EXTERNAL);
         return cp;
     }
 	public static ConnectionPoint makeFirewallDemobject2() {
         ConnectionPoint cp = new ConnectionPoint();
-        cp.setName("Media_presentation_net");
+        cp.setName("eth1");
         cp.setType(ConnectionPointType.EXTERNAL);
         return cp;
     }
 	public static ConnectionPoint makeFirewallDemobject3() {
         ConnectionPoint cp = new ConnectionPoint();
-        cp.setName("Central_service_net");
+        cp.setName("eth2");
         cp.setType(ConnectionPointType.EXTERNAL);
         return cp;
     }
 	public static ConnectionPoint makeFirewallDemobject4() {
         ConnectionPoint cp = new ConnectionPoint();
-        cp.setName("External_net");
+        cp.setName("eth3");
         cp.setType(ConnectionPointType.EXTERNAL);
         cp.setRequiredPort(22, 80, 443);
         return cp;
@@ -37,12 +37,12 @@ public class ConnectionPointTest {
 	
 	public static ConnectionPoint makeMiniwebDemobject1() {
         ConnectionPoint cp = new ConnectionPoint();
-        cp.setName("Media_miniweb");
+        cp.setName("cp-eth0");
         cp.setType(ConnectionPointType.EXTERNAL);
         cp.setRequiredPort(80, 443);
         return cp;
     }
-	
+	/*
     public static ConnectionPoint makeTestObject1() {
         ConnectionPoint cp = new ConnectionPoint();
         cp.setName("MGMT");
@@ -83,7 +83,7 @@ public class ConnectionPointTest {
         cp.setId(id);
         return cp;
     }
-
+*/
     public static ConnectionPoint parametrized(
         String name,
         ConnectionPointType type,

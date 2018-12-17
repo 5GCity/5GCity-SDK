@@ -15,22 +15,31 @@
  */
 package it.nextworks.composer;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.net.URI;
+import java.util.Optional;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 
+import it.nextworks.composer.executor.repositories.SdkFunctionRepository;
 import it.nextworks.composer.plugins.catalogue.Catalogue;
 import it.nextworks.composer.plugins.catalogue.CatalogueType;
 import it.nextworks.composer.plugins.catalogue.DescriptorsParser;
 import it.nextworks.composer.plugins.catalogue.FiveGCataloguePlugin;
 import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
+import it.nextworks.sdk.SdkFunction;
+import it.nextworks.sdk.SdkFunctionTest;
 
 
 
@@ -45,6 +54,9 @@ public class ComposerApplicationTests {
 	private String catalogueHost;
 	
 
+    @Autowired
+    private SdkFunctionRepository functionRepository;
+	
 	
 	@Test
 	public void contextLoads() {
@@ -53,6 +65,7 @@ public class ComposerApplicationTests {
 	}
 	
 	@Test
+	@Ignore
 	public void testPostToCatalogue() throws Exception {
 		
 		Catalogue catalogue = new Catalogue("5gCatalogue", catalogueHost, false, null, null);
@@ -69,5 +82,35 @@ public class ComposerApplicationTests {
 		
 		
 	}
+	
+	@Test
+    //@Ignore // requires DB
+    public void testCityService() {
+
+        SdkFunction miniWeb = SdkFunctionTest.makeDemoMiniwebObject();
+
+        SdkFunction firewall = SdkFunctionTest.makeDemoFirewallObject();
+
+        assertTrue(miniWeb.isValid());
+        assertTrue(firewall.isValid());
+
+        functionRepository.saveAndFlush(miniWeb);
+
+        functionRepository.saveAndFlush(firewall);
+
+        Optional<SdkFunction> mwb = functionRepository.findById(miniWeb.getId());
+
+        Optional<SdkFunction> fwb = functionRepository.findById(firewall.getId());
+
+        assertTrue(mwb.isPresent());
+        assertTrue(fwb.isPresent());
+
+        SdkFunction mw2 = mwb.get();
+        assertEquals(miniWeb, mw2);
+
+        SdkFunction fw2 = fwb.get();
+        assertEquals(firewall, fw2);
+        
+    }
 
 }

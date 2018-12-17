@@ -97,7 +97,7 @@ public class ServiceManagerTest {
         List<SdkService> services = manager.getServices();
         assertEquals(returnedList, services);
     }
-
+/*
     @Test
     public void createService() throws Exception {
         // Setup
@@ -134,7 +134,7 @@ public class ServiceManagerTest {
         String ret = manager.createService(service);
         assertEquals("3", ret);
     }
-
+*/
     @Test
     public void updateService() {
     }
@@ -146,7 +146,7 @@ public class ServiceManagerTest {
     @Test
     public void deleteService() {
     }
-
+/*
     @Test
     public void publishService() throws Exception {
 
@@ -191,7 +191,7 @@ public class ServiceManagerTest {
         verify(serviceInstanceRepository).saveAndFlush(instance);
         verify(executor).execute(any());
     }
-
+*/
     @Test
     public void unPublishService() {
     }

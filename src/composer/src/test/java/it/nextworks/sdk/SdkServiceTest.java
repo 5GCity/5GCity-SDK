@@ -164,7 +164,7 @@ public class SdkServiceTest {
 
         return service;
     }
-
+/*
     @Test
     @Ignore // requires DB
     public void testPersist() throws Exception {
@@ -204,7 +204,7 @@ public class SdkServiceTest {
         byte[] bytesF = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(function);
         Files.write(fileF.toPath(), bytesF);
     }
-
+*/
     @Test
     @Ignore
     public void createCityServiceFromJson() throws Exception {
