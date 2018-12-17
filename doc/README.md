@@ -97,10 +97,12 @@ The configuration file of the SDK Composer module is located at:
   ```
 
 You can change any of the following parameters:
+```sh
 spring.datasource.url=jdbc:mysql://**localhost**/**sdk**
 spring.datasource.username=**catalogue**
 spring.datasource.password=**password**
 catalogue.host=**http://5gcatalogue.5gcity.eu/**
+```
 
 Perform a restart of the service in order to apply changes
 ```sh
