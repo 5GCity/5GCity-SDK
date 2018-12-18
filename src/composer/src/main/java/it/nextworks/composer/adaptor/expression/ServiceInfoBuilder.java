@@ -138,23 +138,24 @@ class ServiceInfoBuilder {
         }
     }
 
-    private VnfdData getVnfdData(Long functionId) {
+    private VnfdData getVnfdData(Long functionInstanceId) {
         Set<L3Connectivity> rules = service2Rules.values().stream()
             .flatMap(Collection::stream)
             .filter(
                 r -> false // TODO in a future release
             )
             .collect(Collectors.toSet());
+        Long functionId = functions.get(functionInstanceId).getTemplate().getId();
         return new VnfdData(
-            functionMetadata.get(functionId).name,
-            functionMetadata.get(functionId).description,
-            functionMetadata.get(functionId).vendor,
-            func2vnfd.get(functionId),
-            func2vnfdVersion.get(functionId),
-            func2flavour.get(functionId),
-            func2level.get(functionId),
-            function2Link.getOrDefault(functionId, new HashSet<>()).stream()
-                .map(al -> al.name)
+            functionMetadata.get(functionInstanceId).name,
+            functionMetadata.get(functionInstanceId).description,
+            functionMetadata.get(functionInstanceId).vendor,
+            func2vnfd.get(functionInstanceId),
+            func2vnfdVersion.get(functionInstanceId),
+            func2flavour.get(functionInstanceId),
+            func2level.get(functionInstanceId),
+            function2Link.getOrDefault(functionInstanceId, new HashSet<>()).stream()
+                .map(al -> al.name + '/' + al.function2CpName.get(functionId))
                 .collect(Collectors.toSet()),
             rules
         );
@@ -200,7 +201,9 @@ class ServiceInfoBuilder {
                 Link externalLink = findFirstAttachedLink(connectionPoint);
                 for (AdapterLink adapterLink : adapterLinks) {
                     if (adapterLink.linkIds.contains(externalLink.getId())) {
-                        adapterLink.name = String.format("%s_mgmt", adapterLink.name);
+                        if (!adapterLink.name.endsWith("_mgmt")) {
+                            adapterLink.name = String.format("%s_mgmt", adapterLink.name);
+                        }
                         break;
                     }
                 }

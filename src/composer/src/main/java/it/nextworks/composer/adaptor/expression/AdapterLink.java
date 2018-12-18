@@ -4,15 +4,16 @@ import it.nextworks.sdk.ConnectionPoint;
 import it.nextworks.sdk.Link;
 import it.nextworks.sdk.SdkFunction;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -61,9 +62,7 @@ class AdapterLink {
 
         private Map<Long, ConnectionPoint> cps = new HashMap<>();
 
-        private Map<Long, String> function2CpName = new HashMap<>();
-
-        private Map<Long, Set<Long>> link2Function = new HashMap<>();
+        private Map<Long, List<FunctionCp>> link2Function = new HashMap<>();
 
         private Map<Long, Long> cp2Function = new HashMap<>();
 
@@ -116,7 +115,6 @@ class AdapterLink {
 
             if (cp.getSdkFunction() != null) {
                 SdkFunction function = cp.getSdkFunction();
-                function2CpName.put(function.getId(), cp.getName());
                 cp2Function.put(cp.getId(), function.getId());
             }
             return this;
@@ -180,8 +178,10 @@ class AdapterLink {
                     while (current != null) {
                         Long function = cp2Function.get(current);
                         if (function != null) {
-                            link2Function.putIfAbsent(linkId, new HashSet<>());
-                            link2Function.get(linkId).add(function);
+                            link2Function.putIfAbsent(linkId, new ArrayList<>());
+                            link2Function.get(linkId).add(new FunctionCp(
+                                function, cps.get(current).getName()
+                            ));
                         }
                         current = cp2Int.get(current);
                     }
@@ -195,10 +195,10 @@ class AdapterLink {
             Map<Long, String> linkFunctions = connectedComponent.stream()
                 .map(l -> link2Function.get(l))  // get function set for the links in the conn-comp
                 .filter(Objects::nonNull)  // skip null sets
-                .flatMap(Collection::stream)  // flatten sets -> stream of Long
+                .flatMap(Collection::stream)  // flatten sets -> stream of FunctionCp
                 .collect(Collectors.toMap(  // build name map
-                    Function.identity(),
-                    function2CpName::get
+                    fcp -> fcp.functionId,
+                    fcp -> fcp.cpName
                 ));
 
             return new AdapterLink(
@@ -232,6 +232,16 @@ class AdapterLink {
                 counter++;
             }
             return output;
+        }
+    }
+
+    private static class FunctionCp {
+        private final Long functionId;
+        private final String cpName;
+
+        private FunctionCp(Long functionId, String cpName) {
+            this.functionId = functionId;
+            this.cpName = cpName;
         }
     }
 }

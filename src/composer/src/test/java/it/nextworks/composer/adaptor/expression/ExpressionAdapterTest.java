@@ -27,6 +27,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
@@ -65,13 +66,14 @@ public class ExpressionAdapterTest {
 
         functionRepo.saveAndFlush(function);
 
+        ConnectionPoint cp = function.getConnectionPoint().iterator().next();
+
+        Map<String, Long> cps = Collections.singletonMap(cp.getName(), cp.getId());
+
         service = SdkServiceTest.makeTestObject(
             function.getId(),
             Arrays.asList("param1", "param2"),
-            function.getConnectionPoint().stream().collect(Collectors.toMap(
-                ConnectionPoint::getName,
-                ConnectionPoint::getId
-            ))
+            cps
         );
 
         assertTrue(service.isValid());

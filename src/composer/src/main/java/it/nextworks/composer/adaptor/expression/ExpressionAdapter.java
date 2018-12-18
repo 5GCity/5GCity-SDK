@@ -85,6 +85,8 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
     }
 
     private VNFNode makeVnfd(VnfdData vnfdData) {
+        ArrayList<String> vnfmInfo = new ArrayList<>();
+        vnfmInfo.add("juju");
         VNFProperties vnfProperties = new VNFProperties(
             vnfdData.vnfd,
             vnfdData.vnfdVersion,
@@ -92,7 +94,7 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
             vnfdData.name,
             vnfdData.vnfdVersion,
             vnfdData.description,
-            null, // vnfm info
+            vnfmInfo,
             vnfdData.flavour,
             vnfdData.flavour
         );

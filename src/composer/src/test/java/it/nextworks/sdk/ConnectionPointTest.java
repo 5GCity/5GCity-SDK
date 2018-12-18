@@ -42,7 +42,7 @@ public class ConnectionPointTest {
         cp.setRequiredPort(80, 443);
         return cp;
     }
-	/*
+
     public static ConnectionPoint makeTestObject1() {
         ConnectionPoint cp = new ConnectionPoint();
         cp.setName("MGMT");
@@ -83,7 +83,7 @@ public class ConnectionPointTest {
         cp.setId(id);
         return cp;
     }
-*/
+
     public static ConnectionPoint parametrized(
         String name,
         ConnectionPointType type,
