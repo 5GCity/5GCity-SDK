@@ -4,8 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import it.nextworks.sdk.enums.ConnectionPointType;
-import it.nextworks.sdk.enums.LinkType;
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -36,7 +34,6 @@ import java.util.stream.Collectors;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "name",
-    "type",
     "connection_point_names"
 })
 @Entity
@@ -55,8 +52,6 @@ public class Link {
     private Set<ConnectionPoint> connectionPoints = new HashSet<>();
 
     private String name;
-
-    private LinkType type;
 
     @ManyToOne
     private SdkService service;
@@ -89,16 +84,6 @@ public class Link {
     @JsonProperty("name")
     public void setName(String name) {
         this.name = name;
-    }
-
-    @JsonProperty("type")
-    public LinkType getType() {
-        return type;
-    }
-
-    @JsonProperty("type")
-    public void setType(LinkType type) {
-        this.type = type;
     }
 
     @JsonIgnore
@@ -138,7 +123,6 @@ public class Link {
         HashSet<ConnectionPoint> linkCPs = new HashSet<>(connectionPoints);
         linkCPs.removeIf(cp -> !connectionPointNames.contains(cp.getName()));
         this.connectionPoints = linkCPs;
-        validateCpsOrException();
     }
 
 
@@ -147,33 +131,6 @@ public class Link {
         return this.name != null && this.name.length() != 0
             && connectionPointNames != null
             && !(connectionPointNames.isEmpty());
-    }
-
-    private void validateCpsOrException() {
-        // Internal links are completely inside the Service (i.e. touch only internal cps)
-        // External links can touch both internal and external cps
-        for (ConnectionPoint cp : connectionPoints) {
-            ConnectionPointType cpType = cp.getType();
-            switch (this.type) {
-                case INTERNAL:
-                    if (!cpType.equals(ConnectionPointType.INTERNAL)) {
-                        throw new IllegalArgumentException(String.format(
-                            "Invalid connection point %s: types not valid. Expected %s, got %s",
-                            cp.getName(),
-                            ConnectionPointType.INTERNAL,
-                            cpType
-                        ));
-                    }
-                    break;
-                case EXTERNAL:
-                    break;
-                default:
-                    throw new IllegalArgumentException(String.format(
-                        "Unexpected connection link type %s",
-                        this.type.toString()
-                    ));
-            }
-        }
     }
 
     @Override
@@ -193,10 +150,6 @@ public class Link {
         sb.append('=');
         sb.append(((this.name == null) ? "<null>" : this.name));
         sb.append(',');
-        sb.append("type");
-        sb.append('=');
-        sb.append(((this.type == null) ? "<null>" : this.type));
-        sb.append(',');
         if (sb.charAt((sb.length() - 1)) == ',') {
             sb.setCharAt((sb.length() - 1), ']');
         } else {
@@ -210,7 +163,6 @@ public class Link {
         int result = 1;
         result = ((result * 31) + ((this.name == null) ? 0 : this.name.hashCode()));
         result = ((result * 31) + ((this.id == null) ? 0 : this.id.hashCode()));
-        result = ((result * 31) + ((this.type == null) ? 0 : this.type.hashCode()));
         result = ((result * 31) + ((this.connectionPointNames == null) ? 0 : this.connectionPointNames.hashCode()));
         return result;
     }
@@ -224,10 +176,9 @@ public class Link {
             return false;
         }
         Link rhs = ((Link) other);
-        return (((((this.name == rhs.name) || ((this.name != null) && this.name.equals(rhs.name)))
-            && ((this.id == rhs.id) || ((this.id != null) && this.id.equals(rhs.id))))
-            && ((this.type == rhs.type) || ((this.type != null) && this.type.equals(rhs.type))))
-            && ((this.connectionPointNames == rhs.connectionPointNames) || ((this.connectionPointNames != null) && this.connectionPointNames.equals(rhs.connectionPointNames))));
+        return Objects.equals(this.name, rhs.name)
+            && Objects.equals(this.id, rhs.id)
+            && Objects.equals(this.connectionPointNames, rhs.connectionPointNames);
     }
 
     private boolean isResolved() {

@@ -3,7 +3,6 @@ package it.nextworks.sdk;
 import it.nextworks.composer.ComposerApplication;
 import it.nextworks.composer.executor.repositories.LinkRepository;
 import it.nextworks.composer.executor.repositories.SdkServiceRepository;
-import it.nextworks.sdk.enums.LinkType;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,7 +36,6 @@ public class LinkTest {
         Link link = new Link();
         link.setName("test-link");
         link.setService(service);
-        link.setType(LinkType.EXTERNAL);
         link.setConnectionPointNames(cps);
         return link;
     }
