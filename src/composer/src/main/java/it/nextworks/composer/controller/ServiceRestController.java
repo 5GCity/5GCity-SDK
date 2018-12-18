@@ -24,8 +24,8 @@ import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
 import it.nextworks.sdk.MonitoringParameter;
 import it.nextworks.sdk.ScalingAspect;
 import it.nextworks.sdk.SdkService;
+import it.nextworks.sdk.SdkServiceDescriptor;
 import it.nextworks.sdk.exceptions.AlreadyPublishedServiceException;
-import it.nextworks.sdk.exceptions.ExistingEntityException;
 import it.nextworks.sdk.exceptions.MalformedElementException;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
 import it.nextworks.sdk.exceptions.NotPublishedServiceException;
@@ -112,25 +112,15 @@ public class ServiceRestController {
     @RequestMapping(value = "/services", method = RequestMethod.POST)
     public ResponseEntity<?> createService(@RequestBody SdkService request) {
         log.info("Request for creation of a new service");
-        if (request.isValid()) {
+        if (request.getId() == null && request.isValid()) {
             try {
                 serviceManager.createService(request);
                 log.debug("Service entity created");
                 return new ResponseEntity<>(request.getId(), HttpStatus.CREATED);
-            } catch (ExistingEntityException e) {
-                log.error("Service with id " + request.getId() + " is already present in database");
+            } catch (MalformedElementException e) {
+                log.error("Malformed request: {}", e.getMessage());
                 return new ResponseEntity<String>(
-                    "Service with id " + request.getId() + " is already present in database",
-                    HttpStatus.BAD_REQUEST);
-            } catch (NotExistingEntityException e2) {
-                log.error("Function id used to build one of the SdkFunctionInstances is not present in database");
-                return new ResponseEntity<String>(
-                    "Function id used to build one of the SdkFunctionInstances is not present in database",
-                    HttpStatus.BAD_REQUEST);
-            } catch (MalformedElementException e3) {
-                log.error("Malformatted request: {}", e3.getMessage());
-                return new ResponseEntity<String>(
-                    String.format("Malformatted request: %s", e3.getMessage()),
+                    String.format("Malformed request: %s", e.getMessage()),
                     HttpStatus.BAD_REQUEST);
             }
         } else {
@@ -189,28 +179,28 @@ public class ServiceRestController {
         }
     }
 
-    @ApiOperation(value = "Instantiate Service")
+    @ApiOperation(value = "Create descriptor from Service")
     @ApiResponses(value = {@ApiResponse(code = 200, message = ""),
-        @ApiResponse(code = 404, message = "Entity to be instantiated not found"),
+        @ApiResponse(code = 404, message = "Base service not found"),
         @ApiResponse(code = 400, message = "Null service or invalid parameters provided")})
-    @RequestMapping(value = "/services/{serviceId}/instantiate", method = RequestMethod.POST)
-    public ResponseEntity<?> instantiateService(
+    @RequestMapping(value = "/services/{serviceId}/create-descriptor", method = RequestMethod.POST)
+    public ResponseEntity<?> createDescriptor(
         @PathVariable Long serviceId,
-        @RequestBody InstantiationRequest instantiationRequest
+        @RequestBody MakeDescriptorRequest makeDescriptorRequest
     ) {
-        List<BigDecimal> parameterValues = instantiationRequest.parameterValues;
-        log.info("Request for instantiation of a service with id: {}, params: {}.", serviceId, parameterValues);
+        List<BigDecimal> parameterValues = makeDescriptorRequest.parameterValues;
+        log.info("Request create-descriptor of a service with id: {}, params: {}.", serviceId, parameterValues);
         if (serviceId == null) {
-            log.error("Instantiation request without parameter serviceId");
+            log.error("Create-descriptor request without parameter serviceId");
             return new ResponseEntity<>(
-                "Instantiation request without parameter serviceId",
+                "Create-descriptor request without parameter serviceId",
                 HttpStatus.BAD_REQUEST
             );
         }
         // else:
         try {
-            String instanceId = serviceManager.instantiateService(serviceId, parameterValues);
-            return new ResponseEntity<>(instanceId, HttpStatus.OK);
+            String descriptorId = serviceManager.createServiceDescriptor(serviceId, parameterValues);
+            return new ResponseEntity<>(descriptorId, HttpStatus.OK);
         } catch (NotExistingEntityException e) {
             return new ResponseEntity<>(
                 e.getMessage(),
@@ -228,21 +218,21 @@ public class ServiceRestController {
     @ApiResponses(value = {
         @ApiResponse(
             code = 202,
-            message = "Instance created with returned id. The service will be published to the public catalogue"
+            message = "Descriptor created with returned id. The descriptor will be published to the public catalogue"
         ),
-        @ApiResponse(code = 404, message = "Entity to be instantiated not found"),
+        @ApiResponse(code = 404, message = "Service to be published not found"),
         @ApiResponse(code = 400, message = "Null service or invalid parameters provided")})
     @RequestMapping(value = "/service/{serviceId}/publish", method = RequestMethod.POST)
     public ResponseEntity<?> publishService(@PathVariable Long serviceId, List<BigDecimal> parameterValues) {
         log.info(
-            "Request for instantiation and publication of a service with id: {}, params: {}.",
+            "Request create-service and publication of a service with id: {}, params: {}.",
             serviceId,
             parameterValues
         );
         if (serviceId == null) {
-            log.error("Instantiation request without parameter serviceId");
+            log.error("Create-service/publication request without parameter serviceId");
             return new ResponseEntity<>(
-                "Instantiation/publication request without parameter serviceId",
+                "Create-service/publication request without parameter serviceId",
                 HttpStatus.BAD_REQUEST
             );
         }
@@ -261,91 +251,6 @@ public class ServiceRestController {
                 HttpStatus.BAD_REQUEST
             );
         }
-    }
-
-    @ApiOperation(value = "Publish Service to Public Catalogue")
-    @ApiResponses(value = {@ApiResponse(code = 202, message = "The service will be published to the public catalogue"),
-        @ApiResponse(code = 404, message = "Entity to be published not found"),
-        @ApiResponse(code = 400, message = "Publication request without parameter serviceId or already published service")})
-    @RequestMapping(value = "/service-instances/{serviceInstanceId}/publish", method = RequestMethod.POST)
-    public ResponseEntity<?> publishService(@PathVariable Long serviceInstanceId) {
-        log.info("Request to publish the service " + serviceInstanceId + " to the public catalogue");
-        if (serviceInstanceId == null) {
-            log.error("Publishing request without parameter serviceId");
-            return new ResponseEntity<String>("Publishing request without parameter serviceId", HttpStatus.BAD_REQUEST);
-        } else {
-            try {
-                serviceManager.publishService(serviceInstanceId);
-                return new ResponseEntity<>(HttpStatus.ACCEPTED);
-            } catch (NotExistingEntityException e1) {
-                log.error("Requested publication for an entity which doesn't exist");
-                return new ResponseEntity<String>("Requested publication for an entity which doesn't exist",
-                    HttpStatus.NOT_FOUND);
-            } catch (AlreadyPublishedServiceException e2) {
-                log.error("Requested publication for an entity already has been published");
-                return new ResponseEntity<String>("Requested publication for an entity already has been published",
-                    HttpStatus.BAD_REQUEST);
-            }
-        }
-    }
-
-    @ApiOperation(value = "Publish Service to Public Catalogue")
-    @ApiResponses(value = {@ApiResponse(code = 202, message = "The service will be published to the public catalogue"),
-        @ApiResponse(code = 404, message = "Entity to be published not found"),
-        @ApiResponse(code = 400, message = "Publication request without parameter serviceId or already published service")})
-    @RequestMapping(value = "/service-instances/{serviceInstanceId}", method = RequestMethod.GET)
-    public ResponseEntity<?> getInstance(@PathVariable Long serviceInstanceId) {
-        log.info("Request GET instance " + serviceInstanceId);
-        if (serviceInstanceId == null) {
-            log.error("GET Instance request without parameter serviceInstanceId");
-            return new ResponseEntity<String>("GET Instance request without parameter serviceInstanceId", HttpStatus.BAD_REQUEST);
-        } else {
-            // TODO
-            return new ResponseEntity<>("Net yet implemented", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @ApiOperation(value = "Write descriptorin the response")
-    @ApiResponses(value = {@ApiResponse(code = 202, message = "The service will be published to the public catalogue"),
-        @ApiResponse(code = 404, message = "Entity to be published not found"),
-        @ApiResponse(code = 400, message = "Publication request without parameter serviceId or already published service")})
-    @RequestMapping(value = "/service-instances/{serviceInstanceId}/descriptor", method = RequestMethod.GET)
-    public ResponseEntity<?> getInstanceDescriptor(@PathVariable Long serviceInstanceId) throws NotExistingEntityException {
-        log.info("Request GET instance descriptor " + serviceInstanceId);
-        if (serviceInstanceId == null) {
-            log.error("GET Instance descriptor request without parameter serviceInstanceId");
-            return new ResponseEntity<String>("GET Instance descriptor request without parameter serviceInstanceId", HttpStatus.BAD_REQUEST);
-        } else {
-            DescriptorTemplate descriptorTemplate = serviceManager.generateTemplate(serviceInstanceId);
-            return new ResponseEntity<>(descriptorTemplate, HttpStatus.OK);
-        }
-    }
-
-    @ApiOperation(value = "Unpublish Service from Public Catalogue")
-    @ApiResponses(value = {@ApiResponse(code = 202, message = "The service will be removed from the public catalogue"),
-        @ApiResponse(code = 404, message = "Entity to be unpublished not found"),
-        @ApiResponse(code = 400, message = "Request without parameter serviceId or not yet published service")})
-    @RequestMapping(value = "/service-instance/{serviceId}/unpublish", method = RequestMethod.POST)
-    public ResponseEntity<?> unPublishService(@PathVariable Long serviceInstanceId) {
-        log.info("Request to unpublish the service " + serviceInstanceId + " from the public catalogue");
-        if (serviceInstanceId == null) {
-            log.error("Request without parameter serviceId");
-            return new ResponseEntity<String>("Request without parameter serviceId", HttpStatus.BAD_REQUEST);
-        } else {
-            try {
-                serviceManager.unPublishService(serviceInstanceId);
-                return new ResponseEntity<>(HttpStatus.ACCEPTED);
-            } catch (NotExistingEntityException e1) {
-                log.error("Requested deletion of publication for an entity which doesn't exist");
-                return new ResponseEntity<String>("Requested deletion of publication for an entity which doesn't exist",
-                    HttpStatus.NOT_FOUND);
-            } catch (NotPublishedServiceException e2) {
-                log.error("Requested publication for an entity that has not been published yet");
-                return new ResponseEntity<String>("Requested publication for an entity that has not been published yet",
-                    HttpStatus.BAD_REQUEST);
-            }
-        }
-
     }
 
     @ApiOperation(value = "Modify an existing list of scaling aspects")

@@ -8,15 +8,15 @@ import java.util.List;
  *
  * @author Marco Capitani <m.capitani AT nextworks.it>
  */
-public class InstantiationRequest {
+public class MakeDescriptorRequest {
 
     public List<BigDecimal> parameterValues;
 
-    public InstantiationRequest() {
+    public MakeDescriptorRequest() {
 
     }
 
-    public InstantiationRequest(List<BigDecimal> parameterValues) {
+    public MakeDescriptorRequest(List<BigDecimal> parameterValues) {
         this.parameterValues = parameterValues;
     }
 }

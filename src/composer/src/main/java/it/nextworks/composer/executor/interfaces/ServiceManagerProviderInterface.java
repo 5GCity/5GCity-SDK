@@ -15,11 +15,12 @@
  */
 package it.nextworks.composer.executor.interfaces;
 
+import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
 import it.nextworks.sdk.MonitoringParameter;
 import it.nextworks.sdk.ScalingAspect;
 import it.nextworks.sdk.SdkService;
+import it.nextworks.sdk.SdkServiceDescriptor;
 import it.nextworks.sdk.exceptions.AlreadyPublishedServiceException;
-import it.nextworks.sdk.exceptions.ExistingEntityException;
 import it.nextworks.sdk.exceptions.MalformedElementException;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
 import it.nextworks.sdk.exceptions.NotPublishedServiceException;
@@ -33,14 +34,13 @@ public interface ServiceManagerProviderInterface {
     SdkService getServiceById(Long id)
         throws NotExistingEntityException;
 
-    List<SdkService> getServices()
-        throws NotExistingEntityException;
+    List<SdkService> getServices();
 
     List<SdkService> getServicesUsingFunction(Long functionId)
         throws NotExistingEntityException;
 
     String createService(SdkService service)
-        throws ExistingEntityException, NotExistingEntityException, MalformedElementException;
+        throws MalformedElementException;
 
     String updateService(SdkService service)
         throws NotExistingEntityException, MalformedElementException;
@@ -48,14 +48,25 @@ public interface ServiceManagerProviderInterface {
     void deleteService(Long serviceId)
         throws NotExistingEntityException;
 
-    String instantiateService(Long serviceId, List<BigDecimal> parameterValues)
+    String createServiceDescriptor(Long serviceId, List<BigDecimal> parameterValues)
         throws NotExistingEntityException, MalformedElementException;
+
+    List<SdkServiceDescriptor> getAllDescriptors();
+
+    SdkServiceDescriptor getServiceDescriptor(Long descriptorId)
+        throws NotExistingEntityException;
+
+    void deleteServiceDescriptor(Long descriptorId)
+        throws NotExistingEntityException;
 
     String publishService(Long serviceId, List<BigDecimal> parameterValues)
         throws NotExistingEntityException, MalformedElementException;
 
     void publishService(Long serviceInstanceId)
         throws NotExistingEntityException, AlreadyPublishedServiceException;
+
+    DescriptorTemplate generateTemplate(Long serviceDescriptorId)
+        throws NotExistingEntityException;
 
     void unPublishService(Long serviceInstanceId)
         throws NotExistingEntityException, NotPublishedServiceException;

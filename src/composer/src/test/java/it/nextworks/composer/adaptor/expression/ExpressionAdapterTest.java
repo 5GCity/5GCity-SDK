@@ -4,14 +4,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import it.nextworks.composer.adaptor.interfaces.ServicesAdaptorProviderInterface;
 import it.nextworks.composer.executor.repositories.SdkFunctionRepository;
-import it.nextworks.composer.executor.repositories.SdkServiceInstanceRepository;
+import it.nextworks.composer.executor.repositories.SdkServiceDescriptorRepository;
 import it.nextworks.composer.executor.repositories.SdkServiceRepository;
 import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
 import it.nextworks.sdk.ConnectionPoint;
 import it.nextworks.sdk.SdkFunction;
 import it.nextworks.sdk.SdkFunctionTest;
 import it.nextworks.sdk.SdkService;
-import it.nextworks.sdk.SdkServiceInstance;
+import it.nextworks.sdk.SdkServiceDescriptor;
 import it.nextworks.sdk.SdkServiceTest;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -28,7 +28,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
@@ -52,7 +51,7 @@ public class ExpressionAdapterTest {
     private SdkServiceRepository serviceRepo;
 
     @Autowired
-    private SdkServiceInstanceRepository instanceRepo;
+    private SdkServiceDescriptorRepository instanceRepo;
 
     private SdkFunction function;
 
@@ -86,7 +85,7 @@ public class ExpressionAdapterTest {
     @Test
     @Ignore // needs DB
     public void instantiateSdkService() {
-        SdkServiceInstance instance = adapter.instantiateSdkService(
+        SdkServiceDescriptor instance = adapter.createServiceDescriptor(
             service,
             Arrays.asList(new BigDecimal(1), new BigDecimal(1))
         );
@@ -106,7 +105,7 @@ public class ExpressionAdapterTest {
 
         serviceRepo.saveAndFlush(service);
         // TODO push functions in DB
-        SdkServiceInstance instance = adapter.instantiateSdkService(
+        SdkServiceDescriptor instance = adapter.createServiceDescriptor(
             service,
             Arrays.asList(new BigDecimal(1), new BigDecimal(1))
         );
@@ -117,7 +116,7 @@ public class ExpressionAdapterTest {
     @Test
     @Ignore // needs DB
     public void generateNetworkServiceDescriptor() throws Exception {
-        SdkServiceInstance instance = adapter.instantiateSdkService(
+        SdkServiceDescriptor instance = adapter.createServiceDescriptor(
             service,
             Arrays.asList(new BigDecimal(0), new BigDecimal(0))
         );

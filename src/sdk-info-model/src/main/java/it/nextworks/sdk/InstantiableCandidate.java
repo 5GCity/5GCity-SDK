@@ -13,5 +13,5 @@ import java.util.List;
  */
 public interface InstantiableCandidate extends SdkComponentCandidate {
 
-    SdkComponentInstance instantiate(List<BigDecimal> parameterValues);
+    SdkComponentInstance makeDescriptor(List<BigDecimal> parameterValues);
 }

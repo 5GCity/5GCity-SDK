@@ -258,10 +258,10 @@ public class SdkFunction implements InstantiableCandidate {
     }
 
     @Override
-    public SdkComponentInstance instantiate(
+    public SdkComponentInstance makeDescriptor(
         List<BigDecimal> parameterValues
     ) {
-        return new SdkFunctionInstance(this, parameterValues);
+        return new SdkFunctionDescriptor(this, parameterValues);
     }
 
     @Override

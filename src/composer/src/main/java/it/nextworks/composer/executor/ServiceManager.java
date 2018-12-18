@@ -24,7 +24,7 @@ import it.nextworks.composer.executor.repositories.LinkRepository;
 import it.nextworks.composer.executor.repositories.MonitoringParameterRepository;
 import it.nextworks.composer.executor.repositories.ScalingAspectRepository;
 import it.nextworks.composer.executor.repositories.SdkFunctionRepository;
-import it.nextworks.composer.executor.repositories.SdkServiceInstanceRepository;
+import it.nextworks.composer.executor.repositories.SdkServiceDescriptorRepository;
 import it.nextworks.composer.executor.repositories.SdkServiceRepository;
 import it.nextworks.composer.plugins.catalogue.FiveGCataloguePlugin;
 import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
@@ -33,11 +33,10 @@ import it.nextworks.sdk.ScalingAspect;
 import it.nextworks.sdk.SdkFunction;
 import it.nextworks.sdk.SdkService;
 import it.nextworks.sdk.SdkServiceComponent;
-import it.nextworks.sdk.SdkServiceInstance;
+import it.nextworks.sdk.SdkServiceDescriptor;
 import it.nextworks.sdk.enums.SdkServiceComponentType;
 import it.nextworks.sdk.enums.SdkServiceStatus;
 import it.nextworks.sdk.exceptions.AlreadyPublishedServiceException;
-import it.nextworks.sdk.exceptions.ExistingEntityException;
 import it.nextworks.sdk.exceptions.MalformedElementException;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
 import it.nextworks.sdk.exceptions.NotPublishedServiceException;
@@ -50,7 +49,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -75,7 +73,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     private SdkServiceRepository serviceRepository;
 
     @Autowired
-    private SdkServiceInstanceRepository serviceInstanceRepository;
+    private SdkServiceDescriptorRepository serviceDescriptorRepository;
 
     @Autowired
     private SdkFunctionRepository functionRepository;
@@ -132,9 +130,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     @Override
     public List<SdkService> getServices() {
         log.info("Request for all service stored in database");
-        List<SdkService> services = serviceRepository.findAll();
-        log.info("Returned list of services");
-        return services;
+        return serviceRepository.findAll();
     }
 
     @Override
@@ -157,7 +153,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
     @Override
     public String createService(SdkService service)
-        throws ExistingEntityException, NotExistingEntityException, MalformedElementException {
+        throws MalformedElementException {
 
         log.info("Storing into database a new service");
         // TODO Find a way to check if service already exists
@@ -262,9 +258,9 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     }
 
     @Override
-    public String instantiateService(Long serviceId, List<BigDecimal> parameterValues)
+    public String createServiceDescriptor(Long serviceId, List<BigDecimal> parameterValues)
         throws NotExistingEntityException, MalformedElementException {
-        log.info("Request for instantiation of service with uuid: " + serviceId);
+        log.info("Request create-descriptor of service with uuid: " + serviceId);
 
         // Check if service exists
         Optional<SdkService> optService = serviceRepository.findById(serviceId);
@@ -274,21 +270,55 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             return new NotExistingEntityException("The Service with UUID: " + serviceId + " is not present in database");
         });
 
-        SdkServiceInstance instance;
+        SdkServiceDescriptor descriptor;
         try {
-            instance = adapter.instantiateSdkService(service, parameterValues);
+            descriptor = adapter.createServiceDescriptor(service, parameterValues);
         } catch (IllegalArgumentException exc) {
-            log.error("Malformed instantiation request: {}", exc.getMessage());
+            log.error("Malformed create-descriptor request: {}", exc.getMessage());
             throw new MalformedElementException(exc.getMessage(), exc);
         }
-        instance.setStatus(SdkServiceStatus.SAVED);
-        serviceInstanceRepository.saveAndFlush(instance);
+        descriptor.setStatus(SdkServiceStatus.SAVED);
+        serviceDescriptorRepository.saveAndFlush(descriptor);
         log.info(
-            "Service {} successfully instantiated. Instance ID {}.",
+            "Descriptor for service {} successfully created. Descriptor ID {}.",
             serviceId,
-            instance.getId()
+            descriptor.getId()
         );
-        return instance.getId().toString();
+        return descriptor.getId().toString();
+    }
+
+    @Override
+    public List<SdkServiceDescriptor> getAllDescriptors() {
+        log.info("Request for all service descriptors stored in database");
+        return serviceDescriptorRepository.findAll();
+    }
+
+    @Override
+    public SdkServiceDescriptor getServiceDescriptor(Long descriptorId)
+        throws NotExistingEntityException {
+        log.info("Request for service descriptor with id: {}", descriptorId);
+        Optional<SdkServiceDescriptor> byId = serviceDescriptorRepository.findById(descriptorId);
+        return byId.orElseThrow(() -> {
+            log.error("Descriptor with id {} not found", descriptorId);
+            return new NotExistingEntityException(String.format(
+                "Descriptor with id %d not found",
+                descriptorId
+            ));
+        });
+    }
+
+    @Override
+    public void deleteServiceDescriptor(Long descriptorId) throws NotExistingEntityException {
+        log.info("Request for deletion of service descriptor with id: {}", descriptorId);
+        Optional<SdkServiceDescriptor> byId = serviceDescriptorRepository.findById(descriptorId);
+        SdkServiceDescriptor descriptor = byId.orElseThrow(() -> {
+            log.error("Descriptor with id {} not found", descriptorId);
+            return new NotExistingEntityException(String.format(
+                "Descriptor with id %d not found",
+                descriptorId
+            ));
+        });
+        serviceDescriptorRepository.delete(descriptor);
     }
 
     @Override
@@ -302,17 +332,17 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             log.error("The Service with UUID: " + serviceId + " is not present in database");
             return new NotExistingEntityException("The Service with UUID: " + serviceId + " is not present in database");
         });
-        SdkServiceInstance instance;
+        SdkServiceDescriptor descriptor;
         try {
-            instance = adapter.instantiateSdkService(service, parameterValues);
+            descriptor = adapter.createServiceDescriptor(service, parameterValues);
         } catch (IllegalArgumentException e) {
-            log.error("Malformed instantiation request: {}", e.getMessage());
+            log.error("Malformed create-descriptor request: {}", e.getMessage());
             throw new MalformedElementException(e.getMessage(), e);
         }
-        instance.setStatus(SdkServiceStatus.CHANGING);
-        serviceInstanceRepository.saveAndFlush(instance);
-        String serviceInstanceId = instance.getId().toString();
-        DescriptorTemplate nsd = adapter.generateNetworkServiceDescriptor(instance);
+        descriptor.setStatus(SdkServiceStatus.CHANGING);
+        serviceDescriptorRepository.saveAndFlush(descriptor);
+        String serviceDescriptorId = descriptor.getId().toString();
+        DescriptorTemplate nsd = adapter.generateNetworkServiceDescriptor(descriptor);
 
         // A thread will be created to handle this request in order to perform it
         // asynchronously.
@@ -320,71 +350,71 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             nsd,
             successful -> {
                 if (successful) {
-                    log.info("Service instance {} successfully published", serviceInstanceId);
-                    instance.setStatus(SdkServiceStatus.COMMITTED);
-                    serviceInstanceRepository.saveAndFlush(instance);
+                    log.info("Service descriptor {} successfully published", serviceDescriptorId);
+                    descriptor.setStatus(SdkServiceStatus.COMMITTED);
+                    serviceDescriptorRepository.saveAndFlush(descriptor);
                 } else {
-                    instance.setStatus(SdkServiceStatus.SAVED);
-                    serviceInstanceRepository.saveAndFlush(instance);
-                    log.error("Error while publishing service instance {}", serviceInstanceId);
+                    descriptor.setStatus(SdkServiceStatus.SAVED);
+                    serviceDescriptorRepository.saveAndFlush(descriptor);
+                    log.error("Error while publishing service descriptor {}", serviceDescriptorId);
                 }
             }
         );
-        return serviceInstanceId;
+        return serviceDescriptorId;
     }
 
-    public DescriptorTemplate generateTemplate(Long serviceInstanceId)
+    public DescriptorTemplate generateTemplate(Long serviceDescriptorId)
         throws NotExistingEntityException {
-        Optional<SdkServiceInstance> optInstance = serviceInstanceRepository.findById(serviceInstanceId);
+        Optional<SdkServiceDescriptor> optDescriptor = serviceDescriptorRepository.findById(serviceDescriptorId);
 
-        SdkServiceInstance instance = optInstance.orElseThrow(() -> {
-            log.error("The Service Instance with UUID: {} is not present in database", serviceInstanceId);
+        SdkServiceDescriptor descriptor = optDescriptor.orElseThrow(() -> {
+            log.error("The Service descriptor with UUID: {} is not present in database", serviceDescriptorId);
             return new NotExistingEntityException(String.format(
-                "The Service with UUID: %s is not present in database",
-                serviceInstanceId
+                "The Service descriptor with UUID: %s is not present in database",
+                serviceDescriptorId
             ));
         });
-        return adapter.generateNetworkServiceDescriptor(instance);
+        return adapter.generateNetworkServiceDescriptor(descriptor);
     }
 
     @Override
-    public void publishService(Long serviceInstanceId)
+    public void publishService(Long serviceDescriptorId)
         throws NotExistingEntityException, AlreadyPublishedServiceException {
-        Optional<SdkServiceInstance> optInstance = serviceInstanceRepository.findById(serviceInstanceId);
+        Optional<SdkServiceDescriptor> optDescriptor = serviceDescriptorRepository.findById(serviceDescriptorId);
 
-        SdkServiceInstance instance = optInstance.orElseThrow(() -> {
-            log.error("The Service Instance with UUID: {} is not present in database", serviceInstanceId);
+        SdkServiceDescriptor descriptor = optDescriptor.orElseThrow(() -> {
+            log.error("The Service descriptor with UUID: {} is not present in database", serviceDescriptorId);
             return new NotExistingEntityException(String.format(
-                "The Service with UUID: %s is not present in database",
-                serviceInstanceId
+                "The Service descriptor with UUID: %s is not present in database",
+                serviceDescriptorId
             ));
         });
 
         synchronized (this) { // To avoid multiple simultaneous calls
-            if (!instance.getStatus().equals(SdkServiceStatus.SAVED)) {
-                log.error("The Service Instance with UUID: {} is not in status SAVED.", serviceInstanceId);
+            if (!descriptor.getStatus().equals(SdkServiceStatus.SAVED)) {
+                log.error("The Service descriptor with UUID: {} is not in status SAVED.", serviceDescriptorId);
                 throw new AlreadyPublishedServiceException(String.format(
-                    "The Service Instance with UUID: %s is not in status SAVED",
-                    serviceInstanceId
+                    "The Service descriptor with UUID: %s is not in status SAVED",
+                    serviceDescriptorId
                 ));
             }
-            instance.setStatus(SdkServiceStatus.CHANGING);
-            serviceInstanceRepository.saveAndFlush(instance);
+            descriptor.setStatus(SdkServiceStatus.CHANGING);
+            serviceDescriptorRepository.saveAndFlush(descriptor);
             // After setting the status, no one can operate on this anymore (except us)
         }
 
-        DescriptorTemplate nsd = adapter.generateNetworkServiceDescriptor(instance);
+        DescriptorTemplate nsd = adapter.generateNetworkServiceDescriptor(descriptor);
         dispatchPublishRequest(
             nsd,
             successful -> {
                 if (successful) {
-                    log.info("Service instance {} successfully published", serviceInstanceId);
-                    instance.setStatus(SdkServiceStatus.COMMITTED);
-                    serviceInstanceRepository.save(instance);
+                    log.info("Service descriptor {} successfully published", serviceDescriptorId);
+                    descriptor.setStatus(SdkServiceStatus.COMMITTED);
+                    serviceDescriptorRepository.save(descriptor);
                 } else {
-                    instance.setStatus(SdkServiceStatus.SAVED);
-                    serviceInstanceRepository.save(instance);
-                    log.error("Error while publishing service instance {}", serviceInstanceId);
+                    descriptor.setStatus(SdkServiceStatus.SAVED);
+                    serviceDescriptorRepository.save(descriptor);
+                    log.error("Error while publishing service descriptor {}", serviceDescriptorId);
                 }
             }
         );
@@ -409,49 +439,50 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         );
     }
 
-    private void dispatchUnPublishRequest(Long serviceInstanceId, Consumer<Boolean> callback) {
+    private void dispatchUnPublishRequest(Long serviceDescriptorId, Consumer<Boolean> callback) {
         // TODO: dispatch unpublish operation to driver, then return immediately
         throw new NotYetImplementedException();
     }
 
 
     @Override
-    public void unPublishService(Long serviceInstanceId) throws NotExistingEntityException, NotPublishedServiceException {
-        log.info("Requested deletion of the publication of the service instance with id: {}", serviceInstanceId);
-        Optional<SdkServiceInstance> optInstance = serviceInstanceRepository.findById(serviceInstanceId);
-        SdkServiceInstance instance = optInstance.orElseThrow(() -> {
-            log.error("The Service Instance with UUID: {} is not present in database", serviceInstanceId);
+    public void unPublishService(Long serviceDescriptorId)
+        throws NotExistingEntityException, NotPublishedServiceException {
+        log.info("Requested deletion of the publication of the service descriptor with id: {}", serviceDescriptorId);
+        Optional<SdkServiceDescriptor> optDescriptor = serviceDescriptorRepository.findById(serviceDescriptorId);
+        SdkServiceDescriptor descriptor = optDescriptor.orElseThrow(() -> {
+            log.error("The Service descriptor with UUID: {} is not present in database", serviceDescriptorId);
             return new NotExistingEntityException(String.format(
                 "The Service with UUID: %s is not present in database",
-                serviceInstanceId
+                serviceDescriptorId
             ));
         });
 
         synchronized (this) { // To avoid multiple simultaneous calls
             // Check if is already published
-            if (!instance.getStatus().equals(SdkServiceStatus.COMMITTED)) {
-                log.error("The Service Instance with UUID: {} is not in status COMMITTED.", serviceInstanceId);
+            if (!descriptor.getStatus().equals(SdkServiceStatus.COMMITTED)) {
+                log.error("The Service descriptor with UUID: {} is not in status COMMITTED.", serviceDescriptorId);
                 throw new NotPublishedServiceException(String.format(
-                    "The Service Instance with UUID: %s is not in status COMMITTED",
-                    serviceInstanceId
+                    "The Service descriptor with UUID: %s is not in status COMMITTED",
+                    serviceDescriptorId
                 ));
             }
-            instance.setStatus(SdkServiceStatus.CHANGING);
-            serviceInstanceRepository.saveAndFlush(instance);
+            descriptor.setStatus(SdkServiceStatus.CHANGING);
+            serviceDescriptorRepository.saveAndFlush(descriptor);
             // After setting the status, no one can operate on this anymore (except us)
         }
 
         dispatchUnPublishRequest(
-            serviceInstanceId,
+            serviceDescriptorId,
             successful -> {
                 if (successful) {
-                    instance.setStatus(SdkServiceStatus.SAVED);
-                    serviceInstanceRepository.saveAndFlush(instance);
-                    log.info("Successfully un-published instance {}", serviceInstanceId);
+                    descriptor.setStatus(SdkServiceStatus.SAVED);
+                    serviceDescriptorRepository.saveAndFlush(descriptor);
+                    log.info("Successfully un-published descriptor {}", serviceDescriptorId);
                 } else {
-                    instance.setStatus(SdkServiceStatus.COMMITTED);
-                    serviceInstanceRepository.saveAndFlush(instance);
-                    log.error("Error while un-publishing instance {}", serviceInstanceId);
+                    descriptor.setStatus(SdkServiceStatus.COMMITTED);
+                    serviceDescriptorRepository.saveAndFlush(descriptor);
+                    log.error("Error while un-publishing descriptor {}", serviceDescriptorId);
                 }
             }
         );

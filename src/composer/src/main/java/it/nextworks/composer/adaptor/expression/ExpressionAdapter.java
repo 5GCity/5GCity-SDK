@@ -21,9 +21,9 @@ import it.nextworks.nfvmano.libs.descriptors.vnfd.nodes.VNF.VNFNode;
 import it.nextworks.nfvmano.libs.descriptors.vnfd.nodes.VNF.VNFProperties;
 import it.nextworks.nfvmano.libs.descriptors.vnfd.nodes.VNF.VNFRequirements;
 import it.nextworks.sdk.SdkComponentInstance;
-import it.nextworks.sdk.SdkFunctionInstance;
+import it.nextworks.sdk.SdkFunctionDescriptor;
 import it.nextworks.sdk.SdkService;
-import it.nextworks.sdk.SdkServiceInstance;
+import it.nextworks.sdk.SdkServiceDescriptor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -53,10 +53,10 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
     );
 
     private ServiceInfoBuilder consumeComponent(SdkComponentInstance instance) {
-        if (instance instanceof SdkFunctionInstance) {
-            return consumeFunction((SdkFunctionInstance) instance);
-        } else if (instance instanceof SdkServiceInstance) {
-            return consumeService((SdkServiceInstance) instance);
+        if (instance instanceof SdkFunctionDescriptor) {
+            return consumeFunction((SdkFunctionDescriptor) instance);
+        } else if (instance instanceof SdkServiceDescriptor) {
+            return consumeService((SdkServiceDescriptor) instance);
         } else {
             throw new IllegalArgumentException(String.format(
                 "Unknown component type %s",
@@ -65,15 +65,15 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
         }
     }
 
-    private ServiceInfoBuilder consumeFunction(SdkFunctionInstance function) {
+    private ServiceInfoBuilder consumeFunction(SdkFunctionDescriptor function) {
         return new ServiceInfoBuilder(function);
     }
 
-    private ServiceInfoBuilder consumeService(SdkServiceInstance service) {
+    private ServiceInfoBuilder consumeService(SdkServiceDescriptor service) {
         if (service.getId() == null) {
             throw new IllegalStateException("Not persisted, cannot create information");
         }
-        return service.getSubInstances().stream()
+        return service.getSubDescriptors().stream()
             .map(this::consumeComponent)
             // Merge all info into one
             .collect(
@@ -192,12 +192,12 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
     }
 
     @Override
-    public SdkServiceInstance instantiateSdkService(SdkService service, List<BigDecimal> parameterValues) {
-        return service.instantiate(parameterValues);
+    public SdkServiceDescriptor createServiceDescriptor(SdkService service, List<BigDecimal> parameterValues) {
+        return service.makeDescriptor(parameterValues);
     }
 
     @Override
-    public DescriptorTemplate generateNetworkServiceDescriptor(SdkServiceInstance serviceInstance) {
+    public DescriptorTemplate generateNetworkServiceDescriptor(SdkServiceDescriptor serviceInstance) {
         ServiceInformation info = consumeService(serviceInstance).build();
         return makeNSD(info);
     }

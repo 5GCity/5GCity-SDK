@@ -16,7 +16,7 @@
 package it.nextworks.composer.executor.interfaces;
 
 import it.nextworks.sdk.MonitoringParameter;
-import it.nextworks.sdk.SdkFunctionInstance;
+import it.nextworks.sdk.SdkFunctionDescriptor;
 import it.nextworks.sdk.SdkService;
 import it.nextworks.sdk.exceptions.ExistingEntityException;
 import it.nextworks.sdk.exceptions.MalformedElementException;
@@ -32,19 +32,19 @@ public interface FunctionInstanceManagerProviderInterface {
      * @return
      * @throws NotExistingEntityException
      */
-    public SdkFunctionInstance getFunction(Long id) throws NotExistingEntityException;
+    public SdkFunctionDescriptor getFunction(Long id) throws NotExistingEntityException;
 
 
     /**
      * @return
      */
-    public List<SdkFunctionInstance> getFunctions();
+    public List<SdkFunctionDescriptor> getFunctions();
 
 
     /**
      *
      */
-    public List<SdkFunctionInstance> getFunctionInstancesForFunction(Long functionId);
+    public List<SdkFunctionDescriptor> getFunctionInstancesForFunction(Long functionId);
 
     public void updateMonitoringParameters(Long functionId, List<MonitoringParameter> monitoringParameters) throws NotExistingEntityException, MalformedElementException;
 
@@ -52,9 +52,9 @@ public interface FunctionInstanceManagerProviderInterface {
 
     public List<MonitoringParameter> getMonitoringParameters(Long functionId) throws NotExistingEntityException;
 
-    public String createInstance(SdkFunctionInstance instance, SdkService service) throws ExistingEntityException, NotExistingEntityException, MalformedElementException;
+    public String createInstance(SdkFunctionDescriptor instance, SdkService service) throws ExistingEntityException, NotExistingEntityException, MalformedElementException;
 
-    public String updateInstance(SdkFunctionInstance instance, SdkService service) throws NotExistingEntityException, MalformedElementException;
+    public String updateInstance(SdkFunctionDescriptor instance, SdkService service) throws NotExistingEntityException, MalformedElementException;
 
     public void deleteInstance(Long id) throws NotExistingEntityException;
 }

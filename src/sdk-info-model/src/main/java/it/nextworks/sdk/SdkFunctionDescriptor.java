@@ -28,7 +28,7 @@ import java.util.Set;
  * @author Marco Capitani <m.capitani AT nextworks.it>
  */
 @Entity
-public class SdkFunctionInstance extends SdkComponentInstance {
+public class SdkFunctionDescriptor extends SdkComponentInstance {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -44,11 +44,11 @@ public class SdkFunctionInstance extends SdkComponentInstance {
     @OrderColumn
     private List<BigDecimal> parameterValues;
 
-    public SdkFunctionInstance() {
+    public SdkFunctionDescriptor() {
         super();
     }
 
-    public SdkFunctionInstance(
+    public SdkFunctionDescriptor(
         SdkFunction template,
         List<BigDecimal> parameterValues
     ) {
@@ -125,8 +125,8 @@ public class SdkFunctionInstance extends SdkComponentInstance {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof SdkFunctionInstance)) return false;
-        SdkFunctionInstance that = (SdkFunctionInstance) o;
+        if (!(o instanceof SdkFunctionDescriptor)) return false;
+        SdkFunctionDescriptor that = (SdkFunctionDescriptor) o;
         return Objects.equals(getId(), that.getId()) &&
             Objects.equals(getTemplate().getId(), that.getTemplate().getId()) &&
             Objects.equals(parameterValues, that.parameterValues);

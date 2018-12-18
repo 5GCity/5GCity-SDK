@@ -18,9 +18,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 
-import java.io.File;
 import java.net.URL;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,15 +26,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import static it.nextworks.sdk.SdkFunctionTest.makeDemoFirewallObject;
-import static it.nextworks.sdk.SdkFunctionTest.makeDemoMiniwebObject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
 
 /**
  * Created by Marco Capitani on 05/12/18.
@@ -60,7 +53,7 @@ public class SdkServiceTest {
         return service;
     }
 
-    public static SdkServiceInstance setInstanceId(SdkServiceInstance instance, Long id) {
+    public static SdkServiceDescriptor setInstanceId(SdkServiceDescriptor instance, Long id) {
         instance.setId(id);
         return instance;
     }

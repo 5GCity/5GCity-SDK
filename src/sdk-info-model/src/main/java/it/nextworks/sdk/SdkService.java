@@ -127,7 +127,7 @@ public class SdkService implements InstantiableCandidate {
     private Set<ConnectionPoint> connectionPoint = new HashSet<>();
 
     @Override
-    public SdkServiceInstance instantiate(List<BigDecimal> parameterValues) {
+    public SdkServiceDescriptor makeDescriptor(List<BigDecimal> parameterValues) {
         Set<SdkComponentInstance> subInstances = new HashSet<>();
         Map<String, BigDecimal> parameterMap = new HashMap<>();
         if (!(parameters.size() == parameterValues.size())) {
@@ -143,7 +143,7 @@ public class SdkService implements InstantiableCandidate {
         for (SdkServiceComponent component : getComponents()) {
             subInstances.add(component.instantiate(parameterMap));
         }
-        return new SdkServiceInstance(
+        return new SdkServiceDescriptor(
             this,
             parameterValues,
             subInstances

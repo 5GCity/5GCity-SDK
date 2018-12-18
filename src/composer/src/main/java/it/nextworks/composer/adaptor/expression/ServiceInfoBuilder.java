@@ -6,9 +6,9 @@ import it.nextworks.sdk.Link;
 import it.nextworks.sdk.MonitoringParameter;
 import it.nextworks.sdk.ScalingAspect;
 import it.nextworks.sdk.SdkFunction;
-import it.nextworks.sdk.SdkFunctionInstance;
+import it.nextworks.sdk.SdkFunctionDescriptor;
 import it.nextworks.sdk.SdkService;
-import it.nextworks.sdk.SdkServiceInstance;
+import it.nextworks.sdk.SdkServiceDescriptor;
 import it.nextworks.sdk.enums.ConnectionPointType;
 
 import java.util.Collection;
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  */
 class ServiceInfoBuilder {
 
-    private Map<Long, SdkFunctionInstance> functions = new HashMap<>();
+    private Map<Long, SdkFunctionDescriptor> functions = new HashMap<>();
 
     private Map<Long, String> func2vnfd = new HashMap<>();
 
@@ -62,7 +62,7 @@ class ServiceInfoBuilder {
 
     }
 
-    ServiceInfoBuilder(SdkFunctionInstance function) {
+    ServiceInfoBuilder(SdkFunctionDescriptor function) {
         Long id = function.getId();
         SdkFunction template = function.getTemplate();
         functions.put(id, function);
@@ -102,7 +102,7 @@ class ServiceInfoBuilder {
         return this;
     }
 
-    ServiceInfoBuilder addServiceRelatedInfo(SdkServiceInstance service) {
+    ServiceInfoBuilder addServiceRelatedInfo(SdkServiceDescriptor service) {
         Long id = service.getId();
         SdkService template = service.getTemplate();
         addLinks(id, template.getLink());
@@ -185,7 +185,7 @@ class ServiceInfoBuilder {
 
         adapterLinks = builder.build();
 
-        for (SdkFunctionInstance functionInstance : functions.values()) {
+        for (SdkFunctionDescriptor functionInstance : functions.values()) {
             Long functionInstanceId = functionInstance.getId();
             Long functionId = functionInstance.getTemplate().getId();
             for (AdapterLink aLink : adapterLinks) {

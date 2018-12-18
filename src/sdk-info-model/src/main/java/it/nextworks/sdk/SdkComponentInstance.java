@@ -19,18 +19,18 @@ import javax.persistence.MappedSuperclass;
     include = JsonTypeInfo.As.EXISTING_PROPERTY,
     property = "component_type")
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = SdkFunctionInstance.class, name = "SDK_FUNCTION"),
-    @JsonSubTypes.Type(value = SdkServiceInstance.class, name = "SDK_SERVICE")
+    @JsonSubTypes.Type(value = SdkFunctionDescriptor.class, name = "SDK_FUNCTION"),
+    @JsonSubTypes.Type(value = SdkServiceDescriptor.class, name = "SDK_SERVICE")
 })
 @MappedSuperclass
 public abstract class SdkComponentInstance {
 
     @ManyToOne
-    protected SdkServiceInstance outerService;
+    protected SdkServiceDescriptor outerService;
 
     public abstract SdkServiceComponentType getType();
 
-    public void setOuterService(SdkServiceInstance outerService) {
+    public void setOuterService(SdkServiceDescriptor outerService) {
         this.outerService = outerService;
     }
 

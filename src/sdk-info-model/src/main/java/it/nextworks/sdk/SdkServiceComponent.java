@@ -250,7 +250,7 @@ abstract public class SdkServiceComponent<T extends InstantiableCandidate> {
     }
 
     public SdkComponentInstance instantiate(Map<String, BigDecimal> parameterValues) {
-        return getComponent().instantiate(computeParams(parameterValues));
+        return getComponent().makeDescriptor(computeParams(parameterValues));
     }
 
     @PrePersist
