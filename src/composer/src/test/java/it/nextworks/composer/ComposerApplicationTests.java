@@ -84,7 +84,7 @@ public class ComposerApplicationTests {
 	}
 	
 	@Test
-    //@Ignore // requires DB
+    @Ignore // requires DB
     public void testCityService() {
 
         SdkFunction miniWeb = SdkFunctionTest.makeDemoMiniwebObject();

@@ -95,13 +95,6 @@ public class SdkFunctionTest {
         function.setVnfdId("a49ef787-aaba-4a06-a677-b30a2e883562");
         function.setVnfdVersion("v5.0");
 
-        MonitoringParameter monitoringParameter = new MonitoringParameter();
-        monitoringParameter.setName(MonitoringParameterName.AVERAGE_MEMORY_UTILIZATION);
-        monitoringParameter.setFunction(function);
-        monitoringParameter.setThreshold(142.0);
-        monitoringParameter.setDirection(Direction.LOWER_THAN);
-        function.setMonitoringParameters(Collections.singleton(monitoringParameter));
-
         ConnectionPoint cp1 = ConnectionPointTest.makeFirewallDemobject1();
         ConnectionPoint cp2 = ConnectionPointTest.makeFirewallDemobject2();
         ConnectionPoint cp3 = ConnectionPointTest.makeFirewallDemobject3();
@@ -119,18 +112,11 @@ public class SdkFunctionTest {
         function.setVendor("NXW");
         function.setDescription("Mini web Server.");
         function.setMetadata(metadata);
-        function.setFlavourExpression("IF(isVideo != 0, video_flavour, image_flavour)");
+        function.setFlavourExpression("IF(isVideo != 0, video_flv_srv, standard_flv_srv)");
         function.setInstantiationLevelExpression("IF(size <= 1, small_il, IF(size <= 10, medium_il, big_il))");
         function.setParameters(Arrays.asList("isVideo", "size"));
         function.setVnfdId("057289e2-7b8e-4280-8734-43b924f64b85");
         function.setVnfdVersion("v1.0");
-
-        MonitoringParameter monitoringParameter = new MonitoringParameter();
-        monitoringParameter.setName(MonitoringParameterName.AVERAGE_MEMORY_UTILIZATION);
-        monitoringParameter.setFunction(function);
-        monitoringParameter.setThreshold(102.0);
-        monitoringParameter.setDirection(Direction.LOWER_THAN);
-        function.setMonitoringParameters(Collections.singleton(monitoringParameter));
 
         ConnectionPoint cp1 = ConnectionPointTest.makeMiniwebDemobject1();
 
