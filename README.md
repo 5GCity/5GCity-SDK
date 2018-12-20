@@ -17,7 +17,7 @@ For a full deployment of the SDK, please follow the instruction at: [Full Deploy
  - Create Service
     - Endpoint: **POST /sdk/composer/services**
     - Expected: 
-        - ***{{serviceId}}***:  Id of the created service as body response
+        - {{***serviceId***}}:  Id of the created service as body response
         - ***Status code***: 201 Created
     - Body
     ```json
@@ -101,7 +101,7 @@ For a full deployment of the SDK, please follow the instruction at: [Full Deploy
  - Create Service Descriptor
     - Endpoint: **POST /sdk/composer/services/{serviceId}/create-descriptor**
     - Expected
-        - ***{{serviceDescriptorId}}***: Id of the Service Descriptor created 
+        - {{***serviceDescriptorId***}}: Id of the Service Descriptor created 
         - ***Status Code***: 201 Created
     - Body: 
     ```json
