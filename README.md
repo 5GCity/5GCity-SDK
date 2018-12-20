@@ -155,11 +155,6 @@ For a full deployment of the SDK, please follow the instruction at: [Full Deploy
                 80,
                 443
               ]
-            }],
-            "monitoring_parameter": [{
-              "name": "AVERAGE_MEMORY_UTILIZATION",
-              "direction": "LOWER_THAN",
-              "threshold": 102
             }]
           },
           "component_type": "SDK_FUNCTION"
@@ -210,12 +205,7 @@ For a full deployment of the SDK, please follow the instruction at: [Full Deploy
                 "type": "EXTERNAL",
                 "required_port": []
               }
-            ],
-            "monitoring_parameter": [{
-              "name": "AVERAGE_MEMORY_UTILIZATION",
-              "direction": "LOWER_THAN",
-              "threshold": 142
-            }]
+            ]
           },
           "component_type": "SDK_FUNCTION"
         }
