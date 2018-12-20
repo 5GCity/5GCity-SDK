@@ -7,18 +7,18 @@ For a full deployment of the SDK, please follow the instruction at: [Full Deploy
 
 # API Usage
  - Get Functions: List of available functions to be used during Service composition
-    - Endpoint: **GET /sdk/composer/functions**
+    - Endpoint: **GET /sdk/composer/functions**  
     As a response body will have a Array<SdkFunction>, in JSON format, with all the Sdk Functions present in the local database.
     
  - Get Services: List of the available services on the SDK
-    - Endpoint: **GET /sdk/composer/services**
+    - Endpoint: **GET /sdk/composer/services**  
     As a response body will have a Array<SdkServices>, in JSON format, with all the Sdk Services present in the local database.
 
  - Create Service
     - Endpoint: **POST /sdk/composer/services**
-    - Expected: 
-        - {{***serviceId***}}:  Id of the created service as body response
-        - ***Status code***: 201 Created
+    - Expected:   
+        - {{***serviceId***}}:  Id of the created service as body response  
+        - ***Status code***: 201 Created  
     - Body
     ```json
     {
@@ -100,9 +100,9 @@ For a full deployment of the SDK, please follow the instruction at: [Full Deploy
     
  - Create Service Descriptor
     - Endpoint: **POST /sdk/composer/services/{serviceId}/create-descriptor**
-    - Expected
-        - {{***serviceDescriptorId***}}: Id of the Service Descriptor created 
-        - ***Status Code***: 201 Created
+    - Expected  
+        - {{***serviceDescriptorId***}}: Id of the Service Descriptor created   
+        - ***Status Code***: 201 Created  
     - Body: 
     ```json
     {
@@ -110,7 +110,7 @@ For a full deployment of the SDK, please follow the instruction at: [Full Deploy
     }
     ```
 
- - GET Service Descriptors 
+ - GET Service Descriptors  
     - Endpoint: **POST /sdk/composer/service-descriptor/**
     - Body: 
     ```sh
@@ -231,7 +231,7 @@ Once the server is running, please check the API Swagger documentation visiting 
 # Testing
 In order to test the SDK Composer the user need to run the service sdk-composer.service created during the deployment phase.
 An instance of the public catalogue is needed in case the publication will be tested.
-Since the SDK Functions will be created in the Editor (TBC), the Composer comes up with two preinstantiated SDK Functions for these test purposes. The two functions are the VNF which compose the NS2 of the UC1:
+Since the SDK Functions will be created in the Editor (TBC), the Composer comes up with two preinstantiated SDK Functions for these test purposes. The two functions are the VNF which compose the NS2 of the UC1:  
  - Miniwebcache
  - Firewall
 
@@ -239,35 +239,35 @@ The steps to run the tests are the following:
 - Get Functions
 	```sh
     $ ./get_functions.sh -h localhost -p 8081
-	```
-	-h: Host where the SDK Composer is running
-	-p: SDK Composer listening port
-In console will be returned the list of the SDK Functions present in the local database.
+	```  
+	-h: Host where the SDK Composer is running  
+	-p: SDK Composer listening port  
+In console will be returned the list of the SDK Functions present in the local database.  
 *Please take in mind that the IDs may change in different installation. This may reflect the result of the service creation operation. The user may need to adjust the json file of the service in terms of Components composing the Service (id of the functions) and the connection points ids.*
  - Create Service
     ```sh
     $ ./create_service.sh -b json/service.json -h localhost -p 8081
-    ```
-    -h: Host where the SDK Composer is running
-    -p: SDK Composer listening port
-    -b: body payload with the composed descriptor
-In console will be returned the identifier of the created service (***serviceId***)
+    ```  
+    -h: Host where the SDK Composer is running  
+    -p: SDK Composer listening port  
+    -b: body payload with the composed descriptor  
+In console will be returned the identifier of the created service (***serviceId***)  
  - Create Service Descriptor
     ```sh
     $ ./create_service_descriptor.sh -b json/service_descriptor.json -i serviceId -h localhost -p 8081
-    ```
-	-h: Host where the SDK Composer is running
-	-p: SDK Composer listening port
-    -b: Body payload
-    -i: Service Identifier (***serviceId***)
+    ```  
+	-h: Host where the SDK Composer is running  
+	-p: SDK Composer listening port  
+	-b: Body payload  
+	-i: Service Identifier (***serviceId***)  
 In console will be returned the identifier of the created service descriptor (***serviceDescriptorId***)
  - Publish to Catalogue
     ```sh
     $ ./publish.sh -i serviceDescriptorId -h localhost -p 8081
     ```
-    -h: Host where the SDK Composer is running
-	-p: SDK Composer listening port
-    -i: Service Descriptor Identifier (***serviceDescriptorId***)
+    -h: Host where the SDK Composer is running  
+	-p: SDK Composer listening port  
+    -i: Service Descriptor Identifier (***serviceDescriptorId***)  
 By publishing to catalogue, the new Service will be present in the public catalogue and if any MANO plugin is enabled in the Catalogue, the new NSD will be pushed into it.
 
 # License
