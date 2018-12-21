@@ -2,12 +2,12 @@
 	"swagger": "2.0",
 	"info": {
 		"description": "ReST API for the 5G-City's SDK composer",
-		"version": "0.0.1",
+		"version": "0.6",
 		"title": "5g-City SDK Composer REST API ",
 		"contact": {
-			"name": "Elian Kraja",
+			"name": "Nextworks S.r.l.",
 			"url": "http://www.nextworks.it",
-			"email": "e.kraja@nextworks.it"
+			"email": "info@nextworks.it"
 		},
 		"license": {
 			"name": "Apache License Version 2.0",
@@ -281,7 +281,7 @@
 				"deprecated": false
 			}
 		},
-		"/sdk/composer/service-descriptor/{serviceId}/unpublish": {
+		"/sdk/composer/service-descriptor/{serviceDescriptorId}/unpublish": {
 			"post": {
 				"tags": ["descriptors-controller"],
 				"summary": "Unpublish Service from Public Catalogue",
@@ -724,23 +724,21 @@
 					}
 				},
 				"deprecated": false
-			},
+			}
+		},
+		"/sdk/composer/services/{serviceId}/monitoringparams/{monitoringParameterId}": {
 			"delete": {
 				"tags": ["service-rest-controller"],
-				"summary": "Delete monitoring param list from SdkService",
+				"summary": "Delete monitoring param from SdkService",
 				"operationId": "deleteMonitoringParametersForServiceUsingDELETE",
 				"produces": ["*/*"],
 				"parameters": [{
-					"in": "body",
-					"name": "monitoringParameters",
-					"description": "monitoringParameters",
+					"name": "monitoringParameterId",
+					"in": "path",
+					"description": "monitoringParameterId",
 					"required": true,
-					"schema": {
-						"type": "array",
-						"items": {
-							"$ref": "#/definitions/MonitoringParameter"
-						}
-					}
+					"type": "integer",
+					"format": "int64"
 				}, {
 					"name": "serviceId",
 					"in": "path",
@@ -872,23 +870,21 @@
 					}
 				},
 				"deprecated": false
-			},
+			}
+		},
+		"/sdk/composer/services/{serviceId}/scalingaspects/{scalingAspectId}": {
 			"delete": {
 				"tags": ["service-rest-controller"],
 				"summary": "Delete ScalingAspect list from SdkService",
 				"operationId": "deleteScalingAspectsUsingDELETE",
 				"produces": ["*/*"],
 				"parameters": [{
-					"in": "body",
-					"name": "scalingAspects",
-					"description": "scalingAspects",
+					"name": "scalingAspectId",
+					"in": "path",
+					"description": "scalingAspectId",
 					"required": true,
-					"schema": {
-						"type": "array",
-						"items": {
-							"$ref": "#/definitions/ScalingAspect"
-						}
-					}
+					"type": "integer",
+					"format": "int64"
 				}, {
 					"name": "serviceId",
 					"in": "path",

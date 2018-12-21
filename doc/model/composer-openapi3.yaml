@@ -1,12 +1,12 @@
 openapi: 3.0.0
 info:
   description: ReST API for the 5G-City's SDK composer
-  version: 0.0.1
+  version: '0.6'
   title: '5g-City SDK Composer REST API '
   contact:
-    name: Elian Kraja
+    name: Nextworks S.r.l.
     url: 'http://www.nextworks.it'
-    email: e.kraja@nextworks.it
+    email: info@nextworks.it
   license:
     name: Apache License Version 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0"'
@@ -229,7 +229,7 @@ paths:
         '404':
           description: Entity to be published not found
       deprecated: false
-  '/sdk/composer/service-descriptor/{serviceId}/unpublish':
+  '/sdk/composer/service-descriptor/{serviceDescriptorId}/unpublish':
     post:
       tags:
         - descriptors-controller
@@ -576,13 +576,28 @@ paths:
           description: Not Found
       deprecated: false
       requestBody:
-        $ref: '#/components/requestBodies/MonitoringParameterArray'
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/MonitoringParameter'
+        description: monitoringParameters
+        required: true
+  '/sdk/composer/services/{serviceId}/monitoringparams/{monitoringParameterId}':
     delete:
       tags:
         - service-rest-controller
-      summary: Delete monitoring param list from SdkService
+      summary: Delete monitoring param from SdkService
       operationId: deleteMonitoringParametersForServiceUsingDELETE
       parameters:
+        - name: monitoringParameterId
+          in: path
+          description: monitoringParameterId
+          required: true
+          schema:
+            type: integer
+            format: int64
         - name: serviceId
           in: path
           description: serviceId
@@ -612,8 +627,6 @@ paths:
         '404':
           description: Entity to be deleted not found
       deprecated: false
-      requestBody:
-        $ref: '#/components/requestBodies/MonitoringParameterArray'
   '/sdk/composer/services/{serviceId}/scalingaspects':
     get:
       tags:
@@ -686,13 +699,28 @@ paths:
           description: Not Found
       deprecated: false
       requestBody:
-        $ref: '#/components/requestBodies/ScalingAspectArray'
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ScalingAspect'
+        description: scalingAspects
+        required: true
+  '/sdk/composer/services/{serviceId}/scalingaspects/{scalingAspectId}':
     delete:
       tags:
         - service-rest-controller
       summary: Delete ScalingAspect list from SdkService
       operationId: deleteScalingAspectsUsingDELETE
       parameters:
+        - name: scalingAspectId
+          in: path
+          description: scalingAspectId
+          required: true
+          schema:
+            type: integer
+            format: int64
         - name: serviceId
           in: path
           description: serviceId
@@ -722,36 +750,16 @@ paths:
         '404':
           description: Entity to be deleted not found
       deprecated: false
-      requestBody:
-        $ref: '#/components/requestBodies/ScalingAspectArray'
 servers:
   - url: '//10.0.2.247:8081/'
 components:
   requestBodies:
-    MonitoringParameterArray:
-      content:
-        application/json:
-          schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/MonitoringParameter'
-      description: monitoringParameters
-      required: true
     SdkService:
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/SdkService'
       description: request
-      required: true
-    ScalingAspectArray:
-      content:
-        application/json:
-          schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/ScalingAspect'
-      description: scalingAspects
       required: true
   schemas:
     ConnectionPoint:
@@ -1019,4 +1027,3 @@ components:
               items:
                 type: string
           title: SubService
-
