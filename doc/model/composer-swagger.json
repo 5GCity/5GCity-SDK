@@ -633,7 +633,7 @@
 		"/sdk/composer/services/{serviceId}/monitoringparams": {
 			"get": {
 				"tags": ["service-rest-controller"],
-				"summary": "Get the list of  Monitoring Paramters for a given SdkService identified by UUID",
+				"summary": "Get the list of  Monitoring Parameters for a given SdkService identified by UUID",
 				"operationId": "getMonitoringParametersForServiceUsingGET",
 				"produces": ["*/*"],
 				"parameters": [{
@@ -875,7 +875,7 @@
 		"/sdk/composer/services/{serviceId}/scalingaspects/{scalingAspectId}": {
 			"delete": {
 				"tags": ["service-rest-controller"],
-				"summary": "Delete ScalingAspect list from SdkService",
+				"summary": "Delete ScalingAspect from SdkService",
 				"operationId": "deleteScalingAspectsUsingDELETE",
 				"produces": ["*/*"],
 				"parameters": [{

@@ -507,7 +507,7 @@ paths:
       tags:
         - service-rest-controller
       summary: >-
-        Get the list of  Monitoring Paramters for a given SdkService identified
+        Get the list of  Monitoring Parameters for a given SdkService identified
         by UUID
       operationId: getMonitoringParametersForServiceUsingGET
       parameters:
@@ -711,7 +711,7 @@ paths:
     delete:
       tags:
         - service-rest-controller
-      summary: Delete ScalingAspect list from SdkService
+      summary: Delete ScalingAspect from SdkService
       operationId: deleteScalingAspectsUsingDELETE
       parameters:
         - name: scalingAspectId

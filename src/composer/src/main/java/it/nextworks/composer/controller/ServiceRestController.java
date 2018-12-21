@@ -302,7 +302,7 @@ public class ServiceRestController {
         }
     }
 
-    @ApiOperation(value = "Delete ScalingAspect list from SdkService")
+    @ApiOperation(value = "Delete ScalingAspect from SdkService")
     @ApiResponses(value = {@ApiResponse(code = 204, message = ""),
         @ApiResponse(code = 404, message = "Entity to be deleted not found"),
         @ApiResponse(code = 400, message = "Deletion request without parameter serviceId")})
@@ -358,7 +358,7 @@ public class ServiceRestController {
         }
     }
 
-    @ApiOperation(value = "Get the list of  Monitoring Paramters for a given SdkService identified by UUID", response = MonitoringParameter.class, responseContainer = "List")
+    @ApiOperation(value = "Get the list of  Monitoring Parameters for a given SdkService identified by UUID", response = MonitoringParameter.class, responseContainer = "List")
     @ApiResponses(value = {@ApiResponse(code = 400, message = "Query without parameter serviceId"),
         @ApiResponse(code = 404, message = "SdkService not found on database"),
         @ApiResponse(code = 200, message = "OK")})
@@ -385,7 +385,7 @@ public class ServiceRestController {
     @RequestMapping(value = "/services/{serviceId}/monitoringparams/{monitoringParameterId}", method = RequestMethod.DELETE)
     public ResponseEntity<?> deleteMonitoringParametersForService(@PathVariable Long serviceId,
                                                                   @PathVariable Long monitoringParameterId) {
-        log.info("Request for deletion of a list of monitoring parameters from service identified by id: "
+        log.info("Request for deletion of monitoring parameter from service identified by id: "
             + serviceId);
 
         try {
