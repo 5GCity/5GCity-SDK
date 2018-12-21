@@ -511,24 +511,25 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     }
 
     @Override
-    public void deleteScalingAspect(Long serviceId, Set<ScalingAspect> scalingAspects)
+    public void deleteScalingAspect(Long serviceId, Long scalingAspectId)
         throws NotExistingEntityException, MalformedElementException {
-        log.info("Request to delete a list of scalingAspects for a specific SDK Service " + serviceId);
+        log.info("Request to delete a scaling aspect identified by id" + scalingAspectId +"for a specific SDK Service " + serviceId);
         Optional<SdkService> service = serviceRepository.findById(serviceId);
         if (!service.isPresent()) {
             log.error("The Service with ID: " + serviceId + " is not present in database");
             throw new NotExistingEntityException("The Service with ID: " + serviceId + " is not present in database");
         }
-        for (ScalingAspect scale : scalingAspects) {
-            if (!scale.isValid()) {
-                log.error("Malformed Scaling Aspect");
-                throw new MalformedElementException("Malformed Scaling Aspect");
-            }
-        }
+
         log.debug("All scaling aspects are valid");
-        service.get().getScalingAspect().removeAll(scalingAspects);
-        log.debug("All scaling aspects have been deleted. Saving to database");
-        serviceRepository.saveAndFlush(service.get());
+        Set<ScalingAspect> scalingAspects = service.get().getScalingAspect();
+        for(ScalingAspect scale : scalingAspects)
+            if(scale.getId().compareTo(scalingAspectId) == 0)
+            {
+                scalingRepository.delete(scale);
+                break;
+            }
+        log.debug("The scalingAspect has been deleted.");
+        //serviceRepository.saveAndFlush(service.get());
     }
 
     @Override
@@ -565,24 +566,23 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     }
 
     @Override
-    public void deleteMonitoringParameters(Long serviceId, Set<MonitoringParameter> monitoringParameters)
+    public void deleteMonitoringParameters(Long serviceId, Long monitoringParameterId)
         throws NotExistingEntityException, MalformedElementException {
-        log.info("Request to delete a list of monitoring parameters for a specific SDK Service " + serviceId);
+        log.info("Request to delete a monitoring parameter identified by id " + monitoringParameterId + " for a specific SDK Service " + serviceId);
         Optional<SdkService> service = serviceRepository.findById(serviceId);
         if (!service.isPresent()) {
             log.error("The Service with ID: " + serviceId + " is not present in database");
             throw new NotExistingEntityException("The Service with ID: " + serviceId + " is not present in database");
         }
+        Set<MonitoringParameter> monitoringParameters = service.get().getMonitoringParameters();
         for (MonitoringParameter param : monitoringParameters) {
-            if (!param.isValid()) {
-                log.error("Malformed MonitoringParameter");
-                throw new MalformedElementException("Malformed MonitoringParameter");
+            if(param.getId().compareTo(monitoringParameterId) == 0){
+                monitoringParamRepository.delete(param);
+                break;
             }
         }
-        log.debug("All monitoring parameters are valid. Deleting them from SDK Service");
-        service.get().getMonitoringParameters().removeAll(monitoringParameters);
-        log.debug("All monitoring parameters have been deleted. Saving to database");
-        serviceRepository.saveAndFlush(service.get());
+        log.debug("Monitoring parameter has been deleted.");
+        //serviceRepository.saveAndFlush(service.get());
 
     }
 

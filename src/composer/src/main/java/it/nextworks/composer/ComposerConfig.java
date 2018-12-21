@@ -47,10 +47,10 @@ public class ComposerConfig extends WebMvcConfigurationSupport {
         return new ApiInfoBuilder()
             .title("5g-City SDK Composer REST API ")
             .description("ReST API for the 5G-City's SDK composer")
-            .version("0.0.1")
+            .version("0.6")
             .license("Apache License Version 2.0")
             .licenseUrl("https://www.apache.org/licenses/LICENSE-2.0\"")
-            .contact(new Contact("Elian Kraja", "http://www.nextworks.it", "e.kraja@nextworks.it"))
+            .contact(new Contact("Nextworks S.r.l.", "http://www.nextworks.it", "info@nextworks.it"))
             .build();
     }
 

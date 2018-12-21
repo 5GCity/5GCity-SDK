@@ -306,13 +306,13 @@ public class ServiceRestController {
     @ApiResponses(value = {@ApiResponse(code = 204, message = ""),
         @ApiResponse(code = 404, message = "Entity to be deleted not found"),
         @ApiResponse(code = 400, message = "Deletion request without parameter serviceId")})
-    @RequestMapping(value = "/services/{serviceId}/scalingaspects", method = RequestMethod.DELETE)
-    public ResponseEntity<?> deleteScalingAspects(@PathVariable Long serviceId, @RequestBody Set<ScalingAspect> scalingAspects) {
+    @RequestMapping(value = "/services/{serviceId}/scalingaspects/{scalingAspectId}", method = RequestMethod.DELETE)
+    public ResponseEntity<?> deleteScalingAspects(@PathVariable Long serviceId, @PathVariable Long scalingAspectId) {
         log.info("Request for deletion of a list of scalingAspects from service identified by id: "
             + serviceId);
 
         try {
-            serviceManager.deleteScalingAspect(serviceId, scalingAspects);
+            serviceManager.deleteScalingAspect(serviceId, scalingAspectId);
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } catch (NotExistingEntityException e) {
             log.error("Requested deletion for an entity which doesn't exist");
@@ -378,18 +378,18 @@ public class ServiceRestController {
         }
     }
 
-    @ApiOperation(value = "Delete monitoring param list from SdkService")
+    @ApiOperation(value = "Delete monitoring param from SdkService")
     @ApiResponses(value = {@ApiResponse(code = 204, message = ""),
         @ApiResponse(code = 404, message = "Entity to be deleted not found"),
         @ApiResponse(code = 400, message = "Deletion request without parameter serviceId")})
-    @RequestMapping(value = "/services/{serviceId}/monitoringparams", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/services/{serviceId}/monitoringparams/{monitoringParameterId}", method = RequestMethod.DELETE)
     public ResponseEntity<?> deleteMonitoringParametersForService(@PathVariable Long serviceId,
-                                                                  @RequestBody Set<MonitoringParameter> monitoringParameters) {
+                                                                  @PathVariable Long monitoringParameterId) {
         log.info("Request for deletion of a list of monitoring parameters from service identified by id: "
             + serviceId);
 
         try {
-            serviceManager.deleteMonitoringParameters(serviceId, monitoringParameters);
+            serviceManager.deleteMonitoringParameters(serviceId, monitoringParameterId);
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } catch (NotExistingEntityException e) {
             log.error("Requested deletion for an entity which doesn't exist");

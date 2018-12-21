@@ -74,7 +74,7 @@ public interface ServiceManagerProviderInterface {
     void updateScalingAspect(Long serviceId, Set<ScalingAspect> scalingAspects)
         throws NotExistingEntityException, MalformedElementException;
 
-    void deleteScalingAspect(Long serviceId, Set<ScalingAspect> scalingAspects)
+    void deleteScalingAspect(Long serviceId, Long scalingAspectId)
         throws NotExistingEntityException, MalformedElementException;
 
     List<ScalingAspect> getScalingAspect(Long serviceId)
@@ -83,7 +83,7 @@ public interface ServiceManagerProviderInterface {
     void updateMonitoringParameters(Long serviceId, Set<MonitoringParameter> monitoringParameters)
         throws NotExistingEntityException, MalformedElementException;
 
-    void deleteMonitoringParameters(Long serviceId, Set<MonitoringParameter> monitoringParameters)
+    void deleteMonitoringParameters(Long serviceId, Long monitoringParameterId)
         throws NotExistingEntityException, MalformedElementException;
 
     List<MonitoringParameter> getMonitoringParameters(Long serviceId)

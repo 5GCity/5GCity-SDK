@@ -141,7 +141,7 @@ public class DescriptorsController {
     @ApiResponses(value = {@ApiResponse(code = 202, message = "The service will be removed from the public catalogue"),
         @ApiResponse(code = 404, message = "Entity to be unpublished not found"),
         @ApiResponse(code = 400, message = "Request without parameter serviceId or not yet published service")})
-    @RequestMapping(value = "/{serviceId}/unpublish", method = RequestMethod.POST)
+    @RequestMapping(value = "/{serviceDescriptorId}/unpublish", method = RequestMethod.POST)
     public ResponseEntity<?> unPublishService(@PathVariable Long serviceDescriptorId) {
         log.info("Request to unpublish the service " + serviceDescriptorId + " from the public catalogue");
         if (serviceDescriptorId == null) {
