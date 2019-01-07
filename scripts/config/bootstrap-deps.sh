@@ -5,7 +5,7 @@
 sudo apt update
 
 echo "Install git and systemd"
-sudo apt install systemd git
+sudo apt install systemd git -y
 
 ## Installing JDK
 echo -e "Installing JDK 1.8"
