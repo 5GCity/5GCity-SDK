@@ -36,8 +36,7 @@ currdir=$(pwd)
 ##Configuring database
 echo -e "Database configuration"
 sudo su -c 'chmod +x configure-mariadb.sh'
-sudo su -c './configure-mariadb.sh ${d} ${u} ${p}'
-
+sudo su -c './configure-mariadb.sh '${d}' '${u}' '${p}''
 
 ## Create packages directory which will contain jar packages
 echo -e "Creating configurations directory in /home/$USER/"
