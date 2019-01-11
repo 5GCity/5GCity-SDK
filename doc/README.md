@@ -73,7 +73,8 @@ The script [bootstrap-deps.sh] can be run in order to meet the prerequisites.
  - SDK Composer
     ```sh
     $ git clone https://github.com/5GCity/5GCity-SDK-Composer
-    $ cd 5GCity-SDK-Composer/src
+    $ git checkout v1.0
+    $ cd 5GCity-SDK-Composer/scripts/config/
     $ chmod +x bootstrap.sh
     $ ./bootstrap.sh -u user -p password -d database -h host 
     ```

@@ -35,7 +35,8 @@ currdir=$(pwd)
 
 ##Configuring database
 echo -e "Database configuration"
-sudo su -c 'configure-mariadb.sh ${d} ${u} ${p}' 
+sudo su -c 'chmod +x configure-mariadb.sh'
+sudo su -c './configure-mariadb.sh ${d} ${u} ${p}'
 
 
 ## Create packages directory which will contain jar packages
@@ -45,7 +46,7 @@ mkdir -p /home/$USER/SDK/COMPOSER/target/
 
 ## Move application properties to configation directory
 echo -e "Copying application.properties of the SDK Composer to the configs directory"
-cp ${currdir}/src/composer/src/main/resources/application.properties.template /home/$USER/SDK/COMPOSER/application.properties
+cp ${currdir}/../../src/composer/src/main/resources/application.properties.template /home/$USER/SDK/COMPOSER/application.properties
 
 ## Change data on application properties
 echo -e "Parameterizing the application.properties with the provided data"
@@ -55,7 +56,7 @@ sed -i "s/_DBPASS_/"${p}"/g" /home/$USER/SDK/COMPOSER/application.properties
 sed -i "s|_CATALOGUE_|"${h}"|g" /home/$USER/SDK/COMPOSER/application.properties
 
 ## To avoid compile issue
-cp /home/$USER/SDK/COMPOSER/application.properties ${currdir}/src/composer/src/main/resources/application.properties
+cp /home/$USER/SDK/COMPOSER/application.properties ${currdir}/../../src/composer/src/main/resources/application.properties
 
 
 ## Check if DB service is up and running 
@@ -63,21 +64,21 @@ cp /home/$USER/SDK/COMPOSER/application.properties ${currdir}/src/composer/src/m
 
 ## Compile SDK-INFO-MODEL library
 echo -e "Compiling Sdk-Info-Model library"
-cd ${currdir}/src/sdk-info-model/ && mvn clean install 
+cd ${currdir}/../../src/sdk-info-model/ && mvn clean install
 if [[ "$?" -ne 0 ]] ; then
   echo 'could not perform library installation'; exit $rc
 fi
 
 ## Building SDK Composer package
 echo -e "Building SDK Composer package"
-cd ${currdir}/src/composer/ && mvn -DskipTests clean package 
+cd ${currdir}/../../src/composer/ && mvn -DskipTests clean package
 if [[ "$?" -ne 0 ]] ; then
   echo 'could not perform packaging of the SDK Composer'; exit $rc
 fi
 
 ## Moving jar to running directory
 echo -e "Moving package to packages directory"
-cp ${currdir}/src/composer/target/composer-0.0.2.jar /home/$USER/SDK/COMPOSER/target/.
+cp ${currdir}/../../src/composer/target/composer-0.0.2.jar /home/$USER/SDK/COMPOSER/target/.
 
 
 ## Create service file for the SDK Composer
@@ -86,7 +87,7 @@ echo "Description=5G-City SDK Composer" >> /home/$USER/SDK/COMPOSER/sdk-composer
 echo "After=syslog.target network-online.target" >> /home/$USER/SDK/COMPOSER/sdk-composer.service
 echo "" >> /home/$USER/SDK/COMPOSER/sdk-composer.service
 echo "[Service]" >> /home/$USER/SDK/COMPOSER/sdk-composer.service
-echo "User=ubuntu" >> /home/$USER/SDK/COMPOSER/sdk-composer.service
+echo "User=${USER}" >> /home/$USER/SDK/COMPOSER/sdk-composer.service
 echo "Restart=on-failure" >> /home/$USER/SDK/COMPOSER/sdk-composer.service
 echo "ExecStart=/usr/bin/java -jar /home/$USER/SDK/COMPOSER/target/composer-0.0.2.jar --spring.config.location=file:/home/$USER/SDK/COMPOSER/" >> /home/$USER/SDK/COMPOSER/sdk-composer.service
 echo "RestartSec=3" >> /home/$USER/SDK/COMPOSER/sdk-composer.service
