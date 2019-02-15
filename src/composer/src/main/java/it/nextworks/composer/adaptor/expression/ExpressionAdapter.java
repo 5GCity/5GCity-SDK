@@ -93,10 +93,18 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
             vnfdData.vendor,
             vnfdData.name,
             vnfdData.vnfdVersion,
+            vnfdData.name,
             vnfdData.description,
             vnfmInfo,
+            Collections.singletonList("EN"),
+            "EN",
+            null,
+            null,
+            null,
+            new ArrayList<>(),
             vnfdData.flavour,
-            vnfdData.flavour
+            vnfdData.flavour,
+            null
         );
         VNFRequirements vnfRequirements = new VNFRequirements(
             new ArrayList<>(vnfdData.vLinks)
@@ -106,7 +114,8 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
             null,  // name is ignored
             vnfProperties,
             vnfRequirements,
-            null  // not used
+            null,  // not used
+            null
         );
     }
 
@@ -145,11 +154,9 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
         NsVirtualLinkProperties nsVirtualLinkProperties = new NsVirtualLinkProperties(
             null,
             "5G-City-SDK",
-            "1.0",
             vlProfile,
             connectivityType,
-            null,
-            serviceAvailability
+            new ArrayList<>()
         );
         return new NsVirtualLinkNode(
             "tosca.nodes.nfv.NsVirtualLink",
@@ -174,7 +181,9 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
         TopologyTemplate topologyTemplate = new TopologyTemplate(
             null,
             null,
+            new HashMap<>(),
             nodeTemplates,
+            new HashMap<>(),
             new HashMap<>()
         );
 

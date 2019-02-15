@@ -9,19 +9,15 @@
     },
     "link" : [ {
         "name" : "Management_net",
-        "type" : "EXTERNAL",
         "connection_point_names" : [ "Management_net" ]
     } , {
         "name" : "Central_service_net",
-        "type" : "EXTERNAL",
         "connection_point_names" : [ "Central_service_net" ]
     }, {
         "name" : "External_net",
-        "type" : "EXTERNAL",
         "connection_point_names" : [ "External_net" ]
     }, {
         "name" : "Media_presentation_net",
-        "type" : "EXTERNAL",
         "connection_point_names" : [ "Media_presentation_net", "Media_miniweb" ]
     } ],
     "component" : [ {
@@ -31,7 +27,7 @@
     }, {
         "component_id" : 4,
         "component_type" : "SDK_FUNCTION",
-        "mapping_expression" : [ "param1", "param2" ]
+        "mapping_expression" : [ "param2" ]
     } ],
     "metadata" : {
         "use.spam" : "egg"

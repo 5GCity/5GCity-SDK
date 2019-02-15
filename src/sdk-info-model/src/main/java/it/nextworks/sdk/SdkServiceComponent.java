@@ -145,9 +145,10 @@ abstract public class SdkServiceComponent<T extends InstantiableCandidate> {
             ));
         }
         if (!(mappingExpression.size() == component.getFreeParametersNumber())) {
-            throw new IllegalArgumentException(
-                "Invalid component provided: parameter-expression mismatch"
-            );
+            throw new IllegalArgumentException(String.format(
+                "Invalid component %d provided: parameter-expression mismatch",
+                componentId
+            ));
         }
         this.component = component;
     }

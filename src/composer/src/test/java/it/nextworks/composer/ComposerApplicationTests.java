@@ -15,14 +15,14 @@
  */
 package it.nextworks.composer;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.net.URI;
-import java.util.Optional;
-
+import it.nextworks.composer.executor.repositories.SdkFunctionRepository;
+import it.nextworks.composer.plugins.catalogue.Catalogue;
+import it.nextworks.composer.plugins.catalogue.CatalogueType;
+import it.nextworks.composer.plugins.catalogue.DescriptorsParser;
+import it.nextworks.composer.plugins.catalogue.FiveGCataloguePlugin;
+import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
+import it.nextworks.sdk.SdkFunction;
+import it.nextworks.sdk.SdkFunctionTest;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,16 +32,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 
-import it.nextworks.composer.executor.repositories.SdkFunctionRepository;
-import it.nextworks.composer.plugins.catalogue.Catalogue;
-import it.nextworks.composer.plugins.catalogue.CatalogueType;
-import it.nextworks.composer.plugins.catalogue.DescriptorsParser;
-import it.nextworks.composer.plugins.catalogue.FiveGCataloguePlugin;
-import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
-import it.nextworks.sdk.SdkFunction;
-import it.nextworks.sdk.SdkFunctionTest;
+import java.io.File;
+import java.net.URI;
+import java.util.Optional;
 
-
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 
 @RunWith(SpringRunner.class)
@@ -50,40 +46,39 @@ import it.nextworks.sdk.SdkFunctionTest;
 public class ComposerApplicationTests {
 
 
-	@Value("${catalogue.host}")
-	private String catalogueHost;
-	
+    @Value("${catalogue.host}")
+    private String catalogueHost;
+
 
     @Autowired
     private SdkFunctionRepository functionRepository;
-	
-	
-	@Test
-	public void contextLoads() {
-		
-		
-	}
-	
-	@Test
-	@Ignore
-	public void testPostToCatalogue() throws Exception {
-		
-		Catalogue catalogue = new Catalogue("5gCatalogue", catalogueHost, false, null, null);
-		FiveGCataloguePlugin plugin = new FiveGCataloguePlugin(CatalogueType.FIVEG_CATALOGUE, catalogue);
+
+
+    @Test
+    public void contextLoads() {
+
+
+    }
+
+    @Test
+    @Ignore
+    public void testPostToCatalogue() throws Exception {
+
+        Catalogue catalogue = new Catalogue("5gCatalogue", catalogueHost, false, null, null);
+        FiveGCataloguePlugin plugin = new FiveGCataloguePlugin(CatalogueType.FIVEG_CATALOGUE, catalogue);
 
         URI uri = this.getClass().getClassLoader().getResource("vCDN_UC3_5GMEDIA.yaml").toURI();
 
-		File file = new File(uri);
-		
-		DescriptorTemplate template = DescriptorsParser.fileToDescriptorTemplate(file);
-		
-		plugin.uploadNetworkService(template, "multipart/form-data", null);
-		
-		
-		
-	}
-	
-	@Test
+        File file = new File(uri);
+
+        DescriptorTemplate template = DescriptorsParser.fileToDescriptorTemplate(file);
+
+        plugin.uploadNetworkService(template, "multipart/form-data", null);
+
+
+    }
+
+    @Test
     @Ignore // requires DB
     public void testCityService() {
 
@@ -110,7 +105,7 @@ public class ComposerApplicationTests {
 
         SdkFunction fw2 = fwb.get();
         assertEquals(firewall, fw2);
-        
+
     }
 
 }
