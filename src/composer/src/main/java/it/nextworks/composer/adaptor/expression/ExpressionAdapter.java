@@ -162,12 +162,15 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
     }
 
     private DescriptorTemplate makeNSD(ServiceInformation info) {
-        Map<String, Node> nodeTemplates = new HashMap<>(
-            info.getVnfdData().stream().collect(Collectors.toMap(
-                data -> data.name,
-                this::makeVnfd
-            ))
+        SortedMap<String, Node> nodeTemplates = new TreeMap(
+
+                info.getVnfdData().stream().collect(Collectors.toMap(
+                        data -> data.name,
+                        this::makeVnfd
+                ))
         );
+
+
         nodeTemplates.put(info.getName(), makeNsNode(info));
 
         for (String link : info.getServiceLinks()) {
@@ -178,7 +181,7 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
             null,
             null,
             new HashMap<>(),
-                (SortedMap<String, Node>) nodeTemplates,
+                nodeTemplates,
             new HashMap<>(),
             new HashMap<>()
         );

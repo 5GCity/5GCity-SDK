@@ -78,7 +78,7 @@ public class SdkFunctionTest {
         Map<String, String> metadata = new HashMap<>();
         SdkFunction function = new SdkFunction();
         function.setName("vPlate-server");
-        function.setVersion("v1.0");
+        function.setVersion("1.0");
         function.setVendor("NXW");
         function.setDescription("Image recognition service.");
         function.setMetadata(metadata);
@@ -86,7 +86,7 @@ public class SdkFunctionTest {
         function.setInstantiationLevelExpression("IF(size <= 1, small_il, IF(size <= 10, medium_il, big_il))");
         function.setParameters(Arrays.asList("isVideo", "size"));
         function.setVnfdId("aa333a44-6587-4940-b442-c029376bbb2e");
-        function.setVnfdVersion("v1.0");
+        function.setVnfdVersion("1.0");
 
         ConnectionPoint cp1 = ConnectionPointTest.makeNS1vPlateObject1();
 
@@ -105,15 +105,15 @@ public class SdkFunctionTest {
 
         SdkFunction function = new SdkFunction();
         function.setName("vFirewall-v5");
-        function.setVersion("v5.0");
-        function.setVendor("NXW");
+        function.setVersion("1.0");
+        function.setVendor("Nextworks");
         function.setDescription("Virtual Firewall");
         function.setMetadata(metadata);
         function.setFlavourExpression("static_df");
         function.setInstantiationLevelExpression("IF(traffic != 0, big_il, medium_il)");
         function.setParameters(Arrays.asList("traffic"));
         function.setVnfdId("aa6a284e-e369-4d7d-a465-57ddc6e8c027");
-        function.setVnfdVersion("v5.0");
+        function.setVnfdVersion("1.0");
 
         ConnectionPoint cp1 = ConnectionPointTest.makeNS1FirewallObject1();
         ConnectionPoint cp2 = ConnectionPointTest.makeNS1FirewallObject2();
@@ -137,16 +137,16 @@ public class SdkFunctionTest {
                 + "exit");
 
         SdkFunction function = new SdkFunction();
-        function.setName("vFirewall-ns2");
-        function.setVersion("v6.0");
-        function.setVendor("NXW");
-        function.setDescription("Virtual Firewall");
+        function.setName("vFirewall-uc1-ns2-v6");
+        function.setVersion("1.0");
+        function.setVendor("Nextworks");
+        function.setDescription("vFirewall-uc1-ns2-v6");
         function.setMetadata(metadata);
         function.setFlavourExpression("static_df");
         function.setInstantiationLevelExpression("IF(traffic != 0, big_il, medium_il)");
         function.setParameters(Arrays.asList("traffic"));
         function.setVnfdId("a49ef787-aaba-4a06-a677-b30a2e883562");
-        function.setVnfdVersion("v6.0");
+        function.setVnfdVersion("1.0");
 
         ConnectionPoint cp1 = ConnectionPointTest.makeFirewallDemobject1();
         ConnectionPoint cp2 = ConnectionPointTest.makeFirewallDemobject2();
@@ -160,16 +160,16 @@ public class SdkFunctionTest {
     public static SdkFunction makeNS2MiniwebObject() {
         Map<String, String> metadata = new HashMap<>();
         SdkFunction function = new SdkFunction();
-        function.setName("miniweb-server");
-        function.setVersion("v1.0");
-        function.setVendor("NXW");
-        function.setDescription("Mini web Server.");
+        function.setName("miniweb-server-uc1-ns2");
+        function.setVersion("1.0");
+        function.setVendor("Nextworks");
+        function.setDescription("miniweb-server-uc1-ns2");
         function.setMetadata(metadata);
         function.setFlavourExpression("IF(isVideo != 0, video_flv_srv, standard_flv_srv)");
         function.setInstantiationLevelExpression("IF(size <= 1, small_il, IF(size <= 10, medium_il, big_il))");
         function.setParameters(Arrays.asList("isVideo", "size"));
         function.setVnfdId("057289e2-7b8e-4280-8734-43b924f64b85");
-        function.setVnfdVersion("v1.0");
+        function.setVnfdVersion("1.0");
 
         ConnectionPoint cp1 = ConnectionPointTest.makeMiniwebDemobject1();
 
