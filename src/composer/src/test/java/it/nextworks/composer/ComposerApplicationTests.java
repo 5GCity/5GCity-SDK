@@ -78,34 +78,34 @@ public class ComposerApplicationTests {
 
     }
 
-    @Test
-    @Ignore // requires DB
-    public void testCityService() {
-
-        SdkFunction miniWeb = SdkFunctionTest.makeDemoMiniwebObject();
-
-        SdkFunction firewall = SdkFunctionTest.makeDemoFirewallObject();
-
-        assertTrue(miniWeb.isValid());
-        assertTrue(firewall.isValid());
-
-        functionRepository.saveAndFlush(miniWeb);
-
-        functionRepository.saveAndFlush(firewall);
-
-        Optional<SdkFunction> mwb = functionRepository.findById(miniWeb.getId());
-
-        Optional<SdkFunction> fwb = functionRepository.findById(firewall.getId());
-
-        assertTrue(mwb.isPresent());
-        assertTrue(fwb.isPresent());
-
-        SdkFunction mw2 = mwb.get();
-        assertEquals(miniWeb, mw2);
-
-        SdkFunction fw2 = fwb.get();
-        assertEquals(firewall, fw2);
-
-    }
+//    @Test
+//    @Ignore // requires DB
+//    public void testCityService() {
+//
+//        SdkFunction miniWeb = SdkFunctionTest.makeDemoMiniwebObject();
+//
+//        SdkFunction firewall = SdkFunctionTest.makeDemoFirewallObject();
+//
+//        assertTrue(miniWeb.isValid());
+//        assertTrue(firewall.isValid());
+//
+//        functionRepository.saveAndFlush(miniWeb);
+//
+//        functionRepository.saveAndFlush(firewall);
+//
+//        Optional<SdkFunction> mwb = functionRepository.findById(miniWeb.getId());
+//
+//        Optional<SdkFunction> fwb = functionRepository.findById(firewall.getId());
+//
+//        assertTrue(mwb.isPresent());
+//        assertTrue(fwb.isPresent());
+//
+//        SdkFunction mw2 = mwb.get();
+//        assertEquals(miniWeb, mw2);
+//
+//        SdkFunction fw2 = fwb.get();
+//        assertEquals(firewall, fw2);
+//
+//    }
 
 }

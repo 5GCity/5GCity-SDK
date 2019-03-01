@@ -36,45 +36,65 @@ public class SdkFunctionTest {
     @Autowired
     private SdkFunctionRepository functionRepository;
 
-    public static SdkFunction makeTestObject() {
+//    public static SdkFunction makeTestObject() {
+//        Map<String, String> metadata = new HashMap<>();
+//        metadata.put("cloud-init", "#!/bin/vbash\n" +
+//            "source /opt/vyatta/etc/functions/script-template\n" +
+//            "configure\n" +
+//            "set interfaces ethernet eth1  address 192.168.200.1/24\n" +
+//            "\n" +
+//            "commit\n" +
+//            "exit");
+//
+//        SdkFunction function = new SdkFunction();
+//        function.setName("vFirewall-v3");
+//        function.setVersion("v3");
+//        function.setVendor("Nextworks");
+//        function.setDescription("vFirewall");
+//        function.setMetadata(metadata);
+//        function.setFlavourExpression("IF(secure != 0, secure_df, insecure_df)");
+//        function.setInstantiationLevelExpression("IF(small != 0, small_il, big_il)");
+//        function.setParameters(Arrays.asList("secure", "small"));
+//        function.setVnfdId("vnfd_id");
+//        function.setVnfdVersion("vnfd_version");
+//
+//        MonitoringParameter monitoringParameter = new MonitoringParameter();
+//        monitoringParameter.setName(MonitoringParameterName.AVERAGE_MEMORY_UTILIZATION);
+//        monitoringParameter.setFunction(function);
+//        monitoringParameter.setThreshold(142.0);
+//        monitoringParameter.setDirection(Direction.LOWER_THAN);
+//        function.setMonitoringParameters(Collections.singleton(monitoringParameter));
+//
+//        ConnectionPoint cp1 = ConnectionPointTest.makeTestObject1();
+//        ConnectionPoint cp2 = ConnectionPointTest.makeTestObject2();
+//        ConnectionPoint cp3 = ConnectionPointTest.makeTestObject3();
+//        ConnectionPoint cp4 = ConnectionPointTest.makeTestObject4();
+//
+//        function.setConnectionPoint(new HashSet<>(Arrays.asList(cp1, cp2, cp3, cp4)));
+//        return function;
+//    }
+
+    public static SdkFunction makeNS1vPlateObject() {
         Map<String, String> metadata = new HashMap<>();
-        metadata.put("cloud-init", "#!/bin/vbash\n" +
-            "source /opt/vyatta/etc/functions/script-template\n" +
-            "configure\n" +
-            "set interfaces ethernet eth1  address 192.168.200.1/24\n" +
-            "\n" +
-            "commit\n" +
-            "exit");
-
         SdkFunction function = new SdkFunction();
-        function.setName("vFirewall-v3");
-        function.setVersion("v3");
-        function.setVendor("Nextworks");
-        function.setDescription("vFirewall");
+        function.setName("vPlate-server");
+        function.setVersion("v1.0");
+        function.setVendor("NXW");
+        function.setDescription("Image recognition service.");
         function.setMetadata(metadata);
-        function.setFlavourExpression("IF(secure != 0, secure_df, insecure_df)");
-        function.setInstantiationLevelExpression("IF(small != 0, small_il, big_il)");
-        function.setParameters(Arrays.asList("secure", "small"));
-        function.setVnfdId("vnfd_id");
-        function.setVnfdVersion("vnfd_version");
+        function.setFlavourExpression("IF(isVideo != 0, video_flv_srv, standard_flv_srv)");
+        function.setInstantiationLevelExpression("IF(size <= 1, small_il, IF(size <= 10, medium_il, big_il))");
+        function.setParameters(Arrays.asList("isVideo", "size"));
+        function.setVnfdId("aa333a44-6587-4940-b442-c029376bbb2e");
+        function.setVnfdVersion("v1.0");
 
-        MonitoringParameter monitoringParameter = new MonitoringParameter();
-        monitoringParameter.setName(MonitoringParameterName.AVERAGE_MEMORY_UTILIZATION);
-        monitoringParameter.setFunction(function);
-        monitoringParameter.setThreshold(142.0);
-        monitoringParameter.setDirection(Direction.LOWER_THAN);
-        function.setMonitoringParameters(Collections.singleton(monitoringParameter));
+        ConnectionPoint cp1 = ConnectionPointTest.makeNS1vPlateObject1();
 
-        ConnectionPoint cp1 = ConnectionPointTest.makeTestObject1();
-        ConnectionPoint cp2 = ConnectionPointTest.makeTestObject2();
-        ConnectionPoint cp3 = ConnectionPointTest.makeTestObject3();
-        ConnectionPoint cp4 = ConnectionPointTest.makeTestObject4();
-
-        function.setConnectionPoint(new HashSet<>(Arrays.asList(cp1, cp2, cp3, cp4)));
+        function.setConnectionPoint(new HashSet<>(Arrays.asList(cp1)));
         return function;
     }
 
-    public static SdkFunction makeDemoFirewallObject() {
+    public static SdkFunction makeNS1FirewallObject() {
         Map<String, String> metadata = new HashMap<>();
         metadata.put("cloud-init", "#!/bin/vbash\n"
         		+ "source /opt/vyatta/etc/functions/script-template\n"
@@ -92,8 +112,41 @@ public class SdkFunctionTest {
         function.setFlavourExpression("static_df");
         function.setInstantiationLevelExpression("IF(traffic != 0, big_il, medium_il)");
         function.setParameters(Arrays.asList("traffic"));
-        function.setVnfdId("a49ef787-aaba-4a06-a677-b30a2e883562");
+        function.setVnfdId("aa6a284e-e369-4d7d-a465-57ddc6e8c027");
         function.setVnfdVersion("v5.0");
+
+        ConnectionPoint cp1 = ConnectionPointTest.makeNS1FirewallObject1();
+        ConnectionPoint cp2 = ConnectionPointTest.makeNS1FirewallObject2();
+        ConnectionPoint cp3 = ConnectionPointTest.makeNS1FirewallObject3();
+        ConnectionPoint cp4 = ConnectionPointTest.makeNS1FirewallObject4();
+
+        function.setConnectionPoint(new HashSet<>(Arrays.asList(cp1, cp2, cp3, cp4)));
+        return function;
+    }
+    
+
+
+
+    public static SdkFunction makeNS2FirewallObject() {
+        Map<String, String> metadata = new HashMap<>();
+        metadata.put("cloud-init", "#!/bin/vbash\n"
+                + "source /opt/vyatta/etc/functions/script-template\n"
+                + "configure\n"
+                + "set interfaces ethernet eth1  address 192.168.200.1/24\n"
+                + "commit"
+                + "exit");
+
+        SdkFunction function = new SdkFunction();
+        function.setName("vFirewall-ns2");
+        function.setVersion("v6.0");
+        function.setVendor("NXW");
+        function.setDescription("Virtual Firewall");
+        function.setMetadata(metadata);
+        function.setFlavourExpression("static_df");
+        function.setInstantiationLevelExpression("IF(traffic != 0, big_il, medium_il)");
+        function.setParameters(Arrays.asList("traffic"));
+        function.setVnfdId("a49ef787-aaba-4a06-a677-b30a2e883562");
+        function.setVnfdVersion("v6.0");
 
         ConnectionPoint cp1 = ConnectionPointTest.makeFirewallDemobject1();
         ConnectionPoint cp2 = ConnectionPointTest.makeFirewallDemobject2();
@@ -103,8 +156,8 @@ public class SdkFunctionTest {
         function.setConnectionPoint(new HashSet<>(Arrays.asList(cp1, cp2, cp3, cp4)));
         return function;
     }
-    
-    public static SdkFunction makeDemoMiniwebObject() {
+
+    public static SdkFunction makeNS2MiniwebObject() {
         Map<String, String> metadata = new HashMap<>();
         SdkFunction function = new SdkFunction();
         function.setName("miniweb-server");
@@ -124,60 +177,79 @@ public class SdkFunctionTest {
         return function;
     }
 
-    public static SdkFunction makeTestObject(Long id, Long cpId) {
-        SdkFunction function = makeTestObject();
-        function.setConnectionPoint(Collections.singleton(ConnectionPointTest.makeTestObjectId(cpId)));
-        function.setId(id);
-        return function;
-    }
+
+
+
+//    public static SdkFunction makeTestObject(Long id, Long cpId) {
+//        SdkFunction function = makeTestObject();
+//        function.setConnectionPoint(Collections.singleton(ConnectionPointTest.makeTestObjectId(cpId)));
+//        function.setId(id);
+//        return function;
+//    }
+
+//    @Test
+//    @Ignore // requires DB
+//    public void testCascadePersist() {
+//
+//        SdkFunction function = makeTestObject();
+//
+//        assertEquals(4, function.getConnectionPoint().size());
+//
+//        functionRepository.saveAndFlush(function);
+//
+//        Optional<SdkFunction> back = functionRepository.findById(function.getId());
+//
+//        assertTrue(back.isPresent());
+//
+//        SdkFunction function2 = back.get();
+//        assertEquals(4, function2.getConnectionPoint().size());
+//        assertEquals(function.getConnectionPoint(), function2.getConnectionPoint());
+//        assertEquals(function, function2);
+//    }
 
     @Test
-    @Ignore // requires DB
-    public void testCascadePersist() {
-
-        SdkFunction function = makeTestObject();
-
-        assertEquals(4, function.getConnectionPoint().size());
-
-        functionRepository.saveAndFlush(function);
-
-        Optional<SdkFunction> back = functionRepository.findById(function.getId());
-
-        assertTrue(back.isPresent());
-
-        SdkFunction function2 = back.get();
-        assertEquals(4, function2.getConnectionPoint().size());
-        assertEquals(function.getConnectionPoint(), function2.getConnectionPoint());
-        assertEquals(function, function2);
-    }
-
-    @Test
-    @Ignore // requires DB
+    //@Ignore // requires DB
     public void testCityService() {
 
-        SdkFunction miniWeb = makeDemoMiniwebObject();
+        SdkFunction ns1Firewall = makeNS1FirewallObject();
 
-        SdkFunction firewall = makeDemoFirewallObject();
+        SdkFunction ns2Firewall = makeNS2FirewallObject();
 
-        assertTrue(miniWeb.isValid());
-        assertTrue(firewall.isValid());
+        SdkFunction minicache = makeNS2MiniwebObject();
 
-        functionRepository.saveAndFlush(miniWeb);
+        SdkFunction vPlate = makeNS1vPlateObject();
 
-        functionRepository.saveAndFlush(firewall);
+        assertTrue(ns1Firewall.isValid());
+        assertTrue(ns2Firewall.isValid());
+        assertTrue(minicache.isValid());
+        assertTrue(vPlate.isValid());
 
-        Optional<SdkFunction> mwb = functionRepository.findById(miniWeb.getId());
+        functionRepository.saveAndFlush(ns1Firewall);
+        functionRepository.saveAndFlush(vPlate);
+        functionRepository.saveAndFlush(ns2Firewall);
+        functionRepository.saveAndFlush(minicache);
 
-        Optional<SdkFunction> fwb = functionRepository.findById(firewall.getId());
+        Optional<SdkFunction> mwb = functionRepository.findById(minicache.getId());
+        Optional<SdkFunction> vwb = functionRepository.findById(vPlate.getId());
+        Optional<SdkFunction> f1wb = functionRepository.findById(ns1Firewall.getId());
+        Optional<SdkFunction> f2wb = functionRepository.findById(ns2Firewall.getId());
 
         assertTrue(mwb.isPresent());
-        assertTrue(fwb.isPresent());
+        assertTrue(vwb.isPresent());
+        assertTrue(f1wb.isPresent());
+        assertTrue(f2wb.isPresent());
 
         SdkFunction mw2 = mwb.get();
-        assertEquals(miniWeb, mw2);
+        assertEquals(minicache, mw2);
 
-        SdkFunction fw2 = fwb.get();
-        assertEquals(firewall, fw2);
+        SdkFunction f1w2 = f1wb.get();
+        assertEquals(ns1Firewall, f1w2);
+
+        SdkFunction vw2 = vwb.get();
+        assertEquals(vPlate, vw2);
+
+        SdkFunction f2w2 = f2wb.get();
+        assertEquals(ns2Firewall, f2w2);
     }
 
 }

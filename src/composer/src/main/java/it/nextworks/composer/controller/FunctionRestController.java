@@ -64,7 +64,7 @@ public class FunctionRestController {
     })
     @RequestMapping(value = "/functions", method = RequestMethod.GET)
     public ResponseEntity<?> getFunctions() {
-        functionManager.createFunction();
+//        functionManager.createFunction();
         log.info("Request for get FUNCTIONS");
         List<SdkFunction> response = new ArrayList<>();
         response = functionManager.getFunctions();

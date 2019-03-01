@@ -27,11 +27,7 @@ import it.nextworks.sdk.SdkServiceDescriptor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -182,7 +178,7 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
             null,
             null,
             new HashMap<>(),
-            nodeTemplates,
+                (SortedMap<String, Node>) nodeTemplates,
             new HashMap<>(),
             new HashMap<>()
         );

@@ -59,27 +59,27 @@ public class ExpressionAdapterTest {
 
     @Before
     public void setupService() {
-        function = SdkFunctionTest.makeTestObject();
-
-        assertTrue(function.isValid());
-
-        functionRepo.saveAndFlush(function);
-
-        ConnectionPoint cp = function.getConnectionPoint().iterator().next();
-
-        Map<String, Long> cps = Collections.singletonMap(cp.getName(), cp.getId());
-
-        service = SdkServiceTest.makeTestObject(
-            function.getId(),
-            Arrays.asList("param1", "param2"),
-            cps
-        );
-
-        assertTrue(service.isValid());
-
-        service.resolveComponents(Collections.singleton(function), new HashSet<>());
-
-        serviceRepo.saveAndFlush(service);
+//        function = SdkFunctionTest.makeTestObject();
+//
+//        assertTrue(function.isValid());
+//
+//        functionRepo.saveAndFlush(function);
+//
+//        ConnectionPoint cp = function.getConnectionPoint().iterator().next();
+//
+//        Map<String, Long> cps = Collections.singletonMap(cp.getName(), cp.getId());
+//
+//        service = SdkServiceTest.makeTestObject(
+//            function.getId(),
+//            Arrays.asList("param1", "param2"),
+//            cps
+//        );
+//
+//        assertTrue(service.isValid());
+//
+//        service.resolveComponents(Collections.singleton(function), new HashSet<>());
+//
+//        serviceRepo.saveAndFlush(service);
     }
 
     @Test
