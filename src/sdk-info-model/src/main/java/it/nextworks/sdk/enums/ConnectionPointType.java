@@ -3,6 +3,7 @@ package it.nextworks.sdk.enums;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,12 +16,14 @@ public enum ConnectionPointType {
 
     INTERNAL("INTERNAL"),
     EXTERNAL("EXTERNAL");
-    private final static Map<String, ConnectionPointType> CONSTANTS = new HashMap<>();
+    private final static Map<String, ConnectionPointType> CONSTANTS;
 
     static {
+        HashMap<String, ConnectionPointType> temp = new HashMap<>();
         for (ConnectionPointType c : values()) {
-            CONSTANTS.put(c.value, c);
+            temp.put(c.value, c);
         }
+        CONSTANTS = Collections.unmodifiableMap(temp);
     }
 
     private final String value;

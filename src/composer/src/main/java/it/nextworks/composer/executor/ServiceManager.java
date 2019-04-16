@@ -151,18 +151,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         return serviceList;
     }
 
-    @Override
-    public String createService(SdkService service)
-        throws MalformedElementException {
-
-        log.info("Storing into database a new service");
-        // TODO Find a way to check if service already exists
-        // TODO: should we really? We could check the name, but this is the user's responsibility
-        if (!service.isValid()) {
-            log.error("Malformed SdkService");
-            throw new MalformedElementException("Malformed SdkService");
-        }
-        log.debug("Checking component availability");
+    private void checkAndResolveService(SdkService service) throws MalformedElementException {
+        log.debug("Checking functions availability");
         List<SdkFunction> availableF = functionManager.getFunctions();
         Set<Long> availableFIds = availableF.stream()
             .map(SdkFunction::getId)
@@ -177,6 +167,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
                 requiredFIds
             ));
         }
+        log.debug("Checking sub-services availability");
         List<SdkService> availableS = this.getServices();
         Set<Long> availableSIds = availableS.stream()
             .map(SdkService::getId)
@@ -202,6 +193,21 @@ public class ServiceManager implements ServiceManagerProviderInterface {
                 e
             );
         }
+    }
+
+    @Override
+    public String createService(SdkService service)
+        throws MalformedElementException {
+
+        log.info("Storing into database a new service");
+        // TODO Find a way to check if service already exists
+        // TODO: should we really? We could check the name, but this is the user's responsibility
+        if (!service.isValid()) {
+            log.error("Malformed SdkService");
+            throw new MalformedElementException("Malformed SdkService");
+        }
+
+        checkAndResolveService(service);
 
         log.debug("Storing into database service with name: " + service.getName());
         // Saving the service
@@ -224,6 +230,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 			throw new NotExistingEntityException("Service id " + service.getId() + " not present in database");
 		}
 		log.debug("Service found on db");
+
+        checkAndResolveService(service);
 
 		log.debug("Updating into database service with id: " + service.getId());
 
