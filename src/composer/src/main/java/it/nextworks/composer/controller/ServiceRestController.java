@@ -21,10 +21,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import it.nextworks.composer.executor.ServiceManager;
 import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
-import it.nextworks.sdk.MonitoringParameter;
-import it.nextworks.sdk.ScalingAspect;
-import it.nextworks.sdk.SdkService;
-import it.nextworks.sdk.SdkServiceDescriptor;
+import it.nextworks.sdk.*;
 import it.nextworks.sdk.exceptions.AlreadyPublishedServiceException;
 import it.nextworks.sdk.exceptions.MalformedElementException;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
@@ -253,6 +250,7 @@ public class ServiceRestController {
         }
     }
 
+    /*
     @ApiOperation(value = "Modify an existing list of scaling aspects")
     @ApiResponses(value = {
         @ApiResponse(code = 400, message = "Service not present in db or request cannot be validated"),
@@ -324,6 +322,7 @@ public class ServiceRestController {
                 HttpStatus.NOT_FOUND);
         }
     }
+    */
 
     @ApiOperation(value = "Modify an existing list of monitoring parameters related to a given SdkService")
     @ApiResponses(value = {
@@ -331,23 +330,22 @@ public class ServiceRestController {
         @ApiResponse(code = 204, message = "Monitoring Param list Updated")})
     @RequestMapping(value = "/services/{serviceId}/monitoringparams", method = RequestMethod.PUT)
     public ResponseEntity<?> updateMonitoringParametersForService(@PathVariable Long serviceId,
-                                                                  @RequestBody Set<MonitoringParameter> monitoringParameters) {
+                                                                  @RequestBody MonitoringParameterWrapper monitoringParameters) {
         log.info("Request for update of a monitoringParameter list");
-        for (MonitoringParameter param : monitoringParameters) {
-            if (!param.isValid()) {
-                log.error("Monitoring param list provided cannot be validated");
-                return new ResponseEntity<String>("Monitoring param list provided cannot be validated",
-                    HttpStatus.BAD_REQUEST);
-            }
+
+        if (!monitoringParameters.isValid()) {
+            log.error("Monitoring param list provided cannot be validated");
+            return new ResponseEntity<String>("Monitoring param list provided cannot be validated",
+                HttpStatus.BAD_REQUEST);
         }
+
         try {
-            serviceManager.updateMonitoringParameters(serviceId, monitoringParameters);
+            serviceManager.updateMonitoringParameters(serviceId, monitoringParameters.getExtMonitoringParameters(), monitoringParameters.getIntMonitoringParameters());
             log.debug("Service entity updated with the requested monitoring parameters");
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } catch (NotExistingEntityException e1) {
-            log.error("Service with id " + serviceId + " is not present in database");
-            return new ResponseEntity<String>("Service with id " + serviceId + " is not present in database",
-                HttpStatus.BAD_REQUEST);
+            log.error(e1.toString());
+            return new ResponseEntity<String>(e1.toString(), HttpStatus.BAD_REQUEST);
         } catch (MalformedElementException e2) {
             log.error("Malformed format for element MonitoringParameter. Unable to update service: "
                 + serviceId);
@@ -358,7 +356,7 @@ public class ServiceRestController {
         }
     }
 
-    @ApiOperation(value = "Get the list of  Monitoring Parameters for a given SdkService identified by UUID", response = MonitoringParameter.class, responseContainer = "List")
+    @ApiOperation(value = "Get the list of  Monitoring Parameters for a given SdkService identified by UUID", response = MonitoringParameterWrapper.class)
     @ApiResponses(value = {@ApiResponse(code = 400, message = "Query without parameter serviceId"),
         @ApiResponse(code = 404, message = "SdkService not found on database"),
         @ApiResponse(code = 200, message = "OK")})
@@ -368,10 +366,10 @@ public class ServiceRestController {
             + serviceId);
 
         try {
-            List<MonitoringParameter> response = serviceManager.getMonitoringParameters(serviceId);
+            MonitoringParameterWrapper response = serviceManager.getMonitoringParameters(serviceId);
             log.debug("Returning list of monitoringParams related to a specific Sdk Service identified by uuid: "
                 + serviceId);
-            return new ResponseEntity<List<MonitoringParameter>>(response, HttpStatus.OK);
+            return new ResponseEntity<MonitoringParameterWrapper>(response, HttpStatus.OK);
         } catch (NotExistingEntityException e) {
             log.debug("SdkService with uuid " + serviceId + " not found on database ");
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

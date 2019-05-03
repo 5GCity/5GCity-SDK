@@ -8,18 +8,7 @@ import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.PostLoad;
-import javax.persistence.PostPersist;
-import javax.persistence.PostUpdate;
-import javax.persistence.PrePersist;
-import javax.persistence.Transient;
+import javax.persistence.*;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
@@ -33,8 +22,9 @@ import java.util.stream.Collectors;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
+    "id",
     "name",
-    "connection_point_names"
+    "connectionPointNames"
 })
 @Entity
 public class Link {
@@ -56,7 +46,7 @@ public class Link {
     @ManyToOne
     private SdkService service;
 
-    @JsonProperty("connection_point_names")
+    @JsonProperty("connectionPointNames")
     public Set<String> getConnectionPointNames() {
         return connectionPointNames;
     }
@@ -66,7 +56,7 @@ public class Link {
         setConnectionPointNames(Arrays.stream(cps).collect(Collectors.toSet()));
     }
 
-    @JsonProperty("connection_point_names")
+    @JsonProperty("connectionPointNames")
     public void setConnectionPointNames(Set<String> connectionPointIds) {
         this.connectionPointNames = connectionPointIds;
     }
@@ -186,6 +176,7 @@ public class Link {
     }
 
     @PrePersist
+    @PreUpdate
     private void prePersist() {
         if (!isResolved()) {
             throw new IllegalStateException("Cannot persist, component is not resolved");

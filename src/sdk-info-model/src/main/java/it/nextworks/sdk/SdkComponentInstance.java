@@ -17,7 +17,7 @@ import javax.persistence.MappedSuperclass;
 @JsonTypeInfo(
     use = JsonTypeInfo.Id.NAME,
     include = JsonTypeInfo.As.EXISTING_PROPERTY,
-    property = "component_type")
+    property = "componentType")
 @JsonSubTypes({
     @JsonSubTypes.Type(value = SdkFunctionDescriptor.class, name = "SDK_FUNCTION"),
     @JsonSubTypes.Type(value = SdkServiceDescriptor.class, name = "SDK_SERVICE")

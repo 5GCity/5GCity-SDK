@@ -17,7 +17,7 @@ package it.nextworks.composer.executor.interfaces;
 
 import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
 import it.nextworks.sdk.MonitoringParameter;
-import it.nextworks.sdk.ScalingAspect;
+import it.nextworks.sdk.MonitoringParameterWrapper;
 import it.nextworks.sdk.SdkService;
 import it.nextworks.sdk.SdkServiceDescriptor;
 import it.nextworks.sdk.exceptions.AlreadyPublishedServiceException;
@@ -71,6 +71,7 @@ public interface ServiceManagerProviderInterface {
     void unPublishService(Long serviceInstanceId)
         throws NotExistingEntityException, NotPublishedServiceException;
 
+    /*
     void updateScalingAspect(Long serviceId, Set<ScalingAspect> scalingAspects)
         throws NotExistingEntityException, MalformedElementException;
 
@@ -79,14 +80,15 @@ public interface ServiceManagerProviderInterface {
 
     List<ScalingAspect> getScalingAspect(Long serviceId)
         throws NotExistingEntityException;
+    */
 
-    void updateMonitoringParameters(Long serviceId, Set<MonitoringParameter> monitoringParameters)
+    void updateMonitoringParameters(Long serviceId, Set<MonitoringParameter> extMonitoringParameters, Set<MonitoringParameter> intMonitoringParameters)
         throws NotExistingEntityException, MalformedElementException;
 
     void deleteMonitoringParameters(Long serviceId, Long monitoringParameterId)
         throws NotExistingEntityException, MalformedElementException;
 
-    List<MonitoringParameter> getMonitoringParameters(Long serviceId)
+    MonitoringParameterWrapper getMonitoringParameters(Long serviceId)
         throws NotExistingEntityException;
 
 }

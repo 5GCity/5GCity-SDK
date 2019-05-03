@@ -4,7 +4,6 @@ import it.nextworks.sdk.ConnectionPoint;
 import it.nextworks.sdk.L3Connectivity;
 import it.nextworks.sdk.Link;
 import it.nextworks.sdk.MonitoringParameter;
-import it.nextworks.sdk.ScalingAspect;
 import it.nextworks.sdk.SdkFunction;
 import it.nextworks.sdk.SdkFunctionDescriptor;
 import it.nextworks.sdk.SdkService;
@@ -49,7 +48,7 @@ class ServiceInfoBuilder {
 
     private Set<MonitoringParameter> monitoringParameters = new HashSet<>();
 
-    private Set<ScalingAspect> scalingAspects = new HashSet<>();
+    //private Set<ScalingAspect> scalingAspects = new HashSet<>();
 
     // Used only at last -> not to be merged
     private Set<AdapterLink> adapterLinks = new HashSet<>();
@@ -98,7 +97,7 @@ class ServiceInfoBuilder {
         service2Cp.putAll(other.service2Cp);
         cpsById.putAll(other.cpsById);
         monitoringParameters.addAll(other.monitoringParameters);
-        scalingAspects.addAll(other.scalingAspects);
+        //scalingAspects.addAll(other.scalingAspects);
         return this;
     }
 
@@ -108,8 +107,8 @@ class ServiceInfoBuilder {
         addLinks(id, template.getLink());
         addCps(id, template.getConnectionPoint());
         addRule(id, template.getL3Connectivity());
-        scalingAspects.addAll(template.getScalingAspect());
-        monitoringParameters.addAll(template.getMonitoringParameters());
+       //scalingAspects.addAll(template.getScalingAspect());
+        monitoringParameters.addAll(template.getExtMonitoringParameters());
 
         serviceMetadata.setName(template.getName())
             .setVersion(template.getVersion())

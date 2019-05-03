@@ -65,7 +65,7 @@ public class SdkFunctionDescriptor extends SdkComponentInstance {
     }
 
     @Override
-    @JsonProperty("component_type")
+    @JsonProperty("componentType")
     public SdkServiceComponentType getType() {
         return SdkServiceComponentType.SDK_FUNCTION;
     }

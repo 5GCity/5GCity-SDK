@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
 package it.nextworks.composer.executor.repositories;
 
 import it.nextworks.sdk.ScalingAspect;
@@ -27,3 +28,4 @@ public interface ScalingAspectRepository extends JpaRepository<ScalingAspect, Lo
 
 
 }
+*/

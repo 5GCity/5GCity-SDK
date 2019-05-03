@@ -1,144 +1,118 @@
 package it.nextworks.sdk;
+import com.fasterxml.jackson.annotation.*;
+import it.nextworks.sdk.enums.MonitoringParameterType;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import it.nextworks.sdk.enums.Direction;
-import it.nextworks.sdk.enums.MonitoringParameterName;
-
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
+import javax.persistence.*;
 
 
 /**
- * MonitoringParameter
+ * BaseMonitoringParameter
  * <p>
+ *
+ *
  */
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "parameterType", visible = true)
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = AggregatedMonParam.class, 	name = "AGGREGATED"),
+    @JsonSubTypes.Type(value = FunctionMonParam.class, 	name = "FUNCTION"),
+    @JsonSubTypes.Type(value = ImportedMonParam.class, 	name = "IMPORTED"),
+    @JsonSubTypes.Type(value = TransformedMonParam.class, 	name = "TRANSFORMED"),
+})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-    "name",
-    "direction",
-    "threshold"
+    "parameterId",
+    "parameterType"
 })
 @Entity
-public class MonitoringParameter {
+public abstract class MonitoringParameter {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    private Direction direction;
-
-    private MonitoringParameterName name;
-
-    private Double threshold;
+    private MonitoringParameterType parameterType;
 
     @ManyToOne
-    private SdkService service;
+    private SdkService sdkServiceExt;
 
     @ManyToOne
-    private SdkFunction function;
+    private SdkService sdkServiceInt;
 
     @ManyToOne
-    private ScalingAspect scalingAspect;
+    private SdkFunction sdkFunction;
 
-    @JsonProperty("direction")
-    public Direction getDirection() {
-        return direction;
+    public MonitoringParameter(){
+        //JPA only
     }
 
-    @JsonProperty("direction")
-    public void setDirection(Direction direction) {
-        this.direction = direction;
+    @JsonProperty("parameterType")
+    public MonitoringParameterType getParameterType() {
+        return parameterType;
     }
 
-    @JsonIgnore
-    public Long getId() {
-        return id;
+    @JsonProperty("parameterType")
+    public void setParameterType(MonitoringParameterType parameterType) {
+        this.parameterType = parameterType;
     }
 
-    @JsonProperty("name")
-    public MonitoringParameterName getName() {
-        return name;
+    @JsonProperty("parameterId")
+    public String getParameterId() {
+        return id.toString();
     }
 
-    @JsonProperty("name")
-    public void setName(MonitoringParameterName name) {
-        this.name = name;
-    }
-
-    @JsonProperty("threshold")
-    public Double getThreshold() {
-        return threshold;
-    }
-
-    @JsonProperty("threshold")
-    public void setThreshold(Double threshold) {
-        this.threshold = threshold;
+    @JsonProperty("parameterId")
+    public void setParameterId(String parameterId) {
+        this.id = Long.valueOf(parameterId);
     }
 
     @JsonIgnore
-    public SdkService getService() {
-        return service;
+    public Long getId() { return id; }
+
+    @JsonIgnore
+    public SdkService getSdkServiceExt() {
+        return sdkServiceExt;
     }
 
     @JsonIgnore
-    public void setService(SdkService service) {
-        this.service = service;
+    public void setSdkServiceExt(SdkService sdkService) {
+        this.sdkServiceExt = sdkService;
     }
 
     @JsonIgnore
-    public ScalingAspect getScalingAspect() {
-        return scalingAspect;
+    public SdkService getSdkServiceInt() {
+        return sdkServiceInt;
     }
 
     @JsonIgnore
-    public void setScalingAspect(ScalingAspect scalingAspect) {
-        this.scalingAspect = scalingAspect;
+    public void setSdkServiceInt(SdkService sdkService) {
+        this.sdkServiceInt = sdkService;
     }
 
     @JsonIgnore
-    public SdkFunction getFunction() {
-        return function;
-    }
+    public SdkFunction getSdkFunction() { return sdkFunction; }
 
     @JsonIgnore
-    public void setFunction(SdkFunction function) {
-        this.function = function;
-    }
+    public void setSdkFunction(SdkFunction sdkFunction) { this.sdkFunction = sdkFunction; }
 
     @JsonIgnore
     public boolean isValid() {
-        return this.name != null;
+        return parameterType != null;
     }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(MonitoringParameter.class.getName())
-            .append('[');
-        sb.append("direction");
+        sb.append(MonitoringParameter.class.getName()).append('[');
+        sb.append("parameterType");
         sb.append('=');
-        sb.append(((this.direction == null) ? "<null>" : this.direction));
+        sb.append(((this.parameterType == null)?"<null>":this.parameterType));
         sb.append(',');
-        sb.append("id");
+        sb.append("parameterId");
         sb.append('=');
-        sb.append(((this.id == null) ? "<null>" : this.id));
+        sb.append(((this.id == null)?"<null>":this.id));
         sb.append(',');
-        sb.append("name");
-        sb.append('=');
-        sb.append(((this.name == null) ? "<null>" : this.name));
-        sb.append(',');
-        sb.append("threshold");
-        sb.append('=');
-        sb.append(((this.threshold == null) ? "<null>" : this.threshold));
-        sb.append(',');
-        if (sb.charAt((sb.length() - 1)) == ',') {
-            sb.setCharAt((sb.length() - 1), ']');
+        if (sb.charAt((sb.length()- 1)) == ',') {
+            sb.setCharAt((sb.length()- 1), ']');
         } else {
             sb.append(']');
         }
@@ -148,10 +122,8 @@ public class MonitoringParameter {
     @Override
     public int hashCode() {
         int result = 1;
-        result = ((result * 31) + ((this.name == null) ? 0 : this.name.hashCode()));
-        result = ((result * 31) + ((this.threshold == null) ? 0 : this.threshold.hashCode()));
-        result = ((result * 31) + ((this.id == null) ? 0 : this.id.hashCode()));
-        result = ((result * 31) + ((this.direction == null) ? 0 : this.direction.hashCode()));
+        result = ((result* 31)+((this.id == null)? 0 :this.id.hashCode()));
+        result = ((result* 31)+((this.parameterType == null)? 0 :this.parameterType.hashCode()));
         return result;
     }
 
@@ -160,14 +132,10 @@ public class MonitoringParameter {
         if (other == this) {
             return true;
         }
-        if (!(other instanceof MonitoringParameter)) {
+        if ((other instanceof MonitoringParameter) == false) {
             return false;
         }
         MonitoringParameter rhs = ((MonitoringParameter) other);
-        return (((((this.name == rhs.name) || ((this.name != null) && this.name.equals(rhs.name)))
-            && ((this.threshold == rhs.threshold) || ((this.threshold != null) && this.threshold.equals(rhs.threshold))))
-            && ((this.id == rhs.id) || ((this.id != null) && this.id.equals(rhs.id))))
-            && ((this.direction == rhs.direction) || ((this.direction != null) && this.direction.equals(rhs.direction))));
+        return (((this.id == rhs.id)||((this.id!= null)&&this.id.equals(rhs.id)))&&((this.parameterType == rhs.parameterType)||((this.parameterType!= null)&&this.parameterType.equals(rhs.parameterType))));
     }
-
 }

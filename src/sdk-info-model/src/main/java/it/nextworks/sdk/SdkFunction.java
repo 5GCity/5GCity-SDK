@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import it.nextworks.sdk.enums.Visibility;
 import it.nextworks.sdk.enums.SdkServiceComponentType;
 import it.nextworks.sdk.evalex.ExtendedExpression;
 import org.hibernate.annotations.Cascade;
@@ -14,19 +15,7 @@ import org.hibernate.annotations.LazyCollectionOption;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import javax.persistence.CascadeType;
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.OrderColumn;
-import javax.persistence.PostLoad;
-import javax.persistence.PostPersist;
-import javax.persistence.PostUpdate;
-import javax.persistence.PrePersist;
+import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -43,18 +32,23 @@ import java.util.stream.Collectors;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "id",
+    "ownerId",
     "name",
     "description",
     "vendor",
     "version",
-    "parameter",
+    "parameters",
     "vnfdId",
-    "vnfd_version",
-    "flavour_expression",
-    "instantiation_level_expression",
+    "vnfdProvider",
+    "vnfdVersion",
+    "visibility",
+    "flavourExpression",
+    "instantiationLevelExpression",
     "metadata",
-    "connection_point",
-    "monitoring_parameter"
+    "connectionPoints",
+    "monitoringParameters",
+    "groupId",
+    "priority"
 })
 @Entity
 public class SdkFunction implements InstantiableCandidate {
@@ -89,10 +83,15 @@ public class SdkFunction implements InstantiableCandidate {
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<Metadata> metadata = new HashSet<>();
 
-    @OneToMany(mappedBy = "function", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "sdkFunction", cascade = CascadeType.ALL)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<MonitoringParameter> monitoringParameters = new HashSet<>();
+
+    @OneToMany(mappedBy = "function", cascade = CascadeType.ALL)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @LazyCollection(LazyCollectionOption.FALSE)
+    private Set<RequiredPort> requiredPorts = new HashSet<>();
 
     private String name;
 
@@ -100,12 +99,52 @@ public class SdkFunction implements InstantiableCandidate {
 
     private String version;
 
-    @JsonProperty("connection_point")
+    private String ownerId;
+
+    private String vnfdProvider;
+
+    private Visibility visibility;
+
+    private String groupId;
+
+    private Integer priority;
+
+    @JsonProperty("ownerId")
+    public String getOwnerId() {
+        return ownerId;
+    }
+
+    @JsonProperty("ownerId")
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
+    }
+
+    @JsonProperty("vnfdProvider")
+    public String getVnfdProvider() {
+        return vnfdProvider;
+    }
+
+    @JsonProperty("vnfdProvider")
+    public void setVnfdProvider(String vnfdProvider) {
+        this.vnfdProvider = vnfdProvider;
+    }
+
+    @JsonProperty("visibility")
+    public Visibility getVisibility() {
+        return visibility;
+    }
+
+    @JsonProperty("visibility")
+    public void setVisibility(Visibility visibility) {
+        this.visibility = visibility;
+    }
+
+    @JsonProperty("connectionPoints")
     public Set<ConnectionPoint> getConnectionPoint() {
         return connectionPoint;
     }
 
-    @JsonProperty("connection_point")
+    @JsonProperty("connectionPoints")
     public void setConnectionPoint(Set<ConnectionPoint> connectionPoint) {
         this.connectionPoint = connectionPoint;
     }
@@ -123,14 +162,14 @@ public class SdkFunction implements InstantiableCandidate {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    @JsonProperty("parameter")
+    @JsonProperty("parameters")
     @Override
     public List<String> getParameters() {
         return parameters;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    @JsonProperty("parameter")
+    @JsonProperty("parameters")
     public void setParameters(List<String> parameters) {
         this.parameters = parameters;
     }
@@ -145,32 +184,32 @@ public class SdkFunction implements InstantiableCandidate {
         this.vnfdId = vnfdId;
     }
 
-    @JsonProperty("vnfd_version")
+    @JsonProperty("vnfdVersion")
     public String getVnfdVersion() {
         return vnfdVersion;
     }
 
-    @JsonProperty("vnfd_version")
+    @JsonProperty("vnfdVersion")
     public void setVnfdVersion(String vnfdVersion) {
         this.vnfdVersion = vnfdVersion;
     }
 
-    @JsonProperty("flavour_expression")
+    @JsonProperty("flavourExpression")
     public String getFlavourExpression() {
         return flavourExpression;
     }
 
-    @JsonProperty("flavour_expression")
+    @JsonProperty("flavourExpression")
     public void setFlavourExpression(String flavourExpression) {
         this.flavourExpression = flavourExpression;
     }
 
-    @JsonProperty("instantiation_level_expression")
+    @JsonProperty("instantiationLevelExpression")
     public String getInstantiationLevelExpression() {
         return instantiationLevelExpression;
     }
 
-    @JsonProperty("instantiation_level_expression")
+    @JsonProperty("instantiationLevelExpression")
     public void setInstantiationLevelExpression(String instantiationLevelExpression) {
         this.instantiationLevelExpression = instantiationLevelExpression;
     }
@@ -200,13 +239,13 @@ public class SdkFunction implements InstantiableCandidate {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    @JsonProperty("monitoring_parameter")
+    @JsonProperty("monitoringParameters")
     public Set<MonitoringParameter> getMonitoringParameters() {
         return monitoringParameters;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    @JsonProperty("monitoring_parameter")
+    @JsonProperty("monitoringParameters")
     public void setMonitoringParameters(Set<MonitoringParameter> monitoringParameters) {
         this.monitoringParameters = monitoringParameters;
     }
@@ -239,6 +278,36 @@ public class SdkFunction implements InstantiableCandidate {
     @JsonProperty("version")
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    @JsonProperty("requiredPorts")
+    public Set<RequiredPort> getRequiredPorts() {
+        return requiredPorts;
+    }
+
+    @JsonProperty("requiredPorts")
+    public void setRequiredPorts(Set<RequiredPort> requiredPorts) {
+        this.requiredPorts = requiredPorts;
+    }
+
+    @JsonProperty("groupId")
+    public String getGroupId() {
+        return groupId;
+    }
+
+    @JsonProperty("groupId")
+    public void setGroupId(String groupId) {
+        this.groupId = groupId;
+    }
+
+    @JsonProperty("priority")
+    public Integer getPriority() {
+        return priority;
+    }
+
+    @JsonProperty("priority")
+    public void setPriority(Integer priority) {
+        this.priority = priority;
     }
 
     @Override
@@ -285,6 +354,10 @@ public class SdkFunction implements InstantiableCandidate {
         sb.append('=');
         sb.append(((this.vnfdId == null) ? "<null>" : this.vnfdId));
         sb.append(',');
+        sb.append("vnfdProvider");
+        sb.append('=');
+        sb.append(((this.vnfdProvider == null) ? "<null>" : this.vnfdProvider));
+        sb.append(',');
         sb.append("flavourExpression");
         sb.append('=');
         sb.append(((this.flavourExpression == null) ? "<null>" : this.flavourExpression));
@@ -296,6 +369,22 @@ public class SdkFunction implements InstantiableCandidate {
         sb.append("id");
         sb.append('=');
         sb.append(((this.id == null) ? "<null>" : this.id));
+        sb.append(',');
+        sb.append("ownerId");
+        sb.append('=');
+        sb.append(((this.ownerId == null) ? "<null>" : this.ownerId));
+        sb.append(',');
+        sb.append("groupId");
+        sb.append('=');
+        sb.append(((this.groupId == null) ? "<null>" : this.groupId));
+        sb.append(',');
+        sb.append("visibility");
+        sb.append('=');
+        sb.append(((this.visibility == null) ? "<null>" : this.visibility));
+        sb.append(',');
+        sb.append("priority");
+        sb.append('=');
+        sb.append(((this.priority == null) ? "<null>" : this.priority));
         sb.append(',');
         sb.append("metadata");
         sb.append('=');
@@ -317,6 +406,10 @@ public class SdkFunction implements InstantiableCandidate {
         sb.append('=');
         sb.append(((this.version == null) ? "<null>" : this.version));
         sb.append(',');
+        sb.append("requiredPorts");
+        sb.append('=');
+        sb.append(((this.requiredPorts == null) ? "<null>" : this.requiredPorts));
+        sb.append(',');
         if (sb.charAt((sb.length() - 1)) == ',') {
             sb.setCharAt((sb.length() - 1), ']');
         } else {
@@ -331,6 +424,7 @@ public class SdkFunction implements InstantiableCandidate {
         result = ((result * 31) + ((this.metadata == null) ? 0 : this.metadata.hashCode()));
         result = ((result * 31) + ((this.instantiationLevelExpression == null) ? 0 : this.instantiationLevelExpression.hashCode()));
         result = ((result * 31) + ((this.vnfdId == null) ? 0 : this.vnfdId.hashCode()));
+        result = ((result * 31) + ((this.vnfdProvider == null) ? 0 : this.vnfdProvider.hashCode()));
         result = ((result * 31) + ((this.description == null) ? 0 : this.description.hashCode()));
         result = ((result * 31) + ((this.version == null) ? 0 : this.version.hashCode()));
         result = ((result * 31) + ((this.monitoringParameters == null) ? 0 : this.monitoringParameters.hashCode()));
@@ -339,7 +433,12 @@ public class SdkFunction implements InstantiableCandidate {
         result = ((result * 31) + ((this.name == null) ? 0 : this.name.hashCode()));
         result = ((result * 31) + ((this.connectionPoint == null) ? 0 : this.connectionPoint.hashCode()));
         result = ((result * 31) + ((this.id == null) ? 0 : this.id.hashCode()));
+        result = ((result * 31) + ((this.ownerId == null) ? 0 : this.ownerId.hashCode()));
+        result = ((result * 31) + ((this.groupId == null) ? 0 : this.groupId.hashCode()));
+        result = ((result * 31) + ((this.priority == null) ? 0 : this.priority.hashCode()));
+        result = ((result * 31) + ((this.visibility == null) ? 0 : this.visibility.hashCode()));
         result = ((result * 31) + ((this.parameters == null) ? 0 : this.parameters.hashCode()));
+        result = ((result * 31) + ((this.requiredPorts == null) ? 0 : this.requiredPorts.hashCode()));
         return result;
     }
 
@@ -352,7 +451,7 @@ public class SdkFunction implements InstantiableCandidate {
             return false;
         }
         SdkFunction rhs = ((SdkFunction) other);
-        return (((((((((((((this.metadata == rhs.metadata) || ((this.metadata != null) && this.metadata.equals(rhs.metadata)))
+        return ((((((((((((((((((((this.metadata == rhs.metadata) || ((this.metadata != null) && this.metadata.equals(rhs.metadata)))
             && ((this.instantiationLevelExpression == rhs.instantiationLevelExpression) || ((this.instantiationLevelExpression != null) && this.instantiationLevelExpression.equals(rhs.instantiationLevelExpression))))
             && ((this.vnfdId == rhs.vnfdId) || ((this.vnfdId != null) && this.vnfdId.equals(rhs.vnfdId))))
             && ((this.description == rhs.description) || ((this.description != null) && this.description.equals(rhs.description))))
@@ -363,21 +462,46 @@ public class SdkFunction implements InstantiableCandidate {
             && ((this.name == rhs.name) || ((this.name != null) && this.name.equals(rhs.name))))
             && ((this.connectionPoint == rhs.connectionPoint) || ((this.connectionPoint != null) && this.connectionPoint.equals(rhs.connectionPoint))))
             && ((this.id == rhs.id) || ((this.id != null) && this.id.equals(rhs.id))))
+            && ((this.ownerId == rhs.ownerId) || ((this.ownerId != null) && this.ownerId.equals(rhs.ownerId))))
+            && ((this.vnfdProvider == rhs.vnfdProvider) || ((this.vnfdProvider != null) && this.vnfdProvider.equals(rhs.vnfdProvider))))
+            && ((this.visibility == rhs.visibility) || ((this.visibility != null) && this.visibility.equals(rhs.visibility))))
+            && ((this.ownerId == rhs.ownerId) || ((this.ownerId != null) && this.ownerId.equals(rhs.ownerId))))
+            &&((this.groupId == rhs.groupId) || ((this.groupId != null) && this.groupId.equals(rhs.groupId))))
+            &&((this.priority == rhs.priority) || ((this.priority != null) && this.priority.equals(rhs.priority))))
+            && ((this.requiredPorts == rhs.requiredPorts) || ((this.requiredPorts != null) && this.requiredPorts.equals(rhs.requiredPorts))))
             && ((this.parameters == rhs.parameters) || ((this.parameters != null) && this.parameters.equals(rhs.parameters))));
     }
 
     @JsonIgnore
     @Override
     public boolean isValid() {
-        return name != null && name.length() > 0
-            && validateCps()
-            && version != null && version.length() > 0
-            && vendor != null && vendor.length() > 0
-            && vnfdId != null && vnfdId.length() > 0
-            && instantiationLevelExpression != null
-            && flavourExpression != null
-            && metadata != null
-            && validateExpressions();
+        return  name != null && name.length() > 0
+                && ownerId != null
+                && validateCps()
+                && version != null && version.length() > 0
+                && vendor != null && vendor.length() > 0
+                && vnfdId != null && vnfdId.length() > 0
+                && vnfdProvider != null && vnfdProvider.length() > 0
+                && instantiationLevelExpression != null
+                && flavourExpression != null
+                && validateExpressions()
+                && vnfdVersion != null
+                && validateMonitoringParameters()
+                && validateRequiredPorts();
+    }
+
+    private boolean validateMonitoringParameters(){
+        if(monitoringParameters != null)
+            return monitoringParameters.stream().allMatch(MonitoringParameter::isValid);
+        else
+            return true;
+    }
+
+    private boolean validateRequiredPorts(){
+        if(requiredPorts != null)
+            return requiredPorts.stream().allMatch(RequiredPort::isValid);
+        else
+            return true;
     }
 
     private boolean validateCps() {
@@ -410,15 +534,19 @@ public class SdkFunction implements InstantiableCandidate {
     }
 
     @PrePersist
+    @PreUpdate
     private void prePersist() {
         for (ConnectionPoint cp : connectionPoint) {
             cp.setSdkFunction(this);
         }
         for (MonitoringParameter mp : monitoringParameters) {
-            mp.setFunction(this);
+            mp.setSdkFunction(this);
         }
         for (Metadata metadatum : metadata) {
             metadatum.setFunction(this);
+        }
+        for (RequiredPort requiredPort : requiredPorts) {
+            requiredPort.setFunction(this);
         }
     }
 
@@ -436,6 +564,7 @@ public class SdkFunction implements InstantiableCandidate {
         connectionPoint = new HashSet<>(connectionPoint);
         monitoringParameters = new HashSet<>(monitoringParameters);
         metadata = new HashSet<>(metadata);
+        requiredPorts = new HashSet<>(requiredPorts);
         parameters = new ArrayList<>(parameters);
     }
 }

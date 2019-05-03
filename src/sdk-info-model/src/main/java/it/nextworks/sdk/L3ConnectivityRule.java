@@ -16,10 +16,10 @@ import javax.persistence.Embeddable;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "protocol",
-    "src_ip",
-    "src_port",
-    "dst_ip",
-    "dst_port"
+    "srcIp",
+    "srcPort",
+    "dstIp",
+    "dstPort"
 })
 @Embeddable
 public class L3ConnectivityRule {
@@ -43,25 +43,25 @@ public class L3ConnectivityRule {
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonProperty("dst_ip")
+    @JsonProperty("dstIp")
     public String getDstIp() {
         return dstIp;
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonProperty("dst_ip")
+    @JsonProperty("dstIp")
     public void setDstIp(String dstIp) {
         this.dstIp = dstIp;
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonProperty("dst_port")
+    @JsonProperty("dstPort")
     public Integer getDstPort() {
         return dstPort;
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonProperty("dst_port")
+    @JsonProperty("dstPort")
     public void setDstPort(Integer dstPort) {
         this.dstPort = dstPort;
     }
@@ -77,25 +77,25 @@ public class L3ConnectivityRule {
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonProperty("src_ip")
+    @JsonProperty("srcIp")
     public String getSrcIp() {
         return srcIp;
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonProperty("src_ip")
+    @JsonProperty("srcIp")
     public void setSrcIp(String srcIp) {
         this.srcIp = srcIp;
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonProperty("src_port")
+    @JsonProperty("srcPort")
     public Integer getSrcPort() {
         return srcPort;
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonProperty("src_port")
+    @JsonProperty("srcPort")
     public void setSrcPort(Integer srcPort) {
         this.srcPort = srcPort;
     }

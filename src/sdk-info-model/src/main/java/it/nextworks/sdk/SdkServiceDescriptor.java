@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import it.nextworks.sdk.enums.SdkServiceComponentType;
 import it.nextworks.sdk.enums.SdkServiceStatus;
+import it.nextworks.sdk.enums.Visibility;
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -14,17 +15,7 @@ import org.hibernate.annotations.LazyCollectionOption;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import javax.persistence.CascadeType;
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.OrderColumn;
-import javax.persistence.PrePersist;
+import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
@@ -44,7 +35,7 @@ import java.util.stream.Collectors;
 @JsonPropertyOrder({
     "id",
     "status",
-    "component_type",
+    "componentType",
     "parameters",
     "sub_descriptor"
 })
@@ -76,6 +67,7 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
     @ManyToOne
     private SdkService template;
 
+
     private SdkServiceDescriptor() {
         super();
         // JPA only
@@ -100,7 +92,7 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
     }
 
     @Override
-    @JsonProperty("component_type")
+    @JsonProperty("componentType")
     public SdkServiceComponentType getType() {
         return SdkServiceComponentType.SDK_SERVICE;
     }
@@ -262,6 +254,7 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
     }
 
     @PrePersist
+    @PreUpdate
     private void prePersist() {
         for (SdkFunctionDescriptor subFunction : subFunctions) {
             subFunction.setOuterService(this);

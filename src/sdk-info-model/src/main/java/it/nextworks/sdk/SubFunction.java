@@ -26,9 +26,10 @@ public class SubFunction extends SdkServiceComponent<SdkFunction> {
      * @param mappingExpression the mapping expressions.
      * @throws IllegalArgumentException if the arguments do not satisfy the constraint
      */
-    public SubFunction(Long componentId, List<String> mappingExpression, SdkService outerService) {
+    public SubFunction(Long componentId, Integer componentIndex, List<String> mappingExpression, SdkService outerService) {
         this.componentId = componentId;
         this.mappingExpression = mappingExpression;
+        this.componentIndex = componentIndex;
         this.outerService = outerService;
         this.type = SdkServiceComponentType.SDK_FUNCTION;
         if (!isValid()) {

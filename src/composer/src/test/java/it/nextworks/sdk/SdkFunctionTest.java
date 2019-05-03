@@ -1,23 +1,25 @@
 package it.nextworks.sdk;
 
 import it.nextworks.composer.ComposerApplication;
+import it.nextworks.composer.executor.ServiceManager;
 import it.nextworks.composer.executor.repositories.SdkFunctionRepository;
-import it.nextworks.sdk.enums.Direction;
-import it.nextworks.sdk.enums.MonitoringParameterName;
+//import it.nextworks.sdk.enums.Direction;
+//import it.nextworks.sdk.enums.MonitoringParameterName;
+import it.nextworks.sdk.enums.AggregatorFunc;
+import it.nextworks.sdk.enums.MetricType;
+import it.nextworks.sdk.enums.MonitoringParameterType;
+import it.nextworks.sdk.enums.Transform;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -32,6 +34,8 @@ import static org.junit.Assert.assertTrue;
 @SpringBootTest(classes = ComposerApplication.class)
 @WebAppConfiguration
 public class SdkFunctionTest {
+
+    private static final Logger log = LoggerFactory.getLogger(SdkFunctionTest.class);
 
     @Autowired
     private SdkFunctionRepository functionRepository;
@@ -63,7 +67,7 @@ public class SdkFunctionTest {
 //        monitoringParameter.setFunction(function);
 //        monitoringParameter.setThreshold(142.0);
 //        monitoringParameter.setDirection(Direction.LOWER_THAN);
-//        function.setMonitoringParameters(Collections.singleton(monitoringParameter));
+//        function.setExtMonitoringParameters(Collections.singleton(monitoringParameter));
 //
 //        ConnectionPoint cp1 = ConnectionPointTest.makeTestObject1();
 //        ConnectionPoint cp2 = ConnectionPointTest.makeTestObject2();
@@ -73,6 +77,36 @@ public class SdkFunctionTest {
 //        function.setConnectionPoint(new HashSet<>(Arrays.asList(cp1, cp2, cp3, cp4)));
 //        return function;
 //    }
+
+    public static FunctionMonParam makeFunctionMonParam(){
+        FunctionMonParam param = new FunctionMonParam();
+        param.setParameterType(MonitoringParameterType.FUNCTION);
+        param.setMetricName("CPU_UTILIZATION");
+        param.setMetricType(MetricType.SYSTEM);
+
+        return param;
+    }
+
+    public static AggregatedMonParam makeAggregatedMonParam(){
+        AggregatedMonParam param = new AggregatedMonParam();
+        param.setParameterType(MonitoringParameterType.AGGREGATED);
+        param.setAggregatorFunc(AggregatorFunc.AVG);
+        List<String> ids = new ArrayList<>();
+        ids.add("10");
+        ids.add("20");
+        param.setParametersId(ids);
+
+        return param;
+    }
+
+    public static TransformedMonParam makeTransformedMonParam(){
+        TransformedMonParam param = new TransformedMonParam();
+        param.setParameterType(MonitoringParameterType.TRANSFORMED);
+        param.setTransform(Transform.AVG_OVER_TIME);
+        param.setTargetParameterId("10");
+
+        return param;
+    }
 
     public static SdkFunction makeNS1vPlateObject() {
         Map<String, String> metadata = new HashMap<>();
@@ -87,10 +121,16 @@ public class SdkFunctionTest {
         function.setParameters(Arrays.asList("isVideo", "size"));
         function.setVnfdId("aa333a44-6587-4940-b442-c029376bbb2e");
         function.setVnfdVersion("v1.0");
+        function.setOwnerId("NXW");
+        function.setVnfdProvider("NXW");
 
         ConnectionPoint cp1 = ConnectionPointTest.makeNS1vPlateObject1();
 
         function.setConnectionPoint(new HashSet<>(Arrays.asList(cp1)));
+
+        FunctionMonParam funParam = makeFunctionMonParam();
+        function.setMonitoringParameters(new HashSet<MonitoringParameter>(Arrays.asList(funParam)));
+
         return function;
     }
 
@@ -114,6 +154,8 @@ public class SdkFunctionTest {
         function.setParameters(Arrays.asList("traffic"));
         function.setVnfdId("aa6a284e-e369-4d7d-a465-57ddc6e8c027");
         function.setVnfdVersion("v5.0");
+        function.setOwnerId("NXW");
+        function.setVnfdProvider("NXW");
 
         ConnectionPoint cp1 = ConnectionPointTest.makeNS1FirewallObject1();
         ConnectionPoint cp2 = ConnectionPointTest.makeNS1FirewallObject2();
@@ -121,6 +163,12 @@ public class SdkFunctionTest {
         ConnectionPoint cp4 = ConnectionPointTest.makeNS1FirewallObject4();
 
         function.setConnectionPoint(new HashSet<>(Arrays.asList(cp1, cp2, cp3, cp4)));
+
+        FunctionMonParam funParam = makeFunctionMonParam();
+        AggregatedMonParam aggParam = makeAggregatedMonParam();
+        TransformedMonParam tranParam = makeTransformedMonParam();
+        function.setMonitoringParameters(new HashSet<MonitoringParameter>(Arrays.asList(funParam, aggParam, tranParam)));
+
         return function;
     }
     
@@ -147,6 +195,8 @@ public class SdkFunctionTest {
         function.setParameters(Arrays.asList("traffic"));
         function.setVnfdId("a49ef787-aaba-4a06-a677-b30a2e883562");
         function.setVnfdVersion("v6.0");
+        function.setOwnerId("NXW");
+        function.setVnfdProvider("NXW");
 
         ConnectionPoint cp1 = ConnectionPointTest.makeFirewallDemobject1();
         ConnectionPoint cp2 = ConnectionPointTest.makeFirewallDemobject2();
@@ -154,6 +204,10 @@ public class SdkFunctionTest {
         ConnectionPoint cp4 = ConnectionPointTest.makeFirewallDemobject4();
 
         function.setConnectionPoint(new HashSet<>(Arrays.asList(cp1, cp2, cp3, cp4)));
+
+        FunctionMonParam funParam = makeFunctionMonParam();
+        function.setMonitoringParameters(new HashSet<MonitoringParameter>(Arrays.asList(funParam)));
+
         return function;
     }
 
@@ -170,10 +224,18 @@ public class SdkFunctionTest {
         function.setParameters(Arrays.asList("isVideo", "size"));
         function.setVnfdId("057289e2-7b8e-4280-8734-43b924f64b85");
         function.setVnfdVersion("v1.0");
+        function.setOwnerId("NXW");
+        function.setVnfdProvider("NXW");
 
         ConnectionPoint cp1 = ConnectionPointTest.makeMiniwebDemobject1();
 
         function.setConnectionPoint(new HashSet<>(Arrays.asList(cp1)));
+
+        FunctionMonParam funParam = makeFunctionMonParam();
+        AggregatedMonParam aggParam = makeAggregatedMonParam();
+        TransformedMonParam tranParam = makeTransformedMonParam();
+        function.setMonitoringParameters(new HashSet<MonitoringParameter>(Arrays.asList(funParam, aggParam, tranParam)));
+
         return function;
     }
 
@@ -208,7 +270,7 @@ public class SdkFunctionTest {
 //    }
 
     @Test
-    //@Ignore // requires DB
+    @Ignore // requires DB
     public void testCityService() {
 
         SdkFunction ns1Firewall = makeNS1FirewallObject();

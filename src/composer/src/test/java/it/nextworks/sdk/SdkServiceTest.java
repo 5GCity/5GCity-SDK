@@ -4,12 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import it.nextworks.composer.ComposerApplication;
 import it.nextworks.composer.executor.repositories.SdkFunctionRepository;
 import it.nextworks.composer.executor.repositories.SdkServiceRepository;
-import it.nextworks.sdk.enums.ConnectionPointType;
-import it.nextworks.sdk.enums.Direction;
-import it.nextworks.sdk.enums.LicenseType;
-import it.nextworks.sdk.enums.MonitoringParameterName;
-import it.nextworks.sdk.enums.Protocol;
-import it.nextworks.sdk.enums.ScalingAction;
+import it.nextworks.sdk.enums.*;
+//import it.nextworks.sdk.enums.Direction;
+//import it.nextworks.sdk.enums.MonitoringParameterName;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,15 +15,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 
+import java.io.File;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.nio.file.Files;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -70,6 +63,7 @@ public class SdkServiceTest {
         service.setName("test-service");
         service.setVersion("0.1");
         service.setDesigner("Nextworks");
+        service.setOwnerId("Nextworks");
 
         License license = new License();
         license.setType(LicenseType.PUBLIC);
@@ -77,12 +71,12 @@ public class SdkServiceTest {
         service.setLicense(license);
 
         service.setParameters(Arrays.asList(
-            "param1",
-            "param2"
+            "param1"
         ));
 
         SubFunction subFunction = new SubFunction(
             functionId,
+            0,
             mappingExpressions,
             service
         );
@@ -103,6 +97,7 @@ public class SdkServiceTest {
             ConnectionPoint intCp = new ConnectionPoint();
             intCp.setName(e.getKey());
             intCp.setInternalCpId(e.getValue());
+            intCp.setComponentIndex(0);
             intCp.setType(ConnectionPointType.INTERNAL);
             intCp.setRequiredPort(e.getValue().intValue() % 1000 + 8000);
             cps.add(intCp);
@@ -136,27 +131,23 @@ public class SdkServiceTest {
         metadata.put("use.spam", "egg");
         service.setMetadata(metadata);
 
-        MonitoringParameter monitoringParameter = new MonitoringParameter();
-        monitoringParameter.setName(MonitoringParameterName.AVERAGE_MEMORY_UTILIZATION);
-        monitoringParameter.setService(service);
-        monitoringParameter.setThreshold(123.0);
-        monitoringParameter.setDirection(Direction.GREATER_THAN);
-        service.setMonitoringParameters(Collections.singleton(monitoringParameter));
+        AggregatedMonParam param1 = SdkFunctionTest.makeAggregatedMonParam();
+        TransformedMonParam param2 = SdkFunctionTest.makeTransformedMonParam();
 
+        service.setExtMonitoringParameters(new HashSet<MonitoringParameter>(Arrays.asList(param1)));
+        service.setIntMonitoringParameters(new HashSet<MonitoringParameter>(Arrays.asList(param2)));
+
+        /*
         ScalingAspect scalingAspect = new ScalingAspect();
         scalingAspect.setName("scaling-aspect-test");
         scalingAspect.setService(service);
         scalingAspect.setAction(ScalingAction.SCALE_UP);
-        MonitoringParameter scalingParameter = new MonitoringParameter();
-        scalingParameter.setName(MonitoringParameterName.AVERAGE_MEMORY_UTILIZATION);
-        scalingParameter.setScalingAspect(scalingAspect);
-        scalingParameter.setThreshold(9.0);
-        scalingParameter.setDirection(Direction.GREATER_THAN);
-        scalingAspect.setMonitoringParameter(Collections.singleton(scalingParameter));
         service.setScalingAspect(Collections.singleton(scalingAspect));
+        */
 
         return service;
     }
+
 /*
     @Test
     @Ignore // requires DB
@@ -198,6 +189,8 @@ public class SdkServiceTest {
         Files.write(fileF.toPath(), bytesF);
     }
 */
+
+/*
     @Test
     @Ignore
     public void createCityServiceFromJson() throws Exception {
@@ -219,30 +212,24 @@ public class SdkServiceTest {
         assertEquals(service, sdkService2);
 
     }
+*/
 
-/*
     @Test
     @Ignore // requires DB
     public void testCityService() throws Exception {
 
-        SdkFunction miniWeb = makeDemoMiniwebObject();
+        SdkFunction firewall = SdkFunctionTest.makeNS1FirewallObject();
 
-        SdkFunction firewall = makeDemoFirewallObject();
-
-        assertTrue(miniWeb.isValid());
         assertTrue(firewall.isValid());
-
-        functionRepository.saveAndFlush(miniWeb);
 
         functionRepository.saveAndFlush(firewall);
 
-        Long miniwebId = miniWeb.getId();
         Long firewallId = firewall.getId();
 
         SdkService service = makeTestObject(
-            functionId,
-            Arrays.asList("param1", "param2"), // I.e. param1 == secure and param2 == small
-            function.getConnectionPoint().stream().collect(Collectors.toMap(
+            firewallId,
+            Arrays.asList("param1"), // I.e. param1 == traffic
+            firewall.getConnectionPoint().stream().collect(Collectors.toMap(
                 ConnectionPoint::getName,
                 ConnectionPoint::getId
             ))
@@ -250,7 +237,7 @@ public class SdkServiceTest {
 
         assertTrue(service.isValid());
 
-        service.resolveComponents(Collections.singleton(function), Collections.emptySet());
+        service.resolveComponents(Collections.singleton(firewall), Collections.emptySet());
 
         serviceRepository.saveAndFlush(service);
 
@@ -266,9 +253,8 @@ public class SdkServiceTest {
         byte[] bytes = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(service);
         Files.write(file.toPath(), bytes);
         File fileF = new File("/tmp/function.json");
-        byte[] bytesF = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(function);
+        byte[] bytesF = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(firewall);
         Files.write(fileF.toPath(), bytesF);
     }
-    */
 }
 
