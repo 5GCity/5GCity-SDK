@@ -18,13 +18,7 @@ package it.nextworks.composer.executor;
 import it.nextworks.composer.adaptor.interfaces.ServicesAdaptorProviderInterface;
 import it.nextworks.composer.executor.interfaces.FunctionManagerProviderInterface;
 import it.nextworks.composer.executor.interfaces.ServiceManagerProviderInterface;
-import it.nextworks.composer.executor.repositories.CatalogueRepository;
-import it.nextworks.composer.executor.repositories.ConnectionpointRepository;
-import it.nextworks.composer.executor.repositories.LinkRepository;
-import it.nextworks.composer.executor.repositories.MonitoringParameterRepository;
-import it.nextworks.composer.executor.repositories.SdkFunctionRepository;
-import it.nextworks.composer.executor.repositories.SdkServiceDescriptorRepository;
-import it.nextworks.composer.executor.repositories.SdkServiceRepository;
+import it.nextworks.composer.executor.repositories.*;
 import it.nextworks.composer.plugins.catalogue.FiveGCataloguePlugin;
 import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
 import it.nextworks.sdk.*;
@@ -42,6 +36,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.task.TaskExecutor;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -74,6 +70,12 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     private SdkFunctionRepository functionRepository;
 
     @Autowired
+    private SdkSubFunctionRepository subFunctionRepository;
+
+    @Autowired
+    private SdkSubServiceRepository subServiceRepository;
+
+    @Autowired
     private LinkRepository linkRepository;
 
     @Autowired
@@ -81,6 +83,9 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
     @Autowired
     private MonitoringParameterRepository monitoringParamRepository;
+
+    @Autowired
+    private MetadataRepository metadataRepository;
 
     //@Autowired
    // private ScalingAspectRepository scalingRepository;
@@ -230,10 +235,47 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
 		log.debug("Updating into database service with id: " + service.getId());
 
-		// Update service on DB
+		cleanOldRelations(srv.get());
+        // Update service on DB
 		serviceRepository.saveAndFlush(service);
-
 		return service.getId().toString();
+    }
+
+    private void cleanOldRelations(SdkService service){
+        for(MonitoringParameter mp : service.getExtMonitoringParameters()){
+            mp.setSdkServiceExt(null);
+            //mp.setReconfigureActionExt(null);
+        }
+        for(MonitoringParameter mp : service.getIntMonitoringParameters()){
+            mp.setSdkServiceInt(null);
+            //mp.setReconfigureActionInt(null);
+        }
+        for(Link mp : service.getLink()){
+            mp.setService(null);
+
+            for(ConnectionPoint cp : mp.getConnectionPoints()){
+                cp.setLink(null);
+            }
+        }
+        for(L3Connectivity mp : service.getL3Connectivity()){
+            mp.setService(null);
+        }
+        for(Metadata mp : service.getMetadata2()){
+            mp.setService(null);
+        }
+        for(ConnectionPoint mp : service.getConnectionPoint()){
+            mp.setSdkService(null);
+        }
+        for(ServiceAction sa : service.getActions()){
+            sa.setSdkService(null);
+        }
+        for(ServiceActionRule sa : service.getActionRules()){
+            sa.setSdkService(null);
+            //sa.setReconfigureAction(null);
+            for(RuleCondition rc : sa.getConditions()){
+                rc.setServiceActionRule(null);
+            }
+        }
     }
 
     @Override
@@ -559,6 +601,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             throw new NotExistingEntityException("The Service with ID: " + serviceId + " is not present in database");
         }
 
+        /*
         List<Long> toKeep = new ArrayList<>();
         for (MonitoringParameter param : extMonitoringParameters) {
             if (!param.isValid()) {
@@ -578,9 +621,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         for(MonitoringParameter param : service.get().getExtMonitoringParameters()){
             if(!toKeep.contains(param.getId())) {
                 param.setSdkServiceExt(null);
-                monitoringParamRepository.saveAndFlush(param);
-                monitoringParamRepository.delete(param);
-                monitoringParamRepository.deleteById(param.getId());
+
             }
         }
 
@@ -608,7 +649,13 @@ public class ServiceManager implements ServiceManagerProviderInterface {
                 monitoringParamRepository.deleteById(param.getId());
             }
         }
-
+        */
+        for(MonitoringParameter mp : service.get().getExtMonitoringParameters()){
+                mp.setSdkServiceExt(null);
+        }
+        for(MonitoringParameter mp : service.get().getIntMonitoringParameters()){
+            mp.setSdkServiceInt(null);
+        }
         log.debug("Updating list of monitoring parameters on service");
         service.get().setExtMonitoringParameters(extMonitoringParameters);
         service.get().setIntMonitoringParameters(intMonitoringParameters);
@@ -620,6 +667,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     public void deleteMonitoringParameters(Long serviceId, Long monitoringParameterId)
         throws NotExistingEntityException, MalformedElementException {
 
+        /*
         log.info("Request to delete a monitoring parameter identified by id " + monitoringParameterId + " for a specific SDK Service " + serviceId);
         Optional<SdkService> service = serviceRepository.findById(serviceId);
         if (!service.isPresent()) {
@@ -649,9 +697,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             log.error("The Monitoring parameter with ID: " + mpOptInt.get().getId() + " is not present in database");
             throw new NotExistingEntityException("The Monitoring parameter with ID: " + mpOptInt.get().getId() + " is not present in database");
         }
-
-
-        /*
+        */
 
         log.info("Request to delete a monitoring parameter identified by id " + monitoringParameterId + " for a specific SDK Service " + serviceId);
         Optional<SdkService> service = serviceRepository.findById(serviceId);
@@ -659,27 +705,29 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             log.error("The Service with ID: " + serviceId + " is not present in database");
             throw new NotExistingEntityException("The Service with ID: " + serviceId + " is not present in database");
         }
-        Set<MonitoringParameter> extMonitoringParameters = service.get().getExtMonitoringParameters();
-        Set<MonitoringParameter> intMonitoringParameters = service.get().getIntMonitoringParameters();
+        Set<MonitoringParameter> extMonitoringParameters = new HashSet<>();
+        extMonitoringParameters.addAll(service.get().getExtMonitoringParameters());
+        Set<MonitoringParameter> intMonitoringParameters = new HashSet<>();
+        intMonitoringParameters.addAll(service.get().getIntMonitoringParameters());
         for (MonitoringParameter param : extMonitoringParameters) {
             if(param.getId().compareTo(monitoringParameterId) == 0){
+                param.setSdkServiceExt(null);
                 extMonitoringParameters.remove(param);
                 break;
             }
         }
         for (MonitoringParameter param : intMonitoringParameters) {
             if(param.getId().compareTo(monitoringParameterId) == 0){
+                param.setSdkServiceInt(null);
                 intMonitoringParameters.remove(param);
                 break;
             }
         }
         service.get().setExtMonitoringParameters(extMonitoringParameters);
         service.get().setIntMonitoringParameters(intMonitoringParameters);
-        log.debug("Monitoring parameter has been deleted.");
+        checkAndResolveService(service.get());
         serviceRepository.saveAndFlush(service.get());
-
-
-         */
+        log.debug("Monitoring parameter has been deleted.");
     }
 
     @Override
@@ -694,5 +742,97 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
         return params;
     }
+
+    /*
+    private void updateComponent(SdkService service, Set<SdkServiceComponent> components) throws MalformedElementException, NotExistingEntityException{
+        List<Long> toKeep = new ArrayList<>();
+        for (SdkServiceComponent component : components) {
+            if (!component.isValid()) {
+                log.error("Malformed Component");
+                throw new MalformedElementException("Malformed Component");
+            }
+            if(component.getId() != null){
+                Optional<SubFunction>  subFunctionOpt = subFunctionRepository.findByIdAndOuterServiceId(component.getId(), service.getId());
+                Optional<SubService>  subServiceOpt = subServiceRepository.findByIdAndOuterServiceId(component.getId(), service.getId());
+                if(!(subFunctionOpt.isPresent() || subServiceOpt.isPresent())){
+                    log.error("The component with ID: " + component.getId() + " is not present in database");
+                    throw new NotExistingEntityException("The component with ID: " + component.getId() + " is not present in database");
+                }else{
+                    toKeep.add(component.getId());
+                }
+            }
+        }
+        for(SdkServiceComponent component : service.getComponents()){
+            if(!toKeep.contains(component.getId())) {
+                component.setOuterService(null);
+                if(component.getType() == SdkServiceComponentType.SDK_FUNCTION) {
+                    subFunctionRepository.saveAndFlush((SubFunction) component);
+                    subFunctionRepository.delete((SubFunction)component);
+                    subFunctionRepository.deleteById(component.getId());
+                }else if(component.getType() == SdkServiceComponentType.SDK_SERVICE){
+                    subServiceRepository.saveAndFlush((SubService) component);
+                    subServiceRepository.delete((SubService)component);
+                    subServiceRepository.deleteById(component.getId());
+                }
+            }
+        }
+
+        service.setComponents(components);
+    }
+
+    private void updateLink(SdkService service, Set<Link> links){
+        for(Link link : service.getLink()){
+            link.setService(null);
+            linkRepository.saveAndFlush(link);
+            linkRepository.delete(link);
+            linkRepository.deleteById(link.getId());
+        }
+        service.setLink(links);
+    }
+
+    private void updateMetadata(SdkService service, Set<Metadata> metadata){
+        for(Metadata md : service.getMetadata2()){
+                md.setService(null);
+                metadataRepository.saveAndFlush(md);
+                metadataRepository.delete(md);
+                metadataRepository.deleteById(md.getId());
+        }
+        service.setMetadata2(metadata);
+    }
+
+    private void updateConnectionPoint(SdkService service, Set<ConnectionPoint> connectionPoints) {
+        List<Long> toKeep = new ArrayList<>();
+        try {
+            for (ConnectionPoint cp : connectionPoints) {
+                if (!cp.isValid()) {
+                    log.error("Malformed Connection Point");
+                    throw new MalformedElementException("Malformed Connection Point");
+                }
+                if (cp.getId() != null) {
+                    Optional<ConnectionPoint> cpOpt = cpRepository.findByIdAndSdkServiceId(cp.getId(), service.getId());
+                    if (!cpOpt.isPresent()) {
+                        log.error("The connection point with ID: " + cp.getId() + " is not present in database");
+                        throw new NotExistingEntityException("The connection point with ID: " + cp.getId() + " is not present in database");
+                    } else {
+                        toKeep.add(cp.getId());
+                    }
+                }
+            }
+            log.info(String.format("CP tokeep %s", toKeep));
+
+            for (ConnectionPoint cp : service.getConnectionPoint()) {
+                if (!toKeep.contains(cp.getId())) {
+                    cp.setSdkService(null);
+                    cpRepository.saveAndFlush(cp);
+                    cpRepository.delete(cp);
+                    cpRepository.deleteById(cp.getId());
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        service.setConnectionPoint(connectionPoints);
+    }
+*/
 }
 

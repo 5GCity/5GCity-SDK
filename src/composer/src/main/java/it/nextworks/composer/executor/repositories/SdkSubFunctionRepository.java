@@ -15,16 +15,18 @@
  */
 package it.nextworks.composer.executor.repositories;
 
-import it.nextworks.sdk.ConnectionPoint;
 import it.nextworks.sdk.MonitoringParameter;
+import it.nextworks.sdk.SdkFunction;
+import it.nextworks.sdk.SubFunction;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
+public interface SdkSubFunctionRepository extends JpaRepository<SubFunction, Long> {
 
-public interface ConnectionpointRepository extends JpaRepository<ConnectionPoint, Long> {
+    Optional<SubFunction> findById(Long id);
 
-    Optional<ConnectionPoint> findById(Integer id);
+    Optional<SubFunction> findByIdAndOuterServiceId(Long id, Long serviceId);
 
-    Optional<ConnectionPoint> findByIdAndSdkServiceId(Long id, Long serviceId);
+
 }

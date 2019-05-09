@@ -50,12 +50,12 @@ public class AggregatedMonParam extends MonitoringParameter {
         this.aggregatorFunc = aggregatorFunc;
     }
 
-    @JsonProperty("parametersId")
+    @JsonProperty("parametersName")
     public List<String> getParametersId() {
         return parametersId;
     }
 
-    @JsonProperty("parametersId")
+    @JsonProperty("parametersName")
     public void setParametersId(List<String> parametersId) {
         this.parametersId = parametersId;
     }
@@ -92,6 +92,7 @@ public class AggregatedMonParam extends MonitoringParameter {
     @Override
     public int hashCode() {
         int result = 1;
+        result = super.hashCode();
         result = ((result* 31)+((this.aggregatorFunc == null)? 0 :this.aggregatorFunc.hashCode()));
         result = ((result* 31)+((this.parametersId == null)? 0 :this.parametersId.hashCode()));
         return result;
@@ -106,9 +107,10 @@ public class AggregatedMonParam extends MonitoringParameter {
             return false;
         }
         AggregatedMonParam rhs = ((AggregatedMonParam) other);
-        return (((this.aggregatorFunc == rhs.aggregatorFunc)||((this.aggregatorFunc!= null)&&this.aggregatorFunc.equals(rhs.aggregatorFunc)))&&((this.parametersId == rhs.parametersId)||((this.parametersId!= null)&&this.parametersId.equals(rhs.parametersId))));
+        return super.equals(other) && (((this.aggregatorFunc == rhs.aggregatorFunc)||((this.aggregatorFunc!= null)&&this.aggregatorFunc.equals(rhs.aggregatorFunc)))&&((this.parametersId == rhs.parametersId)||((this.parametersId!= null)&&this.parametersId.equals(rhs.parametersId))));
     }
 
+    /*
     @PostLoad
     @PostPersist
     @PostUpdate
@@ -116,5 +118,5 @@ public class AggregatedMonParam extends MonitoringParameter {
         // Cleanup persistence artifacts and weird collection implementations
         parametersId = new ArrayList<>(parametersId);
     }
-
+    */
 }

@@ -57,7 +57,7 @@ public class SdkFunction implements InstantiableCandidate {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @OneToMany(mappedBy = "sdkFunction", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "sdkFunction", cascade = CascadeType.ALL, orphanRemoval = true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<ConnectionPoint> connectionPoint = new HashSet<>();
@@ -78,17 +78,17 @@ public class SdkFunction implements InstantiableCandidate {
 
     private String instantiationLevelExpression;
 
-    @OneToMany(mappedBy = "function", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "function", cascade = CascadeType.ALL, orphanRemoval=true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<Metadata> metadata = new HashSet<>();
 
-    @OneToMany(mappedBy = "sdkFunction", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "sdkFunction", cascade = CascadeType.ALL, orphanRemoval=true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<MonitoringParameter> monitoringParameters = new HashSet<>();
 
-    @OneToMany(mappedBy = "function", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "function", cascade = CascadeType.ALL, orphanRemoval=true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<RequiredPort> requiredPorts = new HashSet<>();
@@ -146,7 +146,15 @@ public class SdkFunction implements InstantiableCandidate {
 
     @JsonProperty("connectionPoints")
     public void setConnectionPoint(Set<ConnectionPoint> connectionPoint) {
-        this.connectionPoint = connectionPoint;
+
+        //this.connectionPoint = connectionPoint;
+        //this.connectionPoint = connectionPoint;
+        this.connectionPoint.clear();
+        this.connectionPoint.addAll(connectionPoint);
+
+        for (ConnectionPoint cp : this.connectionPoint) {
+            cp.setSdkFunction(this);
+        }
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -233,9 +241,17 @@ public class SdkFunction implements InstantiableCandidate {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("metadata")
     public void setMetadata(Map<String, String> metadata) {
-        this.metadata = metadata.entrySet().stream()
+        /*this.metadata = metadata.entrySet().stream()
             .map(e -> new Metadata(e.getKey(), e.getValue(), this))
-            .collect(Collectors.toSet());
+            .collect(Collectors.toSet());*/
+        this.metadata.clear();
+        this.metadata.addAll(metadata.entrySet().stream()
+            .map(e -> new Metadata(e.getKey(), e.getValue(), this))
+            .collect(Collectors.toSet()));
+
+        for (Metadata metadatum : this.metadata) {
+            metadatum.setFunction(this);
+        }
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -247,7 +263,14 @@ public class SdkFunction implements InstantiableCandidate {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("monitoringParameters")
     public void setMonitoringParameters(Set<MonitoringParameter> monitoringParameters) {
-        this.monitoringParameters = monitoringParameters;
+        //this.monitoringParameters = monitoringParameters;
+        this.monitoringParameters.clear();
+        this.monitoringParameters.addAll(monitoringParameters);
+
+        for (MonitoringParameter mp : this.monitoringParameters) {
+            mp.setSdkFunction(this);
+        }
+
     }
 
     @JsonProperty("name")
@@ -287,7 +310,13 @@ public class SdkFunction implements InstantiableCandidate {
 
     @JsonProperty("requiredPorts")
     public void setRequiredPorts(Set<RequiredPort> requiredPorts) {
-        this.requiredPorts = requiredPorts;
+        //this.requiredPorts = requiredPorts;
+        this.requiredPorts.clear();
+        this.requiredPorts.addAll(requiredPorts);
+
+        for (RequiredPort mp : this.requiredPorts) {
+            mp.setFunction(this);
+        }
     }
 
     @JsonProperty("groupId")
@@ -491,10 +520,25 @@ public class SdkFunction implements InstantiableCandidate {
     }
 
     private boolean validateMonitoringParameters(){
-        if(monitoringParameters != null)
-            return monitoringParameters.stream().allMatch(MonitoringParameter::isValid);
-        else
-            return true;
+        boolean validParameter;
+        final Set<String> parametersName = new HashSet<String>();
+        validParameter = monitoringParameters.stream().allMatch(MonitoringParameter::isValid);
+        for(MonitoringParameter mp : monitoringParameters){
+            if(!parametersName.add(mp.getName())) {
+                validParameter = false;
+                break;
+            }
+            if(mp instanceof TransformedMonParam){
+                validParameter = validParameter && (monitoringParameters.stream().map(MonitoringParameter::getName).collect(Collectors.toSet()).contains(((TransformedMonParam) mp).getTargetParameterId()));
+            }
+            if(mp instanceof  AggregatedMonParam){
+                for(String s : ((AggregatedMonParam) mp).getParametersId()){
+                    validParameter = validParameter && (monitoringParameters.stream().map(MonitoringParameter::getName).collect(Collectors.toSet()).contains(s));
+                }
+            }
+        }
+
+        return validParameter;
     }
 
     private boolean validateRequiredPorts(){
@@ -533,6 +577,7 @@ public class SdkFunction implements InstantiableCandidate {
         }
     }
 
+    /*
     @PrePersist
     @PreUpdate
     private void prePersist() {
@@ -549,6 +594,7 @@ public class SdkFunction implements InstantiableCandidate {
             requiredPort.setFunction(this);
         }
     }
+    */
 
     @JsonIgnore
     @Override
@@ -556,6 +602,7 @@ public class SdkFunction implements InstantiableCandidate {
         return parameters.size();
     }
 
+    /*
     @PostLoad
     @PostPersist
     @PostUpdate
@@ -567,4 +614,5 @@ public class SdkFunction implements InstantiableCandidate {
         requiredPorts = new HashSet<>(requiredPorts);
         parameters = new ArrayList<>(parameters);
     }
+    */
 }

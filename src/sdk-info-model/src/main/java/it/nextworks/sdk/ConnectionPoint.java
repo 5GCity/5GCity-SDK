@@ -61,8 +61,10 @@ public class ConnectionPoint {
     @ManyToOne
     private Link link;
 
+    /*
     @ManyToOne
     private L3Connectivity l3Connectivity;
+    */
 
     private Long internalCpId;
 
@@ -177,6 +179,7 @@ public class ConnectionPoint {
         this.link = link;
     }
 
+    /*
     @JsonIgnore
     public L3Connectivity getL3Connectivity() {
         return l3Connectivity;
@@ -186,6 +189,7 @@ public class ConnectionPoint {
     public void setL3Connectivity(L3Connectivity l3Connectivity) {
         this.l3Connectivity = l3Connectivity;
     }
+    */
 
     @JsonIgnore
     public boolean isValid() {
@@ -271,6 +275,7 @@ public class ConnectionPoint {
             && ((this.requiredPort == rhs.requiredPort) || ((this.requiredPort != null) && this.requiredPort.equals(rhs.requiredPort))));
     }
 
+    /*
     @PostLoad
     @PostPersist
     @PostUpdate
@@ -278,5 +283,5 @@ public class ConnectionPoint {
         // Cleanup persistence artifacts and weird collection implementations
         requiredPort = new HashSet<>(requiredPort);
     }
-
+    */
 }

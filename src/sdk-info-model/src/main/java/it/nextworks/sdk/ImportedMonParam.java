@@ -81,6 +81,7 @@ public class ImportedMonParam extends MonitoringParameter{
     @Override
     public int hashCode() {
         int result = 1;
+        result = super.hashCode();
         result = ((result* 31)+((this.importedParameterId == null)? 0 :this.importedParameterId.hashCode()));
         result = ((result* 31)+((this.componentIndex == null)? 0 :this.componentIndex.hashCode()));
         return result;
@@ -95,7 +96,7 @@ public class ImportedMonParam extends MonitoringParameter{
             return false;
         }
         ImportedMonParam rhs = ((ImportedMonParam) other);
-        return (((this.importedParameterId == rhs.importedParameterId)||((this.importedParameterId != null)&&this.importedParameterId.equals(rhs.importedParameterId)))&&((this.componentIndex == rhs.componentIndex)||((this.componentIndex!= null)&&this.componentIndex.equals(rhs.componentIndex))));
+        return super.equals(other) && ((this.importedParameterId == rhs.importedParameterId)||((this.importedParameterId != null)&&this.importedParameterId.equals(rhs.importedParameterId)))&&((this.componentIndex == rhs.componentIndex)||((this.componentIndex!= null)&&this.componentIndex.equals(rhs.componentIndex)));
     }
 
 }

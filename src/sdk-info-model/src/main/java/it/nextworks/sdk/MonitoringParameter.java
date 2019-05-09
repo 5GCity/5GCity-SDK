@@ -32,11 +32,21 @@ public abstract class MonitoringParameter {
 
     private MonitoringParameterType parameterType;
 
+    private String name;
+
     @ManyToOne
     private SdkService sdkServiceExt;
 
     @ManyToOne
     private SdkService sdkServiceInt;
+
+    /*
+    @ManyToOne
+    private ReconfigureAction reconfigureActionExt;
+
+    @ManyToOne
+    private ReconfigureAction reconfigureActionInt;
+    */
 
     @ManyToOne
     private SdkFunction sdkFunction;
@@ -68,6 +78,16 @@ public abstract class MonitoringParameter {
     @JsonIgnore
     public Long getId() { return id; }
 
+    @JsonProperty("name")
+    public String getName() {
+        return name;
+    }
+
+    @JsonProperty("name")
+    public void setName(String name) {
+        this.name = name;
+    }
+
     @JsonIgnore
     public SdkService getSdkServiceExt() {
         return sdkServiceExt;
@@ -94,9 +114,31 @@ public abstract class MonitoringParameter {
     @JsonIgnore
     public void setSdkFunction(SdkFunction sdkFunction) { this.sdkFunction = sdkFunction; }
 
+    /*
+    @JsonIgnore
+    public ReconfigureAction getReconfigureActionExt() {
+        return reconfigureActionExt;
+    }
+
+    @JsonIgnore
+    public void setReconfigureActionExt(ReconfigureAction reconfigureActionExt) {
+        this.reconfigureActionExt = reconfigureActionExt;
+    }
+
+    @JsonIgnore
+    public ReconfigureAction getReconfigureActionInt() {
+        return reconfigureActionInt;
+    }
+
+    @JsonIgnore
+    public void setReconfigureActionInt(ReconfigureAction reconfigureActionInt) {
+        this.reconfigureActionInt = reconfigureActionInt;
+    }
+*/
     @JsonIgnore
     public boolean isValid() {
-        return parameterType != null;
+        return parameterType != null
+            && name != null && name.length() > 0;
     }
 
     @Override
@@ -111,6 +153,10 @@ public abstract class MonitoringParameter {
         sb.append('=');
         sb.append(((this.id == null)?"<null>":this.id));
         sb.append(',');
+        sb.append("name");
+        sb.append('=');
+        sb.append(((this.name == null)?"<null>":this.name));
+        sb.append(',');
         if (sb.charAt((sb.length()- 1)) == ',') {
             sb.setCharAt((sb.length()- 1), ']');
         } else {
@@ -124,6 +170,7 @@ public abstract class MonitoringParameter {
         int result = 1;
         result = ((result* 31)+((this.id == null)? 0 :this.id.hashCode()));
         result = ((result* 31)+((this.parameterType == null)? 0 :this.parameterType.hashCode()));
+        result = ((result* 31)+((this.name == null)? 0 :this.name.hashCode()));
         return result;
     }
 
@@ -136,6 +183,8 @@ public abstract class MonitoringParameter {
             return false;
         }
         MonitoringParameter rhs = ((MonitoringParameter) other);
-        return (((this.id == rhs.id)||((this.id!= null)&&this.id.equals(rhs.id)))&&((this.parameterType == rhs.parameterType)||((this.parameterType!= null)&&this.parameterType.equals(rhs.parameterType))));
+        return (((this.id == rhs.id)||((this.id!= null)&&this.id.equals(rhs.id)))
+            &&((this.parameterType == rhs.parameterType)||((this.parameterType!= null)&&this.parameterType.equals(rhs.parameterType)))
+            &&((this.name == rhs.name)||((this.name!= null)&&this.name.equals(rhs.name))));
     }
 }

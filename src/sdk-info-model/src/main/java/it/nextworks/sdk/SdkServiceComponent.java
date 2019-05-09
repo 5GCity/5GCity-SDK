@@ -49,7 +49,6 @@ abstract public class SdkServiceComponent<T extends InstantiableCandidate> {
     @GeneratedValue(strategy = GenerationType.AUTO)
     protected Long id;
 
-    @Transient
     protected Long componentId;
 
     @Transient
@@ -58,7 +57,7 @@ abstract public class SdkServiceComponent<T extends InstantiableCandidate> {
     protected Integer componentIndex;
 
     @ManyToOne
-    protected T component;
+    protected T sdkComponent;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @Fetch(FetchMode.SELECT)
@@ -120,10 +119,10 @@ abstract public class SdkServiceComponent<T extends InstantiableCandidate> {
 
     @JsonIgnore
     public T getComponent() {
-        if (component == null) {
+        if (sdkComponent == null) {
             throw new IllegalStateException("Component not yet set, resolve the component first");
         }
-        return component;
+        return sdkComponent;
     }
 
     @JsonIgnore
@@ -151,7 +150,7 @@ abstract public class SdkServiceComponent<T extends InstantiableCandidate> {
                 componentId
             ));
         }
-        this.component = component;
+        this.sdkComponent = component;
     }
 
     @JsonProperty("mappingExpressions")
@@ -169,7 +168,7 @@ abstract public class SdkServiceComponent<T extends InstantiableCandidate> {
 
     @JsonIgnore
     public boolean isResolved() {
-        return component != null;
+        return sdkComponent != null;
     }
 
     private boolean validateExpressions() {
@@ -205,7 +204,7 @@ abstract public class SdkServiceComponent<T extends InstantiableCandidate> {
             .append('[');
         sb.append("component");
         sb.append('=');
-        sb.append(((this.component == null) ? "<null>" : this.component));
+        sb.append(((this.sdkComponent == null) ? "<null>" : this.sdkComponent));
         sb.append(',');
         sb.append("mappingExpressions");
         sb.append('=');
@@ -257,13 +256,13 @@ abstract public class SdkServiceComponent<T extends InstantiableCandidate> {
     }
 
     @PrePersist
-    @PreUpdate
     private void prePersist() {
         if (!isResolved()) {
             throw new IllegalStateException("Cannot persist, component is not resolved");
         }
     }
 
+    /*
     @PostLoad
     @PostPersist
     @PostUpdate
@@ -272,4 +271,5 @@ abstract public class SdkServiceComponent<T extends InstantiableCandidate> {
         componentId = component.getId();
         type = component.getType();
     }
+     */
 }

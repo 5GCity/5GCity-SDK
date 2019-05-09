@@ -82,6 +82,7 @@ public class FunctionMonParam extends MonitoringParameter {
     @Override
     public int hashCode() {
         int result = 1;
+        result = super.hashCode();
         result = ((result* 31)+((this.metricType == null)? 0 :this.metricType.hashCode()));
         result = ((result* 31)+((this.metricName == null)? 0 :this.metricName.hashCode()));
         return result;
@@ -96,6 +97,6 @@ public class FunctionMonParam extends MonitoringParameter {
             return false;
         }
         FunctionMonParam rhs = ((FunctionMonParam) other);
-        return (((this.metricType == rhs.metricType)||((this.metricType!= null)&&this.metricType.equals(rhs.metricType)))&&((this.metricName == rhs.metricName)||((this.metricName!= null)&&this.metricName.equals(rhs.metricName))));
+        return super.equals(other) && (((this.metricType == rhs.metricType)||((this.metricType!= null)&&this.metricType.equals(rhs.metricType)))&&((this.metricName == rhs.metricName)||((this.metricName!= null)&&this.metricName.equals(rhs.metricName))));
     }
 }

@@ -61,9 +61,14 @@ public class Link {
         this.connectionPointNames = connectionPointIds;
     }
 
-    @JsonIgnore
+    @JsonProperty("id")
     public Long getId() {
         return id;
+    }
+
+    @JsonProperty("id")
+    public void setId(Long id) {
+        this.id = id;
     }
 
     @JsonProperty("name")
@@ -113,6 +118,12 @@ public class Link {
         HashSet<ConnectionPoint> linkCPs = new HashSet<>(connectionPoints);
         linkCPs.removeIf(cp -> !connectionPointNames.contains(cp.getName()));
         this.connectionPoints = linkCPs;
+
+        /*
+        for (ConnectionPoint connectionPoint : this.connectionPoints) {
+            connectionPoint.setLink(this);
+        }
+         */
     }
 
 
@@ -175,21 +186,25 @@ public class Link {
         return connectionPoints != null;
     }
 
-    @PrePersist
-    @PreUpdate
-    private void prePersist() {
-        if (!isResolved()) {
-            throw new IllegalStateException("Cannot persist, component is not resolved");
-        }
-        for (ConnectionPoint connectionPoint : connectionPoints) {
-            connectionPoint.setLink(this);
-        }
-    }
 
+//    @PrePersist
+//    private void prePersist() {
+//        if (!isResolved()) {
+//            throw new IllegalStateException("Cannot persist, component is not resolved");
+//        }
+//        /*
+//        for (ConnectionPoint connectionPoint : connectionPoints) {
+//            connectionPoint.setLink(this);
+//        }
+//        */
+//
+//    }
+
+    /*
     @PostLoad
-    @PostPersist
-    @PostUpdate
     private void fixPersistence() {
         connectionPointNames = new HashSet<>(connectionPointNames);
     }
+
+     */
 }

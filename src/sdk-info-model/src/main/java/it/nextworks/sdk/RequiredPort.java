@@ -122,10 +122,13 @@ public class RequiredPort {
             &&((this.ports == rhs.ports)||((this.ports!= null)&&this.ports.equals(rhs.ports))));
     }
 
+    /*
     @PostLoad
     @PostPersist
     @PostUpdate
     private void fixPersistence() {
         ports = new ArrayList<>(ports);
     }
+
+     */
 }

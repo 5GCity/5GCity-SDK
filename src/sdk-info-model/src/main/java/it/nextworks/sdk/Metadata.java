@@ -60,6 +60,9 @@ public class Metadata {
     }
 
     @JsonIgnore
+    public Long getId() { return id; }
+
+    @JsonIgnore
     public SdkFunction getFunction() {
         return function;
     }

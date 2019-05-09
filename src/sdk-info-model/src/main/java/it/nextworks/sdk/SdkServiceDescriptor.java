@@ -54,12 +54,12 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
     @OrderColumn
     private List<BigDecimal> parameterValues;
 
-    @OneToMany(mappedBy = "outerService", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "outerService", cascade = CascadeType.ALL, orphanRemoval = true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<SdkFunctionDescriptor> subFunctions = new HashSet<>();
 
-    @OneToMany(mappedBy = "outerService", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "outerService", cascade = CascadeType.ALL, orphanRemoval = true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<SdkServiceDescriptor> subServices = new HashSet<>();
@@ -129,7 +129,7 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
         return output;
     }
 
-    @JsonProperty("sub_instance")
+    @JsonProperty("sub_descriptor")
     public void setSubDescriptors(Set<SdkComponentInstance> components) {
         Map<SdkServiceComponentType, List<SdkComponentInstance>> byType =
             components.stream().collect(Collectors.groupingBy(SdkComponentInstance::getType));
@@ -147,7 +147,16 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
             .map(SdkServiceDescriptor.class::cast)
             .collect(Collectors.toSet());
         validateComponents();
+
+        for (SdkFunctionDescriptor subFunction : subFunctions) {
+            subFunction.setOuterService(this);
+        }
+
+        for (SdkServiceDescriptor subService : subServices) {
+            subService.setOuterService(this);
+        }
     }
+
 
     private void validateComponents() {
         Set<Long> subServicesIds = subServices.stream()
@@ -253,6 +262,7 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
         return 0;
     }
 
+    /*
     @PrePersist
     @PreUpdate
     private void prePersist() {
@@ -263,4 +273,5 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
             subService.setOuterService(this);
         }
     }
+    */
 }

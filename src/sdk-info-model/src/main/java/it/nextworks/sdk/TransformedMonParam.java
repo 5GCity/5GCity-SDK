@@ -61,12 +61,12 @@ public class TransformedMonParam extends MonitoringParameter {
         this.argumentList = argumentList;
     }
 
-    @JsonProperty("targetParameterId")
+    @JsonProperty("targetParameterName")
     public String getTargetParameterId() {
         return targetParameterId;
     }
 
-    @JsonProperty("targetParameterId")
+    @JsonProperty("targetParameterName")
     public void setTargetParameterId(String targetParameterId) {
         this.targetParameterId = targetParameterId;
     }
@@ -77,7 +77,8 @@ public class TransformedMonParam extends MonitoringParameter {
         return super.isValid()
             && transform != null
             && argumentList != null
-            && targetParameterId != null;
+            && targetParameterId != null
+            && targetParameterId.length() > 0;
     }
 
     @Override
@@ -107,6 +108,7 @@ public class TransformedMonParam extends MonitoringParameter {
     @Override
     public int hashCode() {
         int result = 1;
+        result = super.hashCode();
         result = ((result* 31)+((this.argumentList == null)? 0 :this.argumentList.hashCode()));
         result = ((result* 31)+((this.transform == null)? 0 :this.transform.hashCode()));
         result = ((result* 31)+((this.targetParameterId == null)? 0 :this.targetParameterId.hashCode()));
@@ -122,9 +124,10 @@ public class TransformedMonParam extends MonitoringParameter {
             return false;
         }
         TransformedMonParam rhs = ((TransformedMonParam) other);
-        return ((((this.argumentList == rhs.argumentList)||((this.argumentList!= null)&&this.argumentList.equals(rhs.argumentList)))&&((this.transform == rhs.transform)||((this.transform!= null)&&this.transform.equals(rhs.transform))))&&((this.targetParameterId == rhs.targetParameterId)||((this.targetParameterId != null)&&this.targetParameterId.equals(rhs.targetParameterId))));
+        return super.equals(other) && ((((this.argumentList == rhs.argumentList)||((this.argumentList!= null)&&this.argumentList.equals(rhs.argumentList)))&&((this.transform == rhs.transform)||((this.transform!= null)&&this.transform.equals(rhs.transform))))&&((this.targetParameterId == rhs.targetParameterId)||((this.targetParameterId != null)&&this.targetParameterId.equals(rhs.targetParameterId))));
     }
 
+    /*
     @PostLoad
     @PostPersist
     @PostUpdate
@@ -132,4 +135,5 @@ public class TransformedMonParam extends MonitoringParameter {
         // Cleanup persistence artifacts and weird collection implementations
         argumentList = new ArrayList<>(argumentList);
     }
+     */
 }
