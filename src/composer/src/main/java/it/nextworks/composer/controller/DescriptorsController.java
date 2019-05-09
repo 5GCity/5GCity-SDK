@@ -42,7 +42,7 @@ public class DescriptorsController {
 
 
 
-    @ApiOperation(value = "Publish Service to Public Catalogue")
+    @ApiOperation(value = "Publish Service to Public Catalogue" )
     @ApiResponses(value = {@ApiResponse(code = 202, message = "The service will be published to the public catalogue"),
         @ApiResponse(code = 404, message = "Entity to be published not found"),
         @ApiResponse(code = 400, message = "Publication request without parameter serviceId or already published service")})
@@ -68,7 +68,7 @@ public class DescriptorsController {
         }
     }
 
-    @ApiOperation(value = "Get all Sdk Service descriptor")
+    @ApiOperation(value = "Get all Sdk Service descriptor", response = SdkServiceDescriptor.class, responseContainer = "List")
     @ApiResponses(value = {
         @ApiResponse(code = 200, message = "OK")
     })
@@ -79,7 +79,7 @@ public class DescriptorsController {
         return new ResponseEntity<>(allDescriptors, HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Get Sdk Service descriptor")
+    @ApiOperation(value = "Get Sdk Service descriptor", response = SdkServiceDescriptor.class)
     @ApiResponses(value = {
         @ApiResponse(code = 200, message = "OK"),
         @ApiResponse(code = 404, message = "Entity not found")
