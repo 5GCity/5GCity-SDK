@@ -40,7 +40,7 @@ public interface ServiceManagerProviderInterface {
         throws NotExistingEntityException;
 
     String createService(SdkService service)
-        throws MalformedElementException;
+        throws NotExistingEntityException, MalformedElementException;
 
     String updateService(SdkService service)
         throws NotExistingEntityException, MalformedElementException;

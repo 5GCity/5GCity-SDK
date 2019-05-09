@@ -119,6 +119,11 @@ public class ServiceRestController {
                 return new ResponseEntity<String>(
                     String.format("Malformed request: %s", e.getMessage()),
                     HttpStatus.BAD_REQUEST);
+            }catch (NotExistingEntityException e){
+                log.error("Malformed request: {}", e.getMessage());
+                return new ResponseEntity<String>(
+                    String.format("Malformed request: %s", e.getMessage()),
+                    HttpStatus.BAD_REQUEST);
             }
         } else {
             log.error("The service provided cannot be validated");
@@ -139,9 +144,9 @@ public class ServiceRestController {
                 log.debug("Service entity updated");
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             } catch (NotExistingEntityException e) {
-                log.error("Service with id " + request.getId() + " is not present in database");
+                log.error(e.getMessage());
                 return new ResponseEntity<String>(
-                    "Service with id " + request.getId() + " is not present in database", HttpStatus.BAD_REQUEST);
+                    e.getMessage(), HttpStatus.BAD_REQUEST);
             } catch (MalformedElementException e1) {
                 log.error("Service with id " + request.getId() + " is malformatted");
                 return new ResponseEntity<String>(

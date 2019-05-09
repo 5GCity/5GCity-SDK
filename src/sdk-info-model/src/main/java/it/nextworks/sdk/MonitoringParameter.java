@@ -40,14 +40,6 @@ public abstract class MonitoringParameter {
     @ManyToOne
     private SdkService sdkServiceInt;
 
-    /*
-    @ManyToOne
-    private ReconfigureAction reconfigureActionExt;
-
-    @ManyToOne
-    private ReconfigureAction reconfigureActionInt;
-    */
-
     @ManyToOne
     private SdkFunction sdkFunction;
 
@@ -114,27 +106,6 @@ public abstract class MonitoringParameter {
     @JsonIgnore
     public void setSdkFunction(SdkFunction sdkFunction) { this.sdkFunction = sdkFunction; }
 
-    /*
-    @JsonIgnore
-    public ReconfigureAction getReconfigureActionExt() {
-        return reconfigureActionExt;
-    }
-
-    @JsonIgnore
-    public void setReconfigureActionExt(ReconfigureAction reconfigureActionExt) {
-        this.reconfigureActionExt = reconfigureActionExt;
-    }
-
-    @JsonIgnore
-    public ReconfigureAction getReconfigureActionInt() {
-        return reconfigureActionInt;
-    }
-
-    @JsonIgnore
-    public void setReconfigureActionInt(ReconfigureAction reconfigureActionInt) {
-        this.reconfigureActionInt = reconfigureActionInt;
-    }
-*/
     @JsonIgnore
     public boolean isValid() {
         return parameterType != null

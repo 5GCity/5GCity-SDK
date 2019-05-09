@@ -127,6 +127,7 @@ public class SdkServiceTest {
         service.setVersion("0.1");
         service.setDesigner("Nextworks");
         service.setOwnerId("Nextworks");
+        service.setGroupId("NXW");
 
         License license = new License();
         license.setType(LicenseType.PUBLIC);
@@ -194,9 +195,9 @@ public class SdkServiceTest {
         metadata.put("use.spam", "egg");
         service.setMetadata(metadata);
 
-        ImportedMonParam param1 = makeImportedMonParam("monparam1","15");
-        ImportedMonParam param2 = makeImportedMonParam("monparam2","20");
-        ImportedMonParam param3 = makeImportedMonParam("monparam3","10");
+        ImportedMonParam param1 = makeImportedMonParam("monparam1","7");
+        ImportedMonParam param2 = makeImportedMonParam("monparam2","8");
+        ImportedMonParam param3 = makeImportedMonParam("monparam3","9");
 
         AggregatedMonParam param4 = makeAggregatedMonParam();
         TransformedMonParam param5 = makeTransformedMonParam();

@@ -15,7 +15,6 @@ import java.util.Set;
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "actionType", visible = true)
 @JsonSubTypes({
-    //@JsonSubTypes.Type(value = ReconfigureAction.class, 	name = "RECONFIGURE"),
     @JsonSubTypes.Type(value = ScaleInAction.class, 	name = "SCALE_IN"),
     @JsonSubTypes.Type(value = ScaleOutAction.class, 	name = "SCALE_OUT"),
     @JsonSubTypes.Type(value = ComponentAction.class, 	name = "COMPONENT"),

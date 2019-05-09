@@ -118,12 +118,6 @@ public class Link {
         HashSet<ConnectionPoint> linkCPs = new HashSet<>(connectionPoints);
         linkCPs.removeIf(cp -> !connectionPointNames.contains(cp.getName()));
         this.connectionPoints = linkCPs;
-
-        /*
-        for (ConnectionPoint connectionPoint : this.connectionPoints) {
-            connectionPoint.setLink(this);
-        }
-         */
     }
 
 
@@ -181,30 +175,4 @@ public class Link {
             && Objects.equals(this.id, rhs.id)
             && Objects.equals(this.connectionPointNames, rhs.connectionPointNames);
     }
-
-    private boolean isResolved() {
-        return connectionPoints != null;
-    }
-
-
-//    @PrePersist
-//    private void prePersist() {
-//        if (!isResolved()) {
-//            throw new IllegalStateException("Cannot persist, component is not resolved");
-//        }
-//        /*
-//        for (ConnectionPoint connectionPoint : connectionPoints) {
-//            connectionPoint.setLink(this);
-//        }
-//        */
-//
-//    }
-
-    /*
-    @PostLoad
-    private void fixPersistence() {
-        connectionPointNames = new HashSet<>(connectionPointNames);
-    }
-
-     */
 }

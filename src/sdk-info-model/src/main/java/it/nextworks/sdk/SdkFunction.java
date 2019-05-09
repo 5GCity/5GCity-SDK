@@ -103,7 +103,7 @@ public class SdkFunction implements InstantiableCandidate {
 
     private String vnfdProvider;
 
-    private Visibility visibility;
+    private Visibility visibility = Visibility.fromValue("PUBLIC");
 
     private String groupId;
 
@@ -147,8 +147,6 @@ public class SdkFunction implements InstantiableCandidate {
     @JsonProperty("connectionPoints")
     public void setConnectionPoint(Set<ConnectionPoint> connectionPoint) {
 
-        //this.connectionPoint = connectionPoint;
-        //this.connectionPoint = connectionPoint;
         this.connectionPoint.clear();
         this.connectionPoint.addAll(connectionPoint);
 
@@ -241,9 +239,6 @@ public class SdkFunction implements InstantiableCandidate {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("metadata")
     public void setMetadata(Map<String, String> metadata) {
-        /*this.metadata = metadata.entrySet().stream()
-            .map(e -> new Metadata(e.getKey(), e.getValue(), this))
-            .collect(Collectors.toSet());*/
         this.metadata.clear();
         this.metadata.addAll(metadata.entrySet().stream()
             .map(e -> new Metadata(e.getKey(), e.getValue(), this))
@@ -263,7 +258,6 @@ public class SdkFunction implements InstantiableCandidate {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("monitoringParameters")
     public void setMonitoringParameters(Set<MonitoringParameter> monitoringParameters) {
-        //this.monitoringParameters = monitoringParameters;
         this.monitoringParameters.clear();
         this.monitoringParameters.addAll(monitoringParameters);
 
@@ -310,7 +304,6 @@ public class SdkFunction implements InstantiableCandidate {
 
     @JsonProperty("requiredPorts")
     public void setRequiredPorts(Set<RequiredPort> requiredPorts) {
-        //this.requiredPorts = requiredPorts;
         this.requiredPorts.clear();
         this.requiredPorts.addAll(requiredPorts);
 
@@ -506,6 +499,7 @@ public class SdkFunction implements InstantiableCandidate {
     public boolean isValid() {
         return  name != null && name.length() > 0
                 && ownerId != null
+                && groupId != null
                 && validateCps()
                 && version != null && version.length() > 0
                 && vendor != null && vendor.length() > 0
@@ -577,42 +571,10 @@ public class SdkFunction implements InstantiableCandidate {
         }
     }
 
-    /*
-    @PrePersist
-    @PreUpdate
-    private void prePersist() {
-        for (ConnectionPoint cp : connectionPoint) {
-            cp.setSdkFunction(this);
-        }
-        for (MonitoringParameter mp : monitoringParameters) {
-            mp.setSdkFunction(this);
-        }
-        for (Metadata metadatum : metadata) {
-            metadatum.setFunction(this);
-        }
-        for (RequiredPort requiredPort : requiredPorts) {
-            requiredPort.setFunction(this);
-        }
-    }
-    */
-
     @JsonIgnore
     @Override
     public Integer getFreeParametersNumber() {
         return parameters.size();
     }
 
-    /*
-    @PostLoad
-    @PostPersist
-    @PostUpdate
-    private void fixPersistence() {
-        // Cleanup persistence artifacts and weird collection implementations
-        connectionPoint = new HashSet<>(connectionPoint);
-        monitoringParameters = new HashSet<>(monitoringParameters);
-        metadata = new HashSet<>(metadata);
-        requiredPorts = new HashSet<>(requiredPorts);
-        parameters = new ArrayList<>(parameters);
-    }
-    */
 }

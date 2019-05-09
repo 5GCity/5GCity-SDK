@@ -44,10 +44,6 @@ public class ServiceActionRule {
 
     @ManyToOne
     private SdkService sdkService;
-/*
-    @ManyToOne
-    private ReconfigureAction reconfigureAction;
-*/
 
     public ServiceActionRule(){
         //JPA only
@@ -81,7 +77,6 @@ public class ServiceActionRule {
     @JsonProperty("conditions")
     public void setConditions(Set<RuleCondition> conditions) {
 
-        //this.conditions = conditions;
         this.conditions.clear();
         this.conditions.addAll(conditions);
 
@@ -110,17 +105,6 @@ public class ServiceActionRule {
         this.sdkService = sdkService;
     }
 
-    /*
-    @JsonIgnore
-    public ReconfigureAction getReconfigureAction() {
-        return reconfigureAction;
-    }
-
-    @JsonIgnore
-    public void setReconfigureAction(ReconfigureAction reconfigureAction) {
-        this.reconfigureAction = reconfigureAction;
-    }
-*/
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

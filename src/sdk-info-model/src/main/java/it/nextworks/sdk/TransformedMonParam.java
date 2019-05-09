@@ -126,14 +126,4 @@ public class TransformedMonParam extends MonitoringParameter {
         TransformedMonParam rhs = ((TransformedMonParam) other);
         return super.equals(other) && ((((this.argumentList == rhs.argumentList)||((this.argumentList!= null)&&this.argumentList.equals(rhs.argumentList)))&&((this.transform == rhs.transform)||((this.transform!= null)&&this.transform.equals(rhs.transform))))&&((this.targetParameterId == rhs.targetParameterId)||((this.targetParameterId != null)&&this.targetParameterId.equals(rhs.targetParameterId))));
     }
-
-    /*
-    @PostLoad
-    @PostPersist
-    @PostUpdate
-    private void postLoad() {
-        // Cleanup persistence artifacts and weird collection implementations
-        argumentList = new ArrayList<>(argumentList);
-    }
-     */
 }

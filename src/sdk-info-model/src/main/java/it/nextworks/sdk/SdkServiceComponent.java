@@ -261,15 +261,4 @@ abstract public class SdkServiceComponent<T extends InstantiableCandidate> {
             throw new IllegalStateException("Cannot persist, component is not resolved");
         }
     }
-
-    /*
-    @PostLoad
-    @PostPersist
-    @PostUpdate
-    private void fixPersistence() {
-        mappingExpression = new ArrayList<>(mappingExpression);
-        componentId = component.getId();
-        type = component.getType();
-    }
-     */
 }

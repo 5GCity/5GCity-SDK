@@ -109,14 +109,4 @@ public class AggregatedMonParam extends MonitoringParameter {
         AggregatedMonParam rhs = ((AggregatedMonParam) other);
         return super.equals(other) && (((this.aggregatorFunc == rhs.aggregatorFunc)||((this.aggregatorFunc!= null)&&this.aggregatorFunc.equals(rhs.aggregatorFunc)))&&((this.parametersId == rhs.parametersId)||((this.parametersId!= null)&&this.parametersId.equals(rhs.parametersId))));
     }
-
-    /*
-    @PostLoad
-    @PostPersist
-    @PostUpdate
-    private void postLoad() {
-        // Cleanup persistence artifacts and weird collection implementations
-        parametersId = new ArrayList<>(parametersId);
-    }
-    */
 }

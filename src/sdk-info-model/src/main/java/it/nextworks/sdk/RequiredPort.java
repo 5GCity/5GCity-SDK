@@ -121,14 +121,4 @@ public class RequiredPort {
         return (((this.connectionPointId == rhs.connectionPointId)||((this.connectionPointId!= null)&&this.connectionPointId.equals(rhs.connectionPointId)))
             &&((this.ports == rhs.ports)||((this.ports!= null)&&this.ports.equals(rhs.ports))));
     }
-
-    /*
-    @PostLoad
-    @PostPersist
-    @PostUpdate
-    private void fixPersistence() {
-        ports = new ArrayList<>(ports);
-    }
-
-     */
 }

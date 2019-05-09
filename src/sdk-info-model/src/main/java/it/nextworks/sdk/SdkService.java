@@ -131,7 +131,7 @@ public class SdkService implements InstantiableCandidate {
 
     private String groupId;
 
-    private Visibility visibility;
+    private Visibility visibility = Visibility.fromValue("PUBLIC");;
 
     private Integer priority;
 
@@ -186,7 +186,6 @@ public class SdkService implements InstantiableCandidate {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("actionRules")
     public void setActionRules(Set<ServiceActionRule> actionRules) {
-        //this.actionRules = actionRules;
 
         this.actionRules.clear();
         this.actionRules.addAll(actionRules);
@@ -204,7 +203,6 @@ public class SdkService implements InstantiableCandidate {
     @JsonProperty("connectionPoints")
     public void setConnectionPoint(Set<ConnectionPoint> connectionPoint) {
 
-        //this.connectionPoint = connectionPoint;
         this.connectionPoint.clear();
         this.connectionPoint.addAll(connectionPoint);
 
@@ -330,11 +328,9 @@ public class SdkService implements InstantiableCandidate {
     public void setLink(Set<Link> link) {
         this.link.clear();
         this.link.addAll(link);
-        //this.link = link;
 
         for (Link l : this.link) {
             l.setService(this);
-            //l.setConnectionPoints(connectionPoint);
         }
     }
 
@@ -345,14 +341,11 @@ public class SdkService implements InstantiableCandidate {
 
     @JsonProperty("l3Connectivity")
     public void setL3Connectivity(Set<L3Connectivity> l3Connectivity) {
-        //this.l3Connectivity = l3Connectivity;
         this.l3Connectivity.clear();
         this.l3Connectivity.addAll(l3Connectivity);
 
         for (L3Connectivity l3c : this.l3Connectivity) {
             l3c.setService(this);
-
-            //l3c.setConnectionPoint(byName.get(l3c.getConnectionPointName()));
         }
     }
 
@@ -365,9 +358,6 @@ public class SdkService implements InstantiableCandidate {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("metadata")
     public void setMetadata(Map<String, String> metadata) {
-        /*this.metadata = metadata.entrySet().stream()
-            .map(e -> new Metadata(e.getKey(), e.getValue(), this))
-            .collect(Collectors.toSet());*/
         this.metadata.clear();
         this.metadata.addAll(metadata.entrySet().stream()
             .map(e -> new Metadata(e.getKey(), e.getValue(), this))
@@ -397,7 +387,6 @@ public class SdkService implements InstantiableCandidate {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("extMonitoringParameters")
     public void setExtMonitoringParameters(Set<MonitoringParameter> extMonitoringParameters) {
-        //this.extMonitoringParameters = extMonitoringParameters;
         this.extMonitoringParameters.clear();
         this.extMonitoringParameters.addAll(extMonitoringParameters);
 
@@ -416,7 +405,6 @@ public class SdkService implements InstantiableCandidate {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("intMonitoringParameters")
     public void setIntMonitoringParameters(Set<MonitoringParameter>intMonitoringParameters) {
-        //this.intMonitoringParameters = intMonitoringParameters;
         this.intMonitoringParameters.clear();
         this.intMonitoringParameters.addAll(intMonitoringParameters);
 
@@ -683,6 +671,7 @@ public class SdkService implements InstantiableCandidate {
     public boolean isValid() {
         return  name != null
                 && ownerId != null
+                && groupId != null
                 && designer != null && designer.length() > 0
                 && version != null && version.length() > 0
                 && license != null && license.isValid()
@@ -927,7 +916,6 @@ public class SdkService implements InstantiableCandidate {
     private void postLoad() {
 
         for (Link l : link) {
-            //l.setService(this);
             l.setConnectionPoints(connectionPoint);
         }
 
@@ -937,63 +925,7 @@ public class SdkService implements InstantiableCandidate {
         ));
 
         for (L3Connectivity l3c : l3Connectivity) {
-            //l3c.setService(this);
             l3c.setConnectionPoint(byName.get(l3c.getConnectionPointName()));
         }
-        /*
-
-        for (ConnectionPoint cp : connectionPoint) {
-            cp.setSdkService(this);
-        }
-
-        for (MonitoringParameter mp : extMonitoringParameters) {
-            mp.setSdkServiceExt(this);
-        }
-        for (MonitoringParameter mp : intMonitoringParameters) {
-            mp.setSdkServiceInt(this);
-        }
-        for (SubFunction subFunction : subFunctions) {
-            subFunction.setOuterService(this);
-        }
-        for (SubService subService : subServices) {
-            subService.setOuterService(this);
-        }
-        for (Metadata metadatum : metadata) {
-            metadatum.setService(this);
-        }
-        */
     }
-
-    /*
-    @PostPersist
-    @PostUpdate
-    @PostLoad
-    private void fixPersistence() {
-        // Cleanup persistence artifacts and weird collection implementations
-        Map<String, ConnectionPoint> byName = getConnectionPoint().stream().collect(Collectors.toMap(
-            ConnectionPoint::getName,
-            Function.identity()
-        ));
-        parameters = new ArrayList<>(parameters);
-        connectionPoint = new HashSet<>(connectionPoint);
-        link = new HashSet<>(link);
-        for (Link l : link) {
-            l.setConnectionPoints(connectionPoint);
-        }
-        l3Connectivity = new HashSet<>(l3Connectivity);
-        for (L3Connectivity c : l3Connectivity) {
-            c.setConnectionPoint(byName.get(c.getConnectionPointName()));
-        }
-        extMonitoringParameters = new HashSet<>(extMonitoringParameters);
-        intMonitoringParameters = new HashSet<>(intMonitoringParameters);
-        subFunctions = new HashSet<>(subFunctions);
-        subServices = new HashSet<>(subServices);
-        metadata = new HashSet<>(metadata);
-        for (ConnectionPoint cp : connectionPoint) {
-            if (cp.getType().equals(ConnectionPointType.EXTERNAL) && (cp.getInternalCpName() != null)) {
-                cp.setInternalCpId(byName.get(cp.getInternalCpName()).getId());
-            }
-        }
-    }
-    */
 }

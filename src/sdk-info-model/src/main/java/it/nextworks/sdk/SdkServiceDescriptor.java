@@ -261,17 +261,4 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
     public Integer getFreeParametersNumber() {
         return 0;
     }
-
-    /*
-    @PrePersist
-    @PreUpdate
-    private void prePersist() {
-        for (SdkFunctionDescriptor subFunction : subFunctions) {
-            subFunction.setOuterService(this);
-        }
-        for (SdkServiceDescriptor subService : subServices) {
-            subService.setOuterService(this);
-        }
-    }
-    */
 }

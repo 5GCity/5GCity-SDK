@@ -146,30 +146,4 @@ public class L3Connectivity {
         return (((this.l3Rules == rhs.l3Rules) || ((this.l3Rules != null) && this.l3Rules.equals(rhs.l3Rules)))
             && ((this.connectionPointName == rhs.connectionPointName) || ((this.connectionPointName != null) && this.connectionPointName.equals(rhs.connectionPointName))));
     }
-
-    private boolean isResolved() {
-        return connectionPoint != null;
-    }
-
-//    @PrePersist
-//    private void prePersist() {
-//
-//        if (!isResolved()) {
-//            throw new IllegalStateException(String.format(
-//                "Cannot persist: l3 connectivity %s not resolved",
-//                getId()
-//            ));
-//        }
-//        /*
-//        connectionPoint.setL3Connectivity(this);
-//         */
-//    }
-    /*
-    @PostLoad
-    @PostPersist
-    @PostUpdate
-    private void fixPersistence() {
-        l3Rules = new HashSet<>(l3Rules);
-    }
-    */
 }

@@ -126,7 +126,7 @@ public class SdkFunctionTest {
         function.setVnfdVersion("v1.0");
         function.setOwnerId("NXW");
         function.setVnfdProvider("NXW");
-
+        function.setGroupId("NXW");
         ConnectionPoint cp1 = ConnectionPointTest.makeNS1vPlateObject1();
 
         function.setConnectionPoint(new HashSet<>(Arrays.asList(cp1)));
@@ -159,6 +159,7 @@ public class SdkFunctionTest {
         function.setVnfdVersion("v5.0");
         function.setOwnerId("NXW");
         function.setVnfdProvider("NXW");
+        function.setGroupId("NXW");
 
         ConnectionPoint cp1 = ConnectionPointTest.makeNS1FirewallObject1();
         ConnectionPoint cp2 = ConnectionPointTest.makeNS1FirewallObject2();
@@ -200,6 +201,7 @@ public class SdkFunctionTest {
         function.setVnfdVersion("v6.0");
         function.setOwnerId("NXW");
         function.setVnfdProvider("NXW");
+        function.setGroupId("NXW");
 
         ConnectionPoint cp1 = ConnectionPointTest.makeFirewallDemobject1();
         ConnectionPoint cp2 = ConnectionPointTest.makeFirewallDemobject2();
@@ -229,6 +231,7 @@ public class SdkFunctionTest {
         function.setVnfdVersion("v1.0");
         function.setOwnerId("NXW");
         function.setVnfdProvider("NXW");
+        function.setGroupId("NXW");
 
         ConnectionPoint cp1 = ConnectionPointTest.makeMiniwebDemobject1();
 
