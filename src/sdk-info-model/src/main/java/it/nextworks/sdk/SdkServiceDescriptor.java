@@ -129,7 +129,7 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
         return output;
     }
 
-    @JsonProperty("sub_instance")
+    @JsonProperty("sub_descriptor")
     public void setSubDescriptors(Set<SdkComponentInstance> components) {
         Map<SdkServiceComponentType, List<SdkComponentInstance>> byType =
             components.stream().collect(Collectors.groupingBy(SdkComponentInstance::getType));
