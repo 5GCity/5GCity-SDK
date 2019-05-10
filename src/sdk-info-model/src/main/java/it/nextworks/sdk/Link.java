@@ -118,6 +118,9 @@ public class Link {
         HashSet<ConnectionPoint> linkCPs = new HashSet<>(connectionPoints);
         linkCPs.removeIf(cp -> !connectionPointNames.contains(cp.getName()));
         this.connectionPoints = linkCPs;
+        for(ConnectionPoint cp : this.connectionPoints){
+            cp.setLink(this);
+        }
     }
 
 

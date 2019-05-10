@@ -618,6 +618,23 @@ public class SdkService implements InstantiableCandidate {
         Set<String> takenCps = new HashSet<>();
         for (Link l : link) {
             Set<String> linkCps = new HashSet<>(l.getConnectionPointNames());
+            Set<Integer> componentIndexes = new HashSet<>();
+            for(ConnectionPoint cp : thisCps){
+                //check if the link is connected to multiple Internal Cps of the same component
+                if(cp.getType() == ConnectionPointType.INTERNAL && linkCps.contains(cp.getName())){
+                    if(!componentIndexes.add(cp.getComponentIndex())) {
+                        throw new IllegalStateException(String.format(
+                            "Invalid link %s, connected to multiple Connection Points of the same component", l.getId()));
+                    }
+                }
+                //check uf the link is connected to multiple External Cps
+                if(cp.getType() == ConnectionPointType.EXTERNAL && linkCps.contains(cp.getName())){
+                    if(!componentIndexes.add(-1)){
+                        throw new IllegalStateException(String.format(
+                            "Invalid link %s, connected to multiple External Connection Points", l.getId()));
+                    }
+                }
+            }
             if (!availableCpIds.containsAll(linkCps)) {
                 // some cp is missing
                 linkCps.removeAll(availableCpIds);

@@ -17,6 +17,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 
 import java.io.File;
+import java.math.BigDecimal;
 import java.net.URL;
 import java.nio.file.Files;
 import java.util.*;
@@ -147,6 +148,7 @@ public class SdkServiceTest {
 
         service.setComponents(Collections.singleton(subFunction));
 
+        /*
         ArrayList<String> cpNames = new ArrayList<>(intCpMap.keySet());
         cpNames.add("EXT_CP");
 
@@ -154,6 +156,12 @@ public class SdkServiceTest {
             service,
             cpNames.toArray(new String[]{})
         );
+        */
+
+        Link link1 = new Link();
+        link1.setName("link1");
+        link1.setService(service);
+        link1.setConnectionPointNames("EXT_CP", "eth0");
 
         Set<ConnectionPoint> cps = new HashSet<>();
 
@@ -175,7 +183,7 @@ public class SdkServiceTest {
 
         service.setConnectionPoint(cps);
 
-        service.setLink(new HashSet<>(Collections.singletonList(link)));
+        service.setLink(new HashSet<>(Collections.singletonList(link1)));
 
         L3Connectivity l3Connectivity = new L3Connectivity();
         l3Connectivity.setConnectionPointName("EXT_CP");
@@ -355,7 +363,7 @@ public class SdkServiceTest {
         //ObjectMapper mapper = new ObjectMapper();
         //SdkService service = mapper.readValue(file, SdkService.class);
         //serviceManager.updateService(service);
-        Optional<SdkService> service = serviceRepository.findById(Long.valueOf(34));
+        Optional<SdkService> service = serviceRepository.findById(Long.valueOf(10));
         SdkService localService = service.get();
         L3Connectivity l3Connectivity = new L3Connectivity();
         l3Connectivity.setConnectionPointName("eth0");
@@ -371,6 +379,14 @@ public class SdkServiceTest {
             Collections.singleton(l3Connectivity)
         );
         serviceManager.updateService(localService);
+    }
+
+    @Test
+    @Ignore // requires DB
+    public void testPublishService() throws Exception {
+        List<BigDecimal> parameterValues = new ArrayList<>();
+        parameterValues.add(new BigDecimal(1000));
+        serviceManager.publishService(Long.valueOf(10), parameterValues);
     }
 }
 

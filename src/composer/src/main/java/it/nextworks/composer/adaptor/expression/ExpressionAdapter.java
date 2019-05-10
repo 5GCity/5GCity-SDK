@@ -162,7 +162,7 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
     }
 
     private DescriptorTemplate makeNSD(ServiceInformation info) {
-        Map<String, Node> nodeTemplates = new HashMap<>(
+        LinkedHashMap<String, Node> nodeTemplates = new LinkedHashMap<>(
             info.getVnfdData().stream().collect(Collectors.toMap(
                 data -> data.name,
                 this::makeVnfd
@@ -178,7 +178,7 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
             null,
             null,
             new HashMap<>(),
-                (SortedMap<String, Node>) nodeTemplates,
+            nodeTemplates,
             new HashMap<>(),
             new HashMap<>()
         );

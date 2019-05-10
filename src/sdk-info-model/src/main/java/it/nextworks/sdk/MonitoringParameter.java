@@ -57,12 +57,12 @@ public abstract class MonitoringParameter {
         this.parameterType = parameterType;
     }
 
-    @JsonProperty("parameterId")
+    @JsonProperty("id")
     public String getParameterId() {
         return id.toString();
     }
 
-    @JsonProperty("parameterId")
+    @JsonProperty("id")
     public void setParameterId(String parameterId) {
         this.id = Long.valueOf(parameterId);
     }

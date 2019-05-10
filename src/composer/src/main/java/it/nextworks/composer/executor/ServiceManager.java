@@ -250,7 +250,6 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     private void cleanOldRelations(SdkService service){
         for(MonitoringParameter mp : service.getExtMonitoringParameters()){
             mp.setSdkServiceExt(null);
-            //mp.setReconfigureActionExt(null);
         }
         for(MonitoringParameter mp : service.getIntMonitoringParameters()){
             mp.setSdkServiceInt(null);

@@ -42,12 +42,12 @@ public abstract  class ServiceAction {
         //JPA only
     }
 
-    @JsonProperty("actionId")
+    @JsonProperty("id")
     public String getActionId() {
         return id.toString();
     }
 
-    @JsonProperty("actionId")
+    @JsonProperty("id")
     public void setActionId(String actionId) {
         this.id = Long.valueOf(actionId);
     }
