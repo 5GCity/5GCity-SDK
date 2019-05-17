@@ -15,12 +15,18 @@
  */
 package it.nextworks.composer.executor;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import it.nextworks.composer.adaptor.interfaces.ServicesAdaptorProviderInterface;
 import it.nextworks.composer.executor.interfaces.FunctionManagerProviderInterface;
 import it.nextworks.composer.executor.interfaces.ServiceManagerProviderInterface;
 import it.nextworks.composer.executor.repositories.*;
+import it.nextworks.composer.plugins.catalogue.ArchiveBuilder;
 import it.nextworks.composer.plugins.catalogue.FiveGCataloguePlugin;
 import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
+import it.nextworks.nfvmano.libs.descriptors.templates.Node;
 import it.nextworks.sdk.*;
 import it.nextworks.sdk.enums.MonitoringParameterType;
 import it.nextworks.sdk.enums.SdkServiceComponentType;
@@ -30,6 +36,7 @@ import it.nextworks.sdk.exceptions.MalformedElementException;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
 import it.nextworks.sdk.exceptions.NotPublishedServiceException;
 import org.hibernate.cfg.NotYetImplementedException;
+import org.mapstruct.Mapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,16 +47,22 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
+import javax.swing.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.sql.Timestamp;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.GZIPOutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Service
 public class ServiceManager implements ServiceManagerProviderInterface {
@@ -392,10 +405,16 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         String serviceDescriptorId = descriptor.getId().toString();
         DescriptorTemplate nsd = adapter.generateNetworkServiceDescriptor(descriptor);
 
+        Set<MonitoringParameter> monitoringParameters = new HashSet<>();
+        monitoringParameters.addAll(service.getExtMonitoringParameters());
+        monitoringParameters.addAll(service.getIntMonitoringParameters());
+
+        String servicePackagePath = ArchiveBuilder.createNSCSAR(nsd, monitoringParameters, service.getActions(), service.getActionRules());
+
         // A thread will be created to handle this request in order to perform it
         // asynchronously.
         dispatchPublishRequest(
-            nsd,
+            servicePackagePath,
             successful -> {
                 if (successful) {
                     log.info("Service descriptor {} successfully published", serviceDescriptorId);
@@ -452,8 +471,15 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         }
 
         DescriptorTemplate nsd = adapter.generateNetworkServiceDescriptor(descriptor);
+
+        Set<MonitoringParameter> monitoringParameters = new HashSet<>();
+        monitoringParameters.addAll(descriptor.getTemplate().getExtMonitoringParameters());
+        monitoringParameters.addAll(descriptor.getTemplate().getIntMonitoringParameters());
+
+        String servicePackagePath = ArchiveBuilder.createNSCSAR(nsd, monitoringParameters, descriptor.getTemplate().getActions(), descriptor.getTemplate().getActionRules());
+
         dispatchPublishRequest(
-            nsd,
+            servicePackagePath,
             successful -> {
                 if (successful) {
                     log.info("Service descriptor {} successfully published", serviceDescriptorId);
@@ -468,16 +494,15 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         );
     }
 
-    private void dispatchPublishRequest(DescriptorTemplate nsd, Consumer<Boolean> callback) {
+    private void dispatchPublishRequest(String servicePackagePath, Consumer<Boolean> callback) {
         // TODO: dispatch publish operation to driver, then return immediately
         executor.execute(() -> {
                 try {
-                    String s = cataloguePlugin.uploadNetworkService(nsd, "multipart/form-data", null);
+                    String s = cataloguePlugin.uploadNetworkService(servicePackagePath, "multipart/form-data", null);
                     callback.accept(true);
                 } catch (Exception exc) {
                     log.error(
-                        "Could not push descriptor {}. Cause: {}",
-                        nsd.getMetadata().getDescriptorId(),
+                        "Could not push service package. Cause: {}",
                         exc.getMessage()
                     );
                     log.debug("Details: ", exc);

@@ -47,7 +47,7 @@ public class FiveGCataloguePlugin extends CataloguePlugin {
 		return converter; 
 	}
 	
-	public String uploadNetworkService(DescriptorTemplate descriptor, String contentType, KeyValuePairs userDefinedData) throws RestClientException, IOException {
+	public String uploadNetworkService(String servicePackagePath, String contentType, KeyValuePairs userDefinedData) throws RestClientException, IOException {
 
 		
 		/* Create CreateNsInfoRequest */
@@ -68,12 +68,12 @@ public class FiveGCataloguePlugin extends CataloguePlugin {
 			throw new RestClientException("Unable to perform NsdInfo creation on public catalogue"); 
 		}
 		//TODO: implementare la parte di Description Parser
-		log.debug("Creating file from DescriptorTempalate");
-		File fileDescriptor = DescriptorsParser.descriptorTempateToFile(descriptor);
+		//log.debug("Creating file from DescriptorTempalate");
+		//File fileDescriptor = DescriptorsParser.descriptorTempateToFile(descriptor);
 			
-		log.debug("Creating MultipartFile from file");
-		MultipartFile multipartFile = this.createMultiPartFromFile(fileDescriptor, contentType);
-		
+		//log.debug("Creating MultipartFile from file");
+        File servicePackage = new File(servicePackagePath);
+		MultipartFile multipartFile = this.createMultiPartFromFile(servicePackage, contentType);
 		try {
 			log.debug("Trying to push data to catalogue");
 			nsdApi.uploadNSD(nsInfo.getId().toString(), multipartFile, contentType);
@@ -87,15 +87,16 @@ public class FiveGCataloguePlugin extends CataloguePlugin {
 		
 		return nsInfo.getId().toString();
 	}
-	
+
+	/*
 	public String uploadNetworkService(File descriptor, String contentType, KeyValuePairs userDefinedData) throws RestClientException, IOException {
 		
-		/* Create CreateNsInfoRequest */
+		// Create CreateNsInfoRequest
 		CreateNsdInfoRequest request = new CreateNsdInfoRequest();
 		if(userDefinedData != null)
 			request.setUserDefinedData(userDefinedData);
 	
-		/* Save descriptor to file */
+	    // Save descriptor to file
 		
 		
 		NsdInfo nsInfo;
@@ -127,7 +128,7 @@ public class FiveGCataloguePlugin extends CataloguePlugin {
 		
 		return nsInfo.getId().toString();
 	}
-	
+	*/
 	
 	
 	public NsdInfo getNsDescriptorInfo(String nsInfoId) {

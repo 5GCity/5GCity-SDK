@@ -131,7 +131,7 @@ public class SdkService implements InstantiableCandidate {
 
     private String groupId;
 
-    private Visibility visibility = Visibility.fromValue("PUBLIC");;
+    private Visibility visibility = Visibility.fromValue("PRIVATE");
 
     private Integer priority;
 
@@ -195,6 +195,7 @@ public class SdkService implements InstantiableCandidate {
         }
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("connectionPoints")
     public Set<ConnectionPoint> getConnectionPoint() {
         return connectionPoint;
@@ -227,6 +228,7 @@ public class SdkService implements InstantiableCandidate {
         return Stream.concat(servicesCp, funcCp).collect(Collectors.toSet());
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("parameters")
     @Override
     public List<String> getParameters() {
@@ -254,6 +256,7 @@ public class SdkService implements InstantiableCandidate {
         this.designer = designer;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("component")
     public Set<SdkServiceComponent> getComponents() {
         Set<SdkServiceComponent> output = new HashSet<>(subFunctions);
@@ -319,6 +322,7 @@ public class SdkService implements InstantiableCandidate {
         this.license = license;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("link")
     public Set<Link> getLink() {
         return link;
@@ -334,6 +338,7 @@ public class SdkService implements InstantiableCandidate {
         }
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("l3Connectivity")
     public Set<L3Connectivity> getL3Connectivity() {
         return l3Connectivity;

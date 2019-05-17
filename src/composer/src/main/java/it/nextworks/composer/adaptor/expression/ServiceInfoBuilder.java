@@ -107,7 +107,6 @@ class ServiceInfoBuilder {
         addLinks(id, template.getLink());
         addCps(id, template.getConnectionPoint());
         addRule(id, template.getL3Connectivity());
-       //scalingAspects.addAll(template.getScalingAspect());
         monitoringParameters.addAll(template.getExtMonitoringParameters());
 
         serviceMetadata.setName(template.getName())

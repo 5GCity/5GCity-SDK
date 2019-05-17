@@ -387,6 +387,7 @@ public class SdkServiceTest {
         List<BigDecimal> parameterValues = new ArrayList<>();
         parameterValues.add(new BigDecimal(1000));
         serviceManager.publishService(Long.valueOf(10), parameterValues);
+        //serviceManager.publishService(Long.valueOf(83));
     }
 }
 
