@@ -34,7 +34,7 @@ fi
 
 
 echo "Creation service descriptor related to service di: ${id}"
-response=$(curl -sb --request POST --header 'Content-Type: application/json' --url http://${host}:${port}/sdk/composer/services/${id}/create-descriptor --data @${body})
+response=$(curl -sb --request POST --header 'Content-Type: application/json' --url http://${host}:${port}/sdk/services/${id}/create-descriptor --data @${body})
 
 echo ${response}
 

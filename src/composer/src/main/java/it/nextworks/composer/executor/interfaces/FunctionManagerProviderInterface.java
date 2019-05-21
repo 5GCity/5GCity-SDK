@@ -16,9 +16,13 @@
 package it.nextworks.composer.executor.interfaces;
 
 import it.nextworks.sdk.SdkFunction;
+import it.nextworks.sdk.MonitoringParameter;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
-
+import it.nextworks.sdk.exceptions.MalformedElementException;
+import org.hibernate.cfg.NotYetImplementedException;
 import java.util.List;
+import java.util.Set;
+import java.math.BigDecimal;
 
 public interface FunctionManagerProviderInterface {
 
@@ -36,7 +40,31 @@ public interface FunctionManagerProviderInterface {
      */
     List<SdkFunction> getFunctions();
 
-    String createFunction(SdkFunction function);
+    //String createFunction(SdkFunction function);
 
     String createFunction();
+
+    String createFunction(SdkFunction function)
+        throws NotExistingEntityException, MalformedElementException, NotYetImplementedException;
+
+    String updateFunction(SdkFunction function)
+        throws NotExistingEntityException, MalformedElementException;
+
+    SdkFunction getFunctionById(Long id)
+        throws NotExistingEntityException;
+
+    void deleteFunction(Long functionId)
+        throws NotExistingEntityException;
+
+    String publishFunction(Long functionId, List<BigDecimal> parameterValues)
+        throws NotExistingEntityException, MalformedElementException;
+
+    void updateMonitoringParameters(Long functionId, Set<MonitoringParameter> monitoringParameters)
+        throws NotExistingEntityException, MalformedElementException, NotYetImplementedException;
+
+    void deleteMonitoringParameters(Long functionId, Long monitoringParameterId)
+        throws NotExistingEntityException, MalformedElementException, NotYetImplementedException;
+
+    Set<MonitoringParameter> getMonitoringParameters(Long functionId)
+        throws NotExistingEntityException, NotYetImplementedException;
 }

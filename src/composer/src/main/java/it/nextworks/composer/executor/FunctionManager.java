@@ -19,16 +19,22 @@ import it.nextworks.composer.executor.interfaces.FunctionManagerProviderInterfac
 import it.nextworks.composer.executor.repositories.SdkFunctionRepository;
 import it.nextworks.sdk.ConnectionPoint;
 import it.nextworks.sdk.SdkFunction;
+import it.nextworks.sdk.MonitoringParameter;
 import it.nextworks.sdk.enums.ConnectionPointType;
+import it.nextworks.sdk.exceptions.MalformedElementException;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
+import org.hibernate.cfg.NotYetImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.Optional;
 
 @Service
@@ -65,10 +71,38 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         return functionList;
     }
 
+    /*
     @Override
     public String createFunction(SdkFunction function) {
         return null;
     }
+    */
+
+    @Override
+    public String createFunction(SdkFunction function)
+        throws NotExistingEntityException, MalformedElementException, NotYetImplementedException {
+
+        log.info("Storing into database a new function");
+
+        if (!function.isValid()) {
+            log.error("Malformed SdkService");
+            throw new MalformedElementException("Malformed SdkService");
+        }
+        ////// TODO-NXW
+        throw new NotYetImplementedException();
+        /*
+        checkAndResolveFunction(function);
+
+
+        log.debug("Storing into database function with name: " + function.getName());
+
+        // Saving the function
+        functionRepository.saveAndFlush(function);
+        return function.getId().toString();
+        */
+    }
+
+
 
     @Override
     public String createFunction() {
@@ -133,6 +167,161 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 //		monitoringParamRepository.saveAndFlush(param12);
 
         return function.getId().toString();
+    }
+
+
+    @Override
+    public String updateFunction(SdkFunction function) throws NotExistingEntityException, MalformedElementException, NotYetImplementedException {
+        log.info("Updating an existing Function with id: " + function.getId());
+
+        throw new NotYetImplementedException();
+        /*
+        if (!function.isValid()) {
+            log.error("Function id " + function.getId() + " is malformed");
+            throw new MalformedElementException("Function id " + function.getId() + " is malformed");
+        }
+        log.debug("Function is valid");
+        // Check if Function exists
+        Optional<SdkFunction> func = functionRepository.findById(function.getId());
+        if (!func.isPresent()) {
+            log.error("Function id " + function.getId() + " not present in database");
+            throw new NotExistingEntityException("Function id " + function.getId() + " not present in database");
+        }
+        log.debug("Function found on db");
+
+        //checkAndResolveFunction(function);
+
+        log.debug("Updating into database Function with id: " + function.getId());
+
+        //cleanOldRelations(func.get());
+
+        // Update Function on DB
+        functionRepository.saveAndFlush(function);
+        return function.getId().toString();
+         */
+    }
+
+
+    @Override
+    public SdkFunction getFunctionById(Long id) throws NotExistingEntityException {
+        log.info("Request for Function with ID: " + id);
+        Optional<SdkFunction> function = functionRepository.findById(id);
+        if (function.isPresent()) {
+            return function.get();
+        } else {
+            log.error("Function with UUID " + id + " not found");
+            throw new NotExistingEntityException("Function with ID " + id + " not found");
+        }
+    }
+
+    @Override
+    public void deleteFunction(Long functionId) throws NotExistingEntityException {
+        log.info("Request for deletion of Function with id: " + functionId);
+        // No deletion required: all that depends on the Function will cascade.
+        Optional<SdkFunction> function = functionRepository.findById(functionId);
+        SdkFunction s = function.orElseThrow(() -> {
+            log.error("Function with ID " + functionId + " not found");
+            return new NotExistingEntityException("Function with ID " + functionId + " not found");
+        });
+        functionRepository.delete(s);
+    }
+
+    @Override
+    public String publishFunction(Long functionId, List<BigDecimal> parameterValues)
+        throws NotExistingEntityException, MalformedElementException, NotYetImplementedException {
+        log.info("Request for publication of function with uuid: " + functionId);
+
+        throw new NotYetImplementedException();
+        /*
+        // Check if service exists
+        Optional<SdkFunction> optService = functionRepository.findById(functionId);
+
+        SdkFunction service = optService.orElseThrow(() -> {
+            log.error("The SDK Function  with UUID: " + functionId + " is not present in database");
+            return new NotExistingEntityException("The SDK Function with UUID: " + functionId + " is not present in database");
+        });
+
+
+        return functionId;
+        */
+    }
+
+    private void validateImportedMonitoringParameter(SdkFunction function) throws NotExistingEntityException, NotYetImplementedException {
+        throw new NotYetImplementedException();
+        /*
+        Set<MonitoringParameter> monitoringParameters = new HashSet<>();
+        monitoringParameters.addAll(function.getMonitoringParameters());
+        for (MonitoringParameter mp : monitoringParameters){
+            if(mp instanceof ImportedMonParam){
+                Optional<MonitoringParameter> target = monitoringParamRepository.findById(Long.valueOf(((ImportedMonParam) mp).getImportedParameterId()));
+                if(!target.isPresent()){
+                    throw new NotExistingEntityException("Monitoring parameter id " + (((ImportedMonParam) mp).getImportedParameterId()) + " not present in database");
+                }
+            }
+        }
+        */
+    }
+
+    @Override
+    public void updateMonitoringParameters(Long functionId, Set<MonitoringParameter> monitoringParameters)
+        throws NotExistingEntityException, MalformedElementException, NotYetImplementedException {
+        log.info("Request to update list of scalingAspects for a specific SDK Function " + functionId);
+        Optional<SdkFunction> function = functionRepository.findById(functionId);
+        if (!function.isPresent()) {
+            log.error("The SDK Function with ID: " + functionId + " is not present in database");
+            throw new NotExistingEntityException("The SDK Function with ID: " + functionId + " is not present in database");
+        }
+
+        for(MonitoringParameter mp : function.get().getMonitoringParameters()){
+            mp.setSdkFunction(null);
+        }
+        log.debug("Updating list of monitoring parameters on SDF Function with ID: " + functionId);
+        function.get().setMonitoringParameters(monitoringParameters);
+        validateImportedMonitoringParameter(function.get());
+        log.debug("Updating list of monitoring parameters on database");
+        functionRepository.saveAndFlush(function.get());
+
+    }
+
+    @Override
+    public void deleteMonitoringParameters(Long functionId, Long monitoringParameterId)
+        throws NotExistingEntityException, MalformedElementException, NotYetImplementedException {
+
+        log.info("Request to delete a monitoring parameter identified by id " + monitoringParameterId + " for a specific SDK Service " + functionId);
+        Optional<SdkFunction> function = functionRepository.findById(functionId);
+        if (!function.isPresent()) {
+            log.error("The SDK Function with ID: " + functionId + " is not present in database");
+            throw new NotExistingEntityException("The SDK Function with ID: " + functionId + " is not present in database");
+        }
+
+        Set<MonitoringParameter> monitoringParameters = new HashSet<>();
+
+        monitoringParameters.addAll(function.get().getMonitoringParameters());
+        for (MonitoringParameter param : monitoringParameters) {
+            if(param.getId().compareTo(monitoringParameterId) == 0){
+                param.setSdkFunction(null);
+                monitoringParameters.remove(param);
+                break;
+            }
+        }
+
+        function.get().setMonitoringParameters(monitoringParameters);
+
+        functionRepository.saveAndFlush(function.get());
+        log.debug("Monitoring parameter has been deleted.");
+
+    }
+
+    @Override
+    public Set<MonitoringParameter> getMonitoringParameters(Long functionId) throws NotExistingEntityException, NotYetImplementedException {
+        log.info("Request to get the list of monitoring parameters for a specific SDK Function " + functionId);
+        Optional<SdkFunction> function = functionRepository.findById(functionId);
+        if (!function.isPresent()) {
+            log.error("The SDK Function with ID: " + functionId + " is not present in database");
+            throw new NotExistingEntityException("The SDK Functionwith ID: " + functionId + " is not present in database");
+        }
+
+        return (function.get().getMonitoringParameters());
     }
 
 }

@@ -37,7 +37,8 @@ public class ComposerConfig extends WebMvcConfigurationSupport {
         return new Docket(DocumentationType.SWAGGER_2)
             .select()
             .apis(RequestHandlerSelectors.basePackage("it.nextworks.composer.controller"))
-            .paths(regex("/sdk.composer.*"))
+            //.paths(regex("/sdk.composer.*"))
+            .paths(regex("/sdk.*"))
             .build()
             .apiInfo(metaData());
 
@@ -45,9 +46,9 @@ public class ComposerConfig extends WebMvcConfigurationSupport {
 
     private ApiInfo metaData() {
         return new ApiInfoBuilder()
-            .title("5g-City SDK Composer REST API ")
-            .description("ReST API for the 5G-City's SDK composer")
-            .version("0.6")
+            .title("5GCity SDK Composer REST API ")
+            .description("ReST API for the 5GCity's SDK composer")
+            .version("0.8")
             .license("Apache License Version 2.0")
             .licenseUrl("https://www.apache.org/licenses/LICENSE-2.0\"")
             .contact(new Contact("Nextworks S.r.l.", "http://www.nextworks.it", "info@nextworks.it"))

@@ -1,9 +1,9 @@
 #!/bin/bash
 
-usage() { 
-	echo "Usage: $0 -h host -p port" 1>&2; 
-	echo "Example: $0 -h localhost -p 8081"
-	exit 1; 
+usage() {
+        echo "Usage: $0 -h host -p port" 1>&2;
+        echo "Example: $0 -h localhost -p 8081"
+        exit 1;
 }
 
 while getopts ":h:p:" o; do
@@ -14,7 +14,7 @@ while getopts ":h:p:" o; do
         p)
             port=${OPTARG}
             ;;
-		*)
+        *)
             usage
             ;;
     esac
@@ -25,7 +25,9 @@ if [ -z "${host}" ] || [ -z "${port}" ] ; then
     usage
 fi
 
-response=$(curl -sb -H "Accept: application/json" --url http://${host}:${port}/sdk/composer/functions)
+####response=$(curl -sb -H "Accept: application/json" --url http://${host}:${port}/sdk/functions)
+
+response=$(curl -X GET "http://${host}:${port}/sdk/functions/" -H "accept: */*")
 
 echo ${response} | python -m json.tool
 

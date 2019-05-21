@@ -31,11 +31,11 @@ import java.util.List;
 
 @RestController
 @CrossOrigin
-@RequestMapping("/sdk/composer/service-descriptor")
-@Api(value = "Sdk descriptor NBI", description = "Operations on Composer Module - Sdk service descriptor APIs")
-public class DescriptorsController {
+@RequestMapping("/sdk/service-descriptor")
+@Api(value = "Sdk descriptor NBI", description = "Operations on SDK Composer Module - SDK Service Descriptor APIs")
+public class ServiceDescriptorsController {
 
-    private static final Logger log = LoggerFactory.getLogger(DescriptorsController.class);
+    private static final Logger log = LoggerFactory.getLogger(ServiceDescriptorsController.class);
 
     @Autowired
     ServiceManagerProviderInterface serviceManager;

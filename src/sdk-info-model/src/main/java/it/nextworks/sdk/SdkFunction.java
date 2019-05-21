@@ -48,7 +48,8 @@ import java.util.stream.Collectors;
     "connectionPoints",
     "monitoringParameters",
     "groupId",
-    "priority"
+    "priority",
+    "ëpoch"
 })
 @Entity
 public class SdkFunction implements InstantiableCandidate {
@@ -78,17 +79,17 @@ public class SdkFunction implements InstantiableCandidate {
 
     private String instantiationLevelExpression;
 
-    @OneToMany(mappedBy = "function", cascade = CascadeType.ALL, orphanRemoval=true)
+    @OneToMany(mappedBy = "function", cascade = CascadeType.ALL, orphanRemoval = true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<Metadata> metadata = new HashSet<>();
 
-    @OneToMany(mappedBy = "sdkFunction", cascade = CascadeType.ALL, orphanRemoval=true)
+    @OneToMany(mappedBy = "sdkFunction", cascade = CascadeType.ALL, orphanRemoval = true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<MonitoringParameter> monitoringParameters = new HashSet<>();
 
-    @OneToMany(mappedBy = "function", cascade = CascadeType.ALL, orphanRemoval=true)
+    @OneToMany(mappedBy = "function", cascade = CascadeType.ALL, orphanRemoval = true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<RequiredPort> requiredPorts = new HashSet<>();
@@ -108,6 +109,8 @@ public class SdkFunction implements InstantiableCandidate {
     private String groupId;
 
     private Integer priority;
+
+    private Long epoch;
 
     @JsonProperty("ownerId")
     public String getOwnerId() {
@@ -332,6 +335,16 @@ public class SdkFunction implements InstantiableCandidate {
         this.priority = priority;
     }
 
+    @JsonProperty("epoch")
+    public Long getEpoch() {
+        return epoch;
+    }
+
+    @JsonProperty("epoch")
+    public void setEpoch(Long epoch) {
+        this.epoch = epoch;
+    }
+
     @Override
     @JsonIgnore
     public SdkServiceComponentType getType() {
@@ -408,6 +421,10 @@ public class SdkFunction implements InstantiableCandidate {
         sb.append('=');
         sb.append(((this.priority == null) ? "<null>" : this.priority));
         sb.append(',');
+        sb.append("epoch");
+        sb.append('=');
+        sb.append(((this.epoch == null) ? "<null>" : this.epoch));
+        sb.append(',');
         sb.append("metadata");
         sb.append('=');
         sb.append(((this.metadata == null) ? "<null>" : this.metadata));
@@ -458,6 +475,7 @@ public class SdkFunction implements InstantiableCandidate {
         result = ((result * 31) + ((this.ownerId == null) ? 0 : this.ownerId.hashCode()));
         result = ((result * 31) + ((this.groupId == null) ? 0 : this.groupId.hashCode()));
         result = ((result * 31) + ((this.priority == null) ? 0 : this.priority.hashCode()));
+        result = ((result * 31) + ((this.epoch == null) ? 0 : this.epoch.hashCode()));
         result = ((result * 31) + ((this.visibility == null) ? 0 : this.visibility.hashCode()));
         result = ((result * 31) + ((this.parameters == null) ? 0 : this.parameters.hashCode()));
         result = ((result * 31) + ((this.requiredPorts == null) ? 0 : this.requiredPorts.hashCode()));
@@ -473,60 +491,64 @@ public class SdkFunction implements InstantiableCandidate {
             return false;
         }
         SdkFunction rhs = ((SdkFunction) other);
-        return ((((((((((((((((((((this.metadata == rhs.metadata) || ((this.metadata != null) && this.metadata.equals(rhs.metadata)))
-            && ((this.instantiationLevelExpression == rhs.instantiationLevelExpression) || ((this.instantiationLevelExpression != null) && this.instantiationLevelExpression.equals(rhs.instantiationLevelExpression))))
-            && ((this.vnfdId == rhs.vnfdId) || ((this.vnfdId != null) && this.vnfdId.equals(rhs.vnfdId))))
-            && ((this.description == rhs.description) || ((this.description != null) && this.description.equals(rhs.description))))
-            && ((this.version == rhs.version) || ((this.version != null) && this.version.equals(rhs.version))))
-            && ((this.monitoringParameters == rhs.monitoringParameters) || ((this.monitoringParameters != null) && this.monitoringParameters.equals(rhs.monitoringParameters))))
-            && ((this.flavourExpression == rhs.flavourExpression) || ((this.flavourExpression != null) && this.flavourExpression.equals(rhs.flavourExpression))))
-            && ((this.vendor == rhs.vendor) || ((this.vendor != null) && this.vendor.equals(rhs.vendor))))
-            && ((this.name == rhs.name) || ((this.name != null) && this.name.equals(rhs.name))))
-            && ((this.connectionPoint == rhs.connectionPoint) || ((this.connectionPoint != null) && this.connectionPoint.equals(rhs.connectionPoint))))
-            && ((this.id == rhs.id) || ((this.id != null) && this.id.equals(rhs.id))))
-            && ((this.ownerId == rhs.ownerId) || ((this.ownerId != null) && this.ownerId.equals(rhs.ownerId))))
-            && ((this.vnfdProvider == rhs.vnfdProvider) || ((this.vnfdProvider != null) && this.vnfdProvider.equals(rhs.vnfdProvider))))
-            && ((this.visibility == rhs.visibility) || ((this.visibility != null) && this.visibility.equals(rhs.visibility))))
-            && ((this.ownerId == rhs.ownerId) || ((this.ownerId != null) && this.ownerId.equals(rhs.ownerId))))
-            &&((this.groupId == rhs.groupId) || ((this.groupId != null) && this.groupId.equals(rhs.groupId))))
-            &&((this.priority == rhs.priority) || ((this.priority != null) && this.priority.equals(rhs.priority))))
-            && ((this.requiredPorts == rhs.requiredPorts) || ((this.requiredPorts != null) && this.requiredPorts.equals(rhs.requiredPorts))))
-            && ((this.parameters == rhs.parameters) || ((this.parameters != null) && this.parameters.equals(rhs.parameters))));
+
+        return (
+                ((this.metadata == rhs.metadata) || ((this.metadata != null) && this.metadata.equals(rhs.metadata)))
+                && ((this.instantiationLevelExpression == rhs.instantiationLevelExpression) ||
+                          ((this.instantiationLevelExpression != null) && this.instantiationLevelExpression.equals(rhs.instantiationLevelExpression)))
+                && ((this.vnfdId == rhs.vnfdId) || ((this.vnfdId != null) && this.vnfdId.equals(rhs.vnfdId)))
+                && ((this.description == rhs.description) || ((this.description != null) && this.description.equals(rhs.description)))
+                && ((this.version == rhs.version) || ((this.version != null) && this.version.equals(rhs.version)))
+                && ((this.monitoringParameters == rhs.monitoringParameters) || ((this.monitoringParameters != null) && this.monitoringParameters.equals(rhs.monitoringParameters)))
+                && ((this.flavourExpression == rhs.flavourExpression) || ((this.flavourExpression != null) && this.flavourExpression.equals(rhs.flavourExpression)))
+                && ((this.vendor == rhs.vendor) || ((this.vendor != null) && this.vendor.equals(rhs.vendor)))
+                && ((this.name == rhs.name) || ((this.name != null) && this.name.equals(rhs.name)))
+                && ((this.connectionPoint == rhs.connectionPoint) || ((this.connectionPoint != null) && this.connectionPoint.equals(rhs.connectionPoint)))
+                && ((this.id == rhs.id) || ((this.id != null) && this.id.equals(rhs.id)))
+                && ((this.ownerId == rhs.ownerId) || ((this.ownerId != null) && this.ownerId.equals(rhs.ownerId)))
+                && ((this.vnfdProvider == rhs.vnfdProvider) || ((this.vnfdProvider != null) && this.vnfdProvider.equals(rhs.vnfdProvider)))
+                && ((this.visibility == rhs.visibility) || ((this.visibility != null) && this.visibility.equals(rhs.visibility)))
+                && ((this.ownerId == rhs.ownerId) || ((this.ownerId != null) && this.ownerId.equals(rhs.ownerId)))
+                && ((this.groupId == rhs.groupId) || ((this.groupId != null) && this.groupId.equals(rhs.groupId)))
+                && ((this.priority == rhs.priority) || ((this.priority != null) && this.priority.equals(rhs.priority)))
+                && ((this.epoch == rhs.epoch) || ((this.epoch != null) && this.epoch.equals(rhs.epoch)))
+                && ((this.requiredPorts == rhs.requiredPorts) || ((this.requiredPorts != null) && this.requiredPorts.equals(rhs.requiredPorts)))
+                && ((this.parameters == rhs.parameters) || ((this.parameters != null) && this.parameters.equals(rhs.parameters))));
     }
 
     @JsonIgnore
     @Override
     public boolean isValid() {
-        return  name != null && name.length() > 0
-                && ownerId != null
-                && groupId != null
-                && validateCps()
-                && version != null && version.length() > 0
-                && vendor != null && vendor.length() > 0
-                && vnfdId != null && vnfdId.length() > 0
-                && vnfdProvider != null && vnfdProvider.length() > 0
-                && instantiationLevelExpression != null
-                && flavourExpression != null
-                && validateExpressions()
-                && vnfdVersion != null
-                && validateMonitoringParameters()
-                && validateRequiredPorts();
+        return name != null && name.length() > 0
+            && ownerId != null
+            && groupId != null
+            && validateCps()
+            && version != null && version.length() > 0
+            && vendor != null && vendor.length() > 0
+            && vnfdId != null && vnfdId.length() > 0
+            && vnfdProvider != null && vnfdProvider.length() > 0
+            && instantiationLevelExpression != null
+            && flavourExpression != null
+            && validateExpressions()
+            && vnfdVersion != null
+            && validateMonitoringParameters()
+            && validateRequiredPorts();
     }
 
-    private boolean validateMonitoringParameters(){
+    private boolean validateMonitoringParameters() {
         boolean validParameter;
         final Set<String> parametersName = new HashSet<String>();
         validParameter = monitoringParameters.stream().allMatch(MonitoringParameter::isValid);
-        for(MonitoringParameter mp : monitoringParameters){
-            if(!parametersName.add(mp.getName())) {
+        for (MonitoringParameter mp : monitoringParameters) {
+            if (!parametersName.add(mp.getName())) {
                 validParameter = false;
                 break;
             }
-            if(mp instanceof TransformedMonParam){
+            if (mp instanceof TransformedMonParam) {
                 validParameter = validParameter && (monitoringParameters.stream().map(MonitoringParameter::getName).collect(Collectors.toSet()).contains(((TransformedMonParam) mp).getTargetParameterId()));
             }
-            if(mp instanceof  AggregatedMonParam){
-                for(String s : ((AggregatedMonParam) mp).getParametersId()){
+            if (mp instanceof AggregatedMonParam) {
+                for (String s : ((AggregatedMonParam) mp).getParametersId()) {
                     validParameter = validParameter && (monitoringParameters.stream().map(MonitoringParameter::getName).collect(Collectors.toSet()).contains(s));
                 }
             }
@@ -535,8 +557,8 @@ public class SdkFunction implements InstantiableCandidate {
         return validParameter;
     }
 
-    private boolean validateRequiredPorts(){
-        if(requiredPorts != null)
+    private boolean validateRequiredPorts() {
+        if (requiredPorts != null)
             return requiredPorts.stream().allMatch(RequiredPort::isValid);
         else
             return true;

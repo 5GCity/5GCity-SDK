@@ -149,7 +149,7 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
         );
         NsVirtualLinkProperties nsVirtualLinkProperties = new NsVirtualLinkProperties(
             null,
-            "5G-City-SDK",
+            "5GCity-SDK",
             vlProfile,
             connectivityType,
             new ArrayList<>()
@@ -186,7 +186,7 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
         return new DescriptorTemplate(
             "tosca_sol001_v0_10",
             null,
-            String.format("NS descriptor: %s. Generated with 5G-City SDK", info.getName()),
+            String.format("NS descriptor: %s. Generated with 5GCity SDK", info.getName()),
             new Metadata(
                 info.getUUID(),
                 info.getDesigner(),
