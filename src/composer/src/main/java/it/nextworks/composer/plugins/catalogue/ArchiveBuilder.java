@@ -10,13 +10,11 @@ import it.nextworks.sdk.ServiceAction;
 import it.nextworks.sdk.ServiceActionRule;
 
 import java.io.*;
-import java.net.URI;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 public class ArchiveBuilder {
