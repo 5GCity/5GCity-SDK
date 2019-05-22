@@ -19,6 +19,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 
+import java.time.Instant;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
@@ -134,6 +135,10 @@ public class SdkFunctionTest {
         FunctionMonParam funParam = makeFunctionMonParam();
         function.setMonitoringParameters(new HashSet<MonitoringParameter>(Arrays.asList(funParam)));
 
+        function.setGroupId("VIDED-ANALYSIS");
+        function.setPriority(4);
+        function.setEpoch(Instant.now().getEpochSecond());
+
         return function;
     }
 
@@ -172,6 +177,10 @@ public class SdkFunctionTest {
         AggregatedMonParam aggParam = makeAggregatedMonParam();
         TransformedMonParam tranParam = makeTransformedMonParam();
         function.setMonitoringParameters(new HashSet<MonitoringParameter>(Arrays.asList(funParam, aggParam, tranParam)));
+
+        function.setGroupId("NETWORK-FUNCTIONS");
+        function.setPriority(4);
+        function.setEpoch(Instant.now().getEpochSecond());
 
         return function;
     }
@@ -213,6 +222,10 @@ public class SdkFunctionTest {
         FunctionMonParam funParam = makeFunctionMonParam();
         function.setMonitoringParameters(new HashSet<MonitoringParameter>(Arrays.asList(funParam)));
 
+        function.setGroupId("NETWORK-FUNCTIONS");
+        function.setPriority(4);
+        function.setEpoch(Instant.now().getEpochSecond());
+
         return function;
     }
 
@@ -241,6 +254,10 @@ public class SdkFunctionTest {
         AggregatedMonParam aggParam = makeAggregatedMonParam();
         TransformedMonParam tranParam = makeTransformedMonParam();
         function.setMonitoringParameters(new HashSet<MonitoringParameter>(Arrays.asList(funParam, aggParam, tranParam)));
+
+        function.setGroupId("WEB-APPLICATION");
+        function.setPriority(4);
+        function.setEpoch(Instant.now().getEpochSecond());
 
         return function;
     }
@@ -276,7 +293,7 @@ public class SdkFunctionTest {
 //    }
 
     @Test
-    @Ignore // requires DB
+    //@Ignore // requires DB
     public void testCityService() {
 
         SdkFunction ns1Firewall = makeNS1FirewallObject();

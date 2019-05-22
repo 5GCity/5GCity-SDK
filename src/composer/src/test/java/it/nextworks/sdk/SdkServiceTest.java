@@ -307,7 +307,7 @@ public class SdkServiceTest {
 */
 
     @Test
-    @Ignore // requires DB
+    //@Ignore // requires DB
     public void testCityService() throws Exception {
 
         SdkFunction firewall = SdkFunctionTest.makeNS1FirewallObject();

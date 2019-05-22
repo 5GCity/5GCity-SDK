@@ -9,7 +9,7 @@
 	<packaging>jar</packaging>
 
 	<name>Composer</name>
-	<description>Composer Module for SDK 5G-City</description>
+	<description>Composer Module for SDK 5GCity</description>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>

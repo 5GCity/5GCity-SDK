@@ -20,12 +20,9 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import it.nextworks.composer.executor.ServiceManager;
-import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
 import it.nextworks.sdk.*;
-import it.nextworks.sdk.exceptions.AlreadyPublishedServiceException;
 import it.nextworks.sdk.exceptions.MalformedElementException;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
-import it.nextworks.sdk.exceptions.NotPublishedServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,20 +37,19 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Set;
 
 @RestController
 @CrossOrigin
-@RequestMapping("/sdk/composer")
-@Api(value = "Sdk NBI", description = "Operations on Composer Module - SdkService APIs")
-public class ServiceRestController {
+@RequestMapping("/sdk/services")
+@Api(value = "SDK Service NBI", description = "Operations on SDK Composer Module - SDK Service APIs")
+public class ServiceController {
 
-    private static final Logger log = LoggerFactory.getLogger(ServiceRestController.class);
+    private static final Logger log = LoggerFactory.getLogger(ServiceController.class);
 
     @Autowired
     private ServiceManager serviceManager;
 
-    public ServiceRestController() {
+    public ServiceController() {
 
     }
 
@@ -62,9 +58,9 @@ public class ServiceRestController {
      *
      * @return servicesList List<Service>
      */
-    @ApiOperation(value = "Get the complete list of the SdkServices available in database", response = SdkService.class, responseContainer = "List")
+    @ApiOperation(value = "Get the complete list of the SDK Services available in database", response = SdkService.class, responseContainer = "List")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "")})
-    @RequestMapping(value = "/services", method = RequestMethod.GET)
+    @RequestMapping(value = "/", method = RequestMethod.GET)
     public ResponseEntity<?> getServices() {
         log.info("Request for get SERVICES");
         List<SdkService> response = serviceManager.getServices();
@@ -78,11 +74,11 @@ public class ServiceRestController {
      * @param serviceId Id of the service to be returned
      * @return service
      */
-    @ApiOperation(value = "Search a SdkService with an UUID", response = SdkService.class)
+    @ApiOperation(value = "Search a SDK Service with an UUID", response = SdkService.class)
     @ApiResponses(value = {@ApiResponse(code = 400, message = "Query without parameter serviceId"),
         @ApiResponse(code = 404, message = "SdkService not found on database"),
         @ApiResponse(code = 200, message = "")})
-    @RequestMapping(value = "/services/{serviceId}", method = RequestMethod.GET)
+    @RequestMapping(value = "/{serviceId}", method = RequestMethod.GET)
     public ResponseEntity<?> getService(@PathVariable Long serviceId) {
         log.info("Request for get specific service id: " + serviceId);
         if (serviceId == null) {
@@ -102,11 +98,11 @@ public class ServiceRestController {
      * @param request
      * @return
      */
-    @ApiOperation(value = "Create a new Service")
+    @ApiOperation(value = "Create a new SDK Service")
     @ApiResponses(value = {
         @ApiResponse(code = 400, message = "Service already present in db or service cannot be validated"),
         @ApiResponse(code = 201, message = "Service Created")})
-    @RequestMapping(value = "/services", method = RequestMethod.POST)
+    @RequestMapping(value = "/", method = RequestMethod.POST)
     public ResponseEntity<?> createService(@RequestBody SdkService request) {
         log.info("Request for creation of a new service");
         if (request.getId() == null && request.isValid()) {
@@ -131,11 +127,11 @@ public class ServiceRestController {
         }
     }
 
-    @ApiOperation(value = "Modify an existing Service")
+    @ApiOperation(value = "Modify an existing SDK Service")
     @ApiResponses(value = {
         @ApiResponse(code = 400, message = "Service not present in db or service cannot be validated"),
         @ApiResponse(code = 204, message = "Service Updated")})
-    @RequestMapping(value = "/services", method = RequestMethod.PUT)
+    @RequestMapping(value = "/", method = RequestMethod.PUT)
     public ResponseEntity<?> updateService(@RequestBody SdkService request) {
         log.info("Request for update of a service");
         if (request.isValid()) {
@@ -159,11 +155,11 @@ public class ServiceRestController {
 
     }
 
-    @ApiOperation(value = "Delete Service From database")
+    @ApiOperation(value = "Delete SDK Service from database")
     @ApiResponses(value = {@ApiResponse(code = 204, message = ""),
         @ApiResponse(code = 404, message = "Entity to be deleted not found"),
         @ApiResponse(code = 400, message = "Deletion request without parameter serviceId")})
-    @RequestMapping(value = "/services/{serviceId}", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/{serviceId}", method = RequestMethod.DELETE)
     public ResponseEntity<?> deleteService(@PathVariable Long serviceId) {
         log.info("Request for deletion of a service with id: " + serviceId);
         if (serviceId == null) {
@@ -181,11 +177,11 @@ public class ServiceRestController {
         }
     }
 
-    @ApiOperation(value = "Create descriptor from Service")
+    @ApiOperation(value = "Create descriptor for SDK Service")
     @ApiResponses(value = {@ApiResponse(code = 200, message = ""),
         @ApiResponse(code = 404, message = "Base service not found"),
         @ApiResponse(code = 400, message = "Null service or invalid parameters provided")})
-    @RequestMapping(value = "/services/{serviceId}/create-descriptor", method = RequestMethod.POST)
+    @RequestMapping(value = "/{serviceId}/create-descriptor", method = RequestMethod.POST)
     public ResponseEntity<?> createDescriptor(
         @PathVariable Long serviceId,
         @RequestBody MakeDescriptorRequest makeDescriptorRequest
@@ -216,7 +212,7 @@ public class ServiceRestController {
         }
     }
 
-    @ApiOperation(value = "Publish Service to Public Catalogue")
+    @ApiOperation(value = "Publish SDK Service to Public Catalogue")
     @ApiResponses(value = {
         @ApiResponse(
             code = 202,
@@ -260,7 +256,7 @@ public class ServiceRestController {
     @ApiResponses(value = {
         @ApiResponse(code = 400, message = "Service not present in db or request cannot be validated"),
         @ApiResponse(code = 204, message = "ScalingAspects Updated")})
-    @RequestMapping(value = "/services/{serviceId}/scalingaspects", method = RequestMethod.PUT)
+    @RequestMapping(value = "/{serviceId}/scalingaspects", method = RequestMethod.PUT)
     public ResponseEntity<?> updateScalingAspects(@PathVariable Long serviceId, @RequestBody Set<ScalingAspect> scalingAspects) {
         log.info("Request for update of a scaling aspect list");
         for (ScalingAspect scaleAspect : scalingAspects) {
@@ -289,7 +285,7 @@ public class ServiceRestController {
     @ApiResponses(value = {@ApiResponse(code = 400, message = "Query without parameter serviceId"),
         @ApiResponse(code = 404, message = "SdkService not found on database"),
         @ApiResponse(code = 200, message = "OK")})
-    @RequestMapping(value = "/services/{serviceId}/scalingaspects", method = RequestMethod.GET)
+    @RequestMapping(value = "/{serviceId}/scalingaspects", method = RequestMethod.GET)
     public ResponseEntity<?> getScalingAspectsForService(@PathVariable Long serviceId) {
         log.info("Request for get list of scalingAspect available on a specific service, identified by id: "
             + serviceId);
@@ -309,7 +305,7 @@ public class ServiceRestController {
     @ApiResponses(value = {@ApiResponse(code = 204, message = ""),
         @ApiResponse(code = 404, message = "Entity to be deleted not found"),
         @ApiResponse(code = 400, message = "Deletion request without parameter serviceId")})
-    @RequestMapping(value = "/services/{serviceId}/scalingaspects/{scalingAspectId}", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/{serviceId}/scalingaspects/{scalingAspectId}", method = RequestMethod.DELETE)
     public ResponseEntity<?> deleteScalingAspects(@PathVariable Long serviceId, @PathVariable Long scalingAspectId) {
         log.info("Request for deletion of a list of scalingAspects from service identified by id: "
             + serviceId);
@@ -329,11 +325,11 @@ public class ServiceRestController {
     }
     */
 
-    @ApiOperation(value = "Modify an existing list of monitoring parameters related to a given SdkService")
+    @ApiOperation(value = "Modify an existing list of monitoring parameters related to a SDK Service")
     @ApiResponses(value = {
         @ApiResponse(code = 400, message = "Service not present in db or request cannot be validated"),
         @ApiResponse(code = 204, message = "Monitoring Param list Updated")})
-    @RequestMapping(value = "/services/{serviceId}/monitoringparams", method = RequestMethod.PUT)
+    @RequestMapping(value = "/{serviceId}/monitoring-params", method = RequestMethod.PUT)
     public ResponseEntity<?> updateMonitoringParametersForService(@PathVariable Long serviceId,
                                                                   @RequestBody MonitoringParameterWrapper monitoringParameters) {
         log.info("Request for update of a monitoringParameter list");
@@ -361,11 +357,11 @@ public class ServiceRestController {
         }
     }
 
-    @ApiOperation(value = "Get the list of  Monitoring Parameters for a given SdkService identified by UUID", response = MonitoringParameterWrapper.class)
+    @ApiOperation(value = "Get the list of  Monitoring Parameters for a SDK Service identified by UUID", response = MonitoringParameterWrapper.class)
     @ApiResponses(value = {@ApiResponse(code = 400, message = "Query without parameter serviceId"),
         @ApiResponse(code = 404, message = "SdkService not found on database"),
         @ApiResponse(code = 200, message = "OK")})
-    @RequestMapping(value = "/services/{serviceId}/monitoringparams", method = RequestMethod.GET)
+    @RequestMapping(value = "/{serviceId}/monitoring-params", method = RequestMethod.GET)
     public ResponseEntity<?> getMonitoringParametersForService(@PathVariable Long serviceId) {
         log.info("Request for get list of monitoringParams available on a specific service, identified by id: "
             + serviceId);
@@ -381,11 +377,11 @@ public class ServiceRestController {
         }
     }
 
-    @ApiOperation(value = "Delete monitoring param from SdkService")
+    @ApiOperation(value = "Delete monitoring param from SDK Service")
     @ApiResponses(value = {@ApiResponse(code = 204, message = ""),
         @ApiResponse(code = 404, message = "Entity to be deleted not found"),
         @ApiResponse(code = 400, message = "Deletion request without parameter serviceId")})
-    @RequestMapping(value = "/services/{serviceId}/monitoringparams/{monitoringParameterId}", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/{serviceId}/monitoring-params/{monitoringParameterId}", method = RequestMethod.DELETE)
     public ResponseEntity<?> deleteMonitoringParametersForService(@PathVariable Long serviceId,
                                                                   @PathVariable Long monitoringParameterId) {
         log.info("Request for deletion of monitoring parameter from service identified by id: "
