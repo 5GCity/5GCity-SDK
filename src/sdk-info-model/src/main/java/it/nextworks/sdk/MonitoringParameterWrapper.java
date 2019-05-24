@@ -95,6 +95,6 @@ public class MonitoringParameterWrapper {
             return false;
         }
         MonitoringParameterWrapper rhs = ((MonitoringParameterWrapper) other);
-        return (((this.extMonitoringParameters == rhs.extMonitoringParameters)||((this.extMonitoringParameters!= null)&&this.extMonitoringParameters.equals(rhs.extMonitoringParameters)))&&((this.intMonitoringParameters == rhs.intMonitoringParameters)||((this.intMonitoringParameters!= null)&&this.intMonitoringParameters.equals(rhs.intMonitoringParameters))));
+        return (((this.extMonitoringParameters == rhs.extMonitoringParameters)||((this.extMonitoringParameters != null)&&this.extMonitoringParameters.equals(rhs.extMonitoringParameters)))&&((this.intMonitoringParameters == rhs.intMonitoringParameters)||((this.intMonitoringParameters != null)&&this.intMonitoringParameters.equals(rhs.intMonitoringParameters))));
     }
 }
