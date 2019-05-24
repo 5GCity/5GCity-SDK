@@ -14,7 +14,7 @@ import java.util.Map;
  */
 public enum ServiceActionType {
 
-    RECONFIGURE("RECONFIGURE"),
+    //RECONFIGURE("RECONFIGURE"),
     SCALE_IN("SCALE_IN"),
     SCALE_OUT("SCALE_OUT"),
     COMPONENT("COMPONENT");

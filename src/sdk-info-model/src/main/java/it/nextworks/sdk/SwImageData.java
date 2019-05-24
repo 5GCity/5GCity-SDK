@@ -34,7 +34,7 @@ import java.util.HashSet;
 @Embeddable
 public class SwImageData {
 
-    private String imgName;
+    private String  imgName;
 
     private String  imgVersion;
 
@@ -140,7 +140,7 @@ public class SwImageData {
         return size;
     }
 
-    @JsonProperty("minCpu")
+    @JsonProperty("size")
     public void setSize(Integer size) {
         this.size = size;
     }
@@ -285,8 +285,8 @@ public class SwImageData {
                 ((this.containerFormat!= null) && (this.containerFormat.length() != 0) && validContainerFormats.contains(this.containerFormat)) &&
                 ((this.diskFormat!= null) && (this.diskFormat.length() != 0) && validDiskFormats.contains(this.diskFormat)) &&
                 (this.minDisk > 0) &&
-                //OPTIONAL (this.minRam > 0 ) &&
-                //OPTIONAL (this.minCpu > 0) &&
+                (this.minRam > 0 ) &&
+                (this.minCpu > 0) &&
                 (this.size > 0));
     }
 }
