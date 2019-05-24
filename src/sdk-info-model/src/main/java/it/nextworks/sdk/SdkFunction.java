@@ -48,7 +48,8 @@ import java.util.stream.Collectors;
     "connectionPoints",
     "monitoringParameters",
     "groupId",
-    "priority",
+    "accessLevel",
+    "swImageData",
     "epoch"
 })
 @Entity
@@ -104,11 +105,13 @@ public class SdkFunction implements InstantiableCandidate {
 
     private String vnfdProvider;
 
-    private Visibility visibility = Visibility.fromValue("PUBLIC");
+    private Visibility visibility = Visibility.fromValue("PRIVATE");
 
     private String groupId;
 
-    private Integer priority;
+    private Integer accessLevel;
+
+    private SwImageData swImageData;
 
     private Long epoch;
 
@@ -325,15 +328,23 @@ public class SdkFunction implements InstantiableCandidate {
         this.groupId = groupId;
     }
 
-    @JsonProperty("priority")
-    public Integer getPriority() {
-        return priority;
+    @JsonProperty("accessLevel")
+    public Integer getAccessLevel() {
+        return accessLevel;
     }
 
-    @JsonProperty("priority")
-    public void setPriority(Integer priority) {
-        this.priority = priority;
+    @JsonProperty("accessLevel")
+    public void setAccessLevel(Integer accessLevel) {
+        this.accessLevel = accessLevel;
     }
+
+    @JsonProperty("swImageData")
+    public SwImageData getSwImageData() {
+        return swImageData;
+    }
+
+    @JsonProperty("swImageData")
+    public void setSwImageData(SwImageData swImageData) { this.swImageData = swImageData; }
 
     @JsonProperty("epoch")
     public Long getEpoch() {
@@ -417,9 +428,13 @@ public class SdkFunction implements InstantiableCandidate {
         sb.append('=');
         sb.append(((this.visibility == null) ? "<null>" : this.visibility));
         sb.append(',');
-        sb.append("priority");
+        sb.append("accessLevel");
         sb.append('=');
-        sb.append(((this.priority == null) ? "<null>" : this.priority));
+        sb.append(((this.accessLevel == null) ? "<null>" : this.accessLevel));
+        sb.append(',');
+        sb.append("swImageData");
+        sb.append('=');
+        sb.append(((this.swImageData == null) ? "<null>" : this.swImageData));
         sb.append(',');
         sb.append("epoch");
         sb.append('=');
@@ -474,7 +489,8 @@ public class SdkFunction implements InstantiableCandidate {
         result = ((result * 31) + ((this.id == null) ? 0 : this.id.hashCode()));
         result = ((result * 31) + ((this.ownerId == null) ? 0 : this.ownerId.hashCode()));
         result = ((result * 31) + ((this.groupId == null) ? 0 : this.groupId.hashCode()));
-        result = ((result * 31) + ((this.priority == null) ? 0 : this.priority.hashCode()));
+        result = ((result * 31) + ((this.accessLevel == null) ? 0 : this.accessLevel.hashCode()));
+        result = ((result * 31) + ((this.swImageData == null) ? 0 : this.swImageData.hashCode()));
         result = ((result * 31) + ((this.epoch == null) ? 0 : this.epoch.hashCode()));
         result = ((result * 31) + ((this.visibility == null) ? 0 : this.visibility.hashCode()));
         result = ((result * 31) + ((this.parameters == null) ? 0 : this.parameters.hashCode()));
@@ -510,7 +526,8 @@ public class SdkFunction implements InstantiableCandidate {
                 && ((this.visibility == rhs.visibility) || ((this.visibility != null) && this.visibility.equals(rhs.visibility)))
                 && ((this.ownerId == rhs.ownerId) || ((this.ownerId != null) && this.ownerId.equals(rhs.ownerId)))
                 && ((this.groupId == rhs.groupId) || ((this.groupId != null) && this.groupId.equals(rhs.groupId)))
-                && ((this.priority == rhs.priority) || ((this.priority != null) && this.priority.equals(rhs.priority)))
+                && ((this.accessLevel == rhs.accessLevel) || ((this.accessLevel != null) && this.accessLevel.equals(rhs.accessLevel)))
+                && ((this.swImageData == rhs.swImageData) || ((this.swImageData != null) && this.swImageData.equals(rhs.swImageData)))
                 && ((this.epoch == rhs.epoch) || ((this.epoch != null) && this.epoch.equals(rhs.epoch)))
                 && ((this.requiredPorts == rhs.requiredPorts) || ((this.requiredPorts != null) && this.requiredPorts.equals(rhs.requiredPorts)))
                 && ((this.parameters == rhs.parameters) || ((this.parameters != null) && this.parameters.equals(rhs.parameters))));
@@ -532,7 +549,8 @@ public class SdkFunction implements InstantiableCandidate {
             && validateExpressions()
             && vnfdVersion != null
             && validateMonitoringParameters()
-            && validateRequiredPorts();
+            && validateRequiredPorts()
+            && swImageData.isValid();
     }
 
     private boolean validateMonitoringParameters() {
@@ -544,11 +562,11 @@ public class SdkFunction implements InstantiableCandidate {
                 validParameter = false;
                 break;
             }
-            if (mp instanceof TransformedMonParam) {
-                validParameter = validParameter && (monitoringParameters.stream().map(MonitoringParameter::getName).collect(Collectors.toSet()).contains(((TransformedMonParam) mp).getTargetParameterId()));
+            if (mp instanceof MonParamTransformed) {
+                validParameter = validParameter && (monitoringParameters.stream().map(MonitoringParameter::getName).collect(Collectors.toSet()).contains(((MonParamTransformed) mp).getTargetParameterId()));
             }
-            if (mp instanceof AggregatedMonParam) {
-                for (String s : ((AggregatedMonParam) mp).getParametersId()) {
+            if (mp instanceof MonParamAggregated) {
+                for (String s : ((MonParamAggregated) mp).getParametersId()) {
                     validParameter = validParameter && (monitoringParameters.stream().map(MonitoringParameter::getName).collect(Collectors.toSet()).contains(s));
                 }
             }

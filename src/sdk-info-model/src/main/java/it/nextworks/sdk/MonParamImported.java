@@ -20,13 +20,13 @@ import javax.persistence.*;
     "componentIndex",
     "importedParameterId"
 })
-public class ImportedMonParam extends MonitoringParameter{
+public class MonParamImported extends MonitoringParameter {
 
     private Integer componentIndex;
 
     private String importedParameterId;
 
-    public ImportedMonParam(){
+    public MonParamImported(){
         //JPA only
     }
 
@@ -61,7 +61,7 @@ public class ImportedMonParam extends MonitoringParameter{
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(ImportedMonParam.class.getName()).append('[');
+        sb.append(MonParamImported.class.getName()).append('[');
         sb.append("componentIndex");
         sb.append('=');
         sb.append(((this.componentIndex == null)?"<null>":this.componentIndex));
@@ -92,10 +92,10 @@ public class ImportedMonParam extends MonitoringParameter{
         if (other == this) {
             return true;
         }
-        if ((other instanceof ImportedMonParam) == false) {
+        if ((other instanceof MonParamImported) == false) {
             return false;
         }
-        ImportedMonParam rhs = ((ImportedMonParam) other);
+        MonParamImported rhs = ((MonParamImported) other);
         return super.equals(other) && ((this.importedParameterId == rhs.importedParameterId)||((this.importedParameterId != null)&&this.importedParameterId.equals(rhs.importedParameterId)))&&((this.componentIndex == rhs.componentIndex)||((this.componentIndex!= null)&&this.componentIndex.equals(rhs.componentIndex)));
     }
 

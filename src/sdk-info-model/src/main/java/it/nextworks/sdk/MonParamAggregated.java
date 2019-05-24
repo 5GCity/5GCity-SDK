@@ -1,9 +1,7 @@
 package it.nextworks.sdk;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.fasterxml.jackson.annotation.*;
 import it.nextworks.sdk.enums.AggregatorFunc;
@@ -26,7 +24,7 @@ import javax.persistence.*;
     "aggregatorFunc",
     "parametersId"
 })
-public class AggregatedMonParam extends MonitoringParameter {
+public class MonParamAggregated extends MonitoringParameter {
 
     private AggregatorFunc aggregatorFunc;
 
@@ -36,7 +34,7 @@ public class AggregatedMonParam extends MonitoringParameter {
     @OrderColumn
     private List<String> parametersId = new ArrayList<>();
 
-    public AggregatedMonParam(){
+    public MonParamAggregated(){
         //JPA only
     }
 
@@ -72,7 +70,7 @@ public class AggregatedMonParam extends MonitoringParameter {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(AggregatedMonParam.class.getName()).append('[');
+        sb.append(MonParamAggregated.class.getName()).append('[');
         sb.append("aggregatorFunc");
         sb.append('=');
         sb.append(((this.aggregatorFunc == null)?"<null>":this.aggregatorFunc));
@@ -103,10 +101,10 @@ public class AggregatedMonParam extends MonitoringParameter {
         if (other == this) {
             return true;
         }
-        if ((other instanceof AggregatedMonParam) == false) {
+        if ((other instanceof MonParamAggregated) == false) {
             return false;
         }
-        AggregatedMonParam rhs = ((AggregatedMonParam) other);
+        MonParamAggregated rhs = ((MonParamAggregated) other);
         return super.equals(other) && (((this.aggregatorFunc == rhs.aggregatorFunc)||((this.aggregatorFunc!= null)&&this.aggregatorFunc.equals(rhs.aggregatorFunc)))&&((this.parametersId == rhs.parametersId)||((this.parametersId!= null)&&this.parametersId.equals(rhs.parametersId))));
     }
 }

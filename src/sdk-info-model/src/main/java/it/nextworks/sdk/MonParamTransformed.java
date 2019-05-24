@@ -25,7 +25,7 @@ import javax.persistence.*;
     "argumentList",
     "targetParameterId"
 })
-public class TransformedMonParam extends MonitoringParameter {
+public class MonParamTransformed extends MonitoringParameter {
 
     private Transform transform;
 
@@ -37,7 +37,7 @@ public class TransformedMonParam extends MonitoringParameter {
 
     private String targetParameterId;
 
-    public TransformedMonParam(){
+    public MonParamTransformed(){
         //JPA only
     }
 
@@ -84,7 +84,7 @@ public class TransformedMonParam extends MonitoringParameter {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(TransformedMonParam.class.getName()).append('[');
+        sb.append(MonParamTransformed.class.getName()).append('[');
         sb.append("transform");
         sb.append('=');
         sb.append(((this.transform == null)?"<null>":this.transform));
@@ -120,10 +120,10 @@ public class TransformedMonParam extends MonitoringParameter {
         if (other == this) {
             return true;
         }
-        if ((other instanceof TransformedMonParam) == false) {
+        if ((other instanceof MonParamTransformed) == false) {
             return false;
         }
-        TransformedMonParam rhs = ((TransformedMonParam) other);
+        MonParamTransformed rhs = ((MonParamTransformed) other);
         return super.equals(other) && ((((this.argumentList == rhs.argumentList)||((this.argumentList!= null)&&this.argumentList.equals(rhs.argumentList)))&&((this.transform == rhs.transform)||((this.transform!= null)&&this.transform.equals(rhs.transform))))&&((this.targetParameterId == rhs.targetParameterId)||((this.targetParameterId != null)&&this.targetParameterId.equals(rhs.targetParameterId))));
     }
 }

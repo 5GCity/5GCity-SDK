@@ -56,6 +56,8 @@ public interface FunctionManagerProviderInterface {
     void deleteFunction(Long functionId)
         throws NotExistingEntityException;
 
+    String createFunctionDescriptor(Long functionId, List<BigDecimal> parameterValues)
+        throws NotExistingEntityException, MalformedElementException, NotYetImplementedException;
     String publishFunction(Long functionId, List<BigDecimal> parameterValues)
         throws NotExistingEntityException, MalformedElementException;
 

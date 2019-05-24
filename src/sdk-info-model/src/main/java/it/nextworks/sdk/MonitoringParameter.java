@@ -13,10 +13,10 @@ import javax.persistence.*;
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "parameterType", visible = true)
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = AggregatedMonParam.class, 	name = "AGGREGATED"),
-    @JsonSubTypes.Type(value = FunctionMonParam.class, 	name = "FUNCTION"),
-    @JsonSubTypes.Type(value = ImportedMonParam.class, 	name = "IMPORTED"),
-    @JsonSubTypes.Type(value = TransformedMonParam.class, 	name = "TRANSFORMED"),
+    @JsonSubTypes.Type(value = MonParamAggregated.class, 	name = "AGGREGATED"),
+    @JsonSubTypes.Type(value = MonParamFunction.class, 	name = "FUNCTION"),
+    @JsonSubTypes.Type(value = MonParamImported.class, 	name = "IMPORTED"),
+    @JsonSubTypes.Type(value = MonParamTransformed.class, 	name = "TRANSFORMED"),
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({

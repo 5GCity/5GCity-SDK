@@ -160,10 +160,10 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         monitoringParameters.addAll(service.getIntMonitoringParameters());
         monitoringParameters.addAll(service.getExtMonitoringParameters());;
         for (MonitoringParameter mp : monitoringParameters){
-            if(mp instanceof ImportedMonParam){
-                Optional<MonitoringParameter> target = monitoringParamRepository.findById(Long.valueOf(((ImportedMonParam) mp).getImportedParameterId()));
+            if(mp instanceof MonParamImported){
+                Optional<MonitoringParameter> target = monitoringParamRepository.findById(Long.valueOf(((MonParamImported) mp).getImportedParameterId()));
                 if(!target.isPresent()){
-                    throw new NotExistingEntityException("Monitoring parameter id " + (((ImportedMonParam) mp).getImportedParameterId()) + " not present in database");
+                    throw new NotExistingEntityException("Monitoring parameter id " + (((MonParamImported) mp).getImportedParameterId()) + " not present in database");
                 }
             }
         }

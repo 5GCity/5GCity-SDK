@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
     "status",
     "componentType",
     "parameters",
-    "sub_descriptor"
+    "subDescriptor"
 })
 @Entity
 public class SdkServiceDescriptor extends SdkComponentInstance {
@@ -122,14 +122,14 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
         this.status = status;
     }
 
-    @JsonProperty("sub_descriptor")
+    @JsonProperty("subDescriptor")
     public Set<SdkComponentInstance> getSubDescriptors() {
         Set<SdkComponentInstance> output = new HashSet<>(subFunctions);
         output.addAll(subServices);
         return output;
     }
 
-    @JsonProperty("sub_descriptor")
+    @JsonProperty("subDescriptor")
     public void setSubDescriptors(Set<SdkComponentInstance> components) {
         Map<SdkServiceComponentType, List<SdkComponentInstance>> byType =
             components.stream().collect(Collectors.groupingBy(SdkComponentInstance::getType));

@@ -1,8 +1,5 @@
 package it.nextworks.sdk;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.fasterxml.jackson.annotation.*;
 import it.nextworks.sdk.enums.MetricType;
 
@@ -21,13 +18,13 @@ import javax.persistence.*;
     "metricName",
     "metricType"
 })
-public class FunctionMonParam extends MonitoringParameter {
+public class MonParamFunction extends MonitoringParameter {
 
     private String metricName;
 
     private MetricType metricType;
 
-    public FunctionMonParam(){
+    public MonParamFunction(){
         //JPA only
     }
 
@@ -62,7 +59,7 @@ public class FunctionMonParam extends MonitoringParameter {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(FunctionMonParam.class.getName()).append('[');
+        sb.append(MonParamFunction.class.getName()).append('[');
         sb.append("metricName");
         sb.append('=');
         sb.append(((this.metricName == null)?"<null>":this.metricName));
@@ -93,10 +90,10 @@ public class FunctionMonParam extends MonitoringParameter {
         if (other == this) {
             return true;
         }
-        if ((other instanceof FunctionMonParam) == false) {
+        if ((other instanceof MonParamFunction) == false) {
             return false;
         }
-        FunctionMonParam rhs = ((FunctionMonParam) other);
+        MonParamFunction rhs = ((MonParamFunction) other);
         return super.equals(other) && (((this.metricType == rhs.metricType)||((this.metricType!= null)&&this.metricType.equals(rhs.metricType)))&&((this.metricName == rhs.metricName)||((this.metricName!= null)&&this.metricName.equals(rhs.metricName))));
     }
 }
