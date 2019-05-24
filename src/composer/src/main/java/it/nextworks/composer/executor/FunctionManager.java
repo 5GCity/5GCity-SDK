@@ -17,10 +17,9 @@ package it.nextworks.composer.executor;
 
 import it.nextworks.composer.executor.interfaces.FunctionManagerProviderInterface;
 import it.nextworks.composer.executor.repositories.SdkFunctionRepository;
-import it.nextworks.sdk.ConnectionPoint;
-import it.nextworks.sdk.SdkFunction;
-import it.nextworks.sdk.MonitoringParameter;
+import it.nextworks.sdk.*;
 import it.nextworks.sdk.enums.ConnectionPointType;
+import it.nextworks.sdk.enums.SdkServiceStatus;
 import it.nextworks.sdk.exceptions.MalformedElementException;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
 import org.hibernate.cfg.NotYetImplementedException;
@@ -227,6 +226,40 @@ public class FunctionManager implements FunctionManagerProviderInterface {
     }
 
     @Override
+    public String createFunctionDescriptor(Long functionId, List<BigDecimal> parameterValues)
+        throws NotExistingEntityException, MalformedElementException, NotYetImplementedException {
+        log.info("Request create-descriptor of function with uuid: " + functionId);
+
+        // Check if function exists
+        Optional<SdkFunction> optFunction = functionRepository.findById(functionId);
+
+        SdkFunction function = optFunction.orElseThrow(() -> {
+            log.error("Function with UUID: " + functionId + " is not present in database");
+            return new NotExistingEntityException("Function with UUID: " + functionId + " is not present in database");
+        });
+
+        throw new NotYetImplementedException();
+        /*
+        SdkServiceDescriptor descriptor;
+
+        try {
+            descriptor = adapter.createServiceDescriptor(service, parameterValues);
+        } catch (IllegalArgumentException exc) {
+            log.error("Malformed create-descriptor request: {}", exc.getMessage());
+            throw new MalformedElementException(exc.getMessage(), exc);
+        }
+        descriptor.setStatus(SdkServiceStatus.SAVED);
+        serviceDescriptorRepository.saveAndFlush(descriptor);
+        log.info(
+            "Descriptor for service {} successfully created. Descriptor ID {}.",
+            serviceId,
+            descriptor.getId()
+        );
+        return descriptor.getId().toString();
+        */
+    }
+
+    @Override
     public String publishFunction(Long functionId, List<BigDecimal> parameterValues)
         throws NotExistingEntityException, MalformedElementException, NotYetImplementedException {
         log.info("Request for publication of function with uuid: " + functionId);
@@ -246,22 +279,6 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         */
     }
 
-    private void validateImportedMonitoringParameter(SdkFunction function) throws NotExistingEntityException, NotYetImplementedException {
-        throw new NotYetImplementedException();
-        /*
-        Set<MonitoringParameter> monitoringParameters = new HashSet<>();
-        monitoringParameters.addAll(function.getMonitoringParameters());
-        for (MonitoringParameter mp : monitoringParameters){
-            if(mp instanceof ImportedMonParam){
-                Optional<MonitoringParameter> target = monitoringParamRepository.findById(Long.valueOf(((ImportedMonParam) mp).getImportedParameterId()));
-                if(!target.isPresent()){
-                    throw new NotExistingEntityException("Monitoring parameter id " + (((ImportedMonParam) mp).getImportedParameterId()) + " not present in database");
-                }
-            }
-        }
-        */
-    }
-
     @Override
     public void updateMonitoringParameters(Long functionId, Set<MonitoringParameter> monitoringParameters)
         throws NotExistingEntityException, MalformedElementException, NotYetImplementedException {
@@ -275,9 +292,10 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         for(MonitoringParameter mp : function.get().getMonitoringParameters()){
             mp.setSdkFunction(null);
         }
+
         log.debug("Updating list of monitoring parameters on SDF Function with ID: " + functionId);
         function.get().setMonitoringParameters(monitoringParameters);
-        validateImportedMonitoringParameter(function.get());
+
         log.debug("Updating list of monitoring parameters on database");
         functionRepository.saveAndFlush(function.get());
 

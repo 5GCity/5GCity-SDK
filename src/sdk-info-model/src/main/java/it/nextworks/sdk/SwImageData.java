@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.persistence.Entity;
 import javax.persistence.Embeddable;
 
 import java.util.Set;
@@ -18,11 +17,10 @@ import java.util.HashSet;
  * 
  * 
  */
-@Entity
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-    "name",
-    "version",
+    "imgName",
+    "imgVersion",
     "checksum",
     "containerFormat",
     "diskFormat",
@@ -36,21 +34,15 @@ import java.util.HashSet;
 @Embeddable
 public class SwImageData {
 
-    private String  name;
+    private String imgName;
 
-    private String  version;
+    private String  imgVersion;
 
     private String  checksum;
 
     private String  containerFormat;
 
-    @JsonIgnore
-    private Set<String> validContainerFormats;
-
     private String  diskFormat;
-
-    @JsonIgnore
-    private Set<String> validDiskFormats;
 
     private Integer minDisk; // in MB
 
@@ -60,73 +52,27 @@ public class SwImageData {
 
     private Integer size; // in MB
 
-
-
     public SwImageData() {
-        validContainerFormats = new HashSet<String>();
-        validContainerFormats.add("aki");
-        validContainerFormats.add("ami");
-        validContainerFormats.add("ari");
-        validContainerFormats.add("bare");
-        validContainerFormats.add("docker");
-        validContainerFormats.add("ova");
-        validContainerFormats.add("ovf");
-            /* validContainerFormats = [ aki, ami, ari, bare, docker, ova, ovf]
-            The container format describes the container
-            file format in which software image is provided.
-            Description of valid values:
-            aki:a kernel image
-            ami: a machine image
-            ari: a ramdisk image
-            bare: the image does not have a container or  metadata envelope
-            docker: docker container format
-            ova: OVF package in a tarfile
-            ovf: OVF container format
-            */
-
-        validDiskFormats = new HashSet<String>();
-        validDiskFormats.add("aki");
-        validDiskFormats.add("ami");
-        validDiskFormats.add("ari");
-        validDiskFormats.add("iso");
-        validDiskFormats.add("qcow2");
-        validDiskFormats.add("raw");
-        validDiskFormats.add("vdi");
-        validDiskFormats.add("vhd");
-        validDiskFormats.add("vhdx");
-        validDiskFormats.add("vmdk");
-            /* validDiskFormats =[ aki, ami, ari, iso, qcow2, raw, vdi, vhd, vhdx, vmdk ]
-            aki: a kernel image
-            ami: a machine image
-            ari: a ramdisk image
-            iso: an archive format for the data contents of an optical disc, such as CD-ROM
-            qcow2: a common disk image format, which can expand dynamically and supports copy on write
-            raw: an unstructured disk image format
-            vdi: a common disk image format
-            vhd: a common disk image format
-            vhdx: enhanced version of VHD format
-            vmdk: a common disk image format
-            */
     }
 
-    @JsonProperty("name")
-    public String getName() {
-        return name;
+    @JsonProperty("imgName")
+    public String getImgName() {
+        return imgName;
     }
 
-    @JsonProperty("name")
-    public void Name(String name) {
-        this.name = name;
+    @JsonProperty("imgName")
+    public void setImgName(String imgName) {
+        this.imgName = imgName;
     }
 
-    @JsonProperty("version")
+    @JsonProperty("imgVersion")
     public String getVersion() {
-        return version;
+        return imgVersion;
     }
 
-    @JsonProperty("version")
-    public void setVersion(String version) {
-        this.version = version;
+    @JsonProperty("imgVersion")
+    public void setImgVersion(String imgVersion) {
+        this.imgVersion = imgVersion;
     }
 
     @JsonProperty("checksum")
@@ -135,7 +81,7 @@ public class SwImageData {
     }
 
     @JsonProperty("checksum")
-    public void setchecksum(String checksum) {
+    public void setChecksum(String checksum) {
         this.checksum = checksum;
     }
 
@@ -204,13 +150,13 @@ public class SwImageData {
         StringBuilder sb = new StringBuilder();
         sb.append(SwImageData.class.getName()).append('[');
 
-        sb.append("name");
+        sb.append("imgName");
         sb.append('=');
-        sb.append(((this.name == null)?"<null>":this.name));
+        sb.append(((this.imgName == null)?"<null>":this.imgName));
         sb.append(',');
-        sb.append("version");
+        sb.append("imgVersion");
         sb.append('=');
-        sb.append(((this.version == null)?"<null>":this.version));
+        sb.append(((this.imgVersion == null)?"<null>":this.imgVersion));
         sb.append(',');
         sb.append("checksum");
         sb.append('=');
@@ -251,8 +197,8 @@ public class SwImageData {
     @Override
     public int hashCode() {
         int result = 1;
-        result = ((result* 31)+((this.name == null)? 0 :this.name.hashCode()));
-        result = ((result* 31)+((this.version == null)? 0 :this.version.hashCode()));
+        result = ((result* 31)+((this.imgName == null)? 0 :this.imgName.hashCode()));
+        result = ((result* 31)+((this.imgVersion == null)? 0 :this.imgVersion.hashCode()));
         result = ((result* 31)+((this.checksum == null)? 0 :this.checksum.hashCode()));
         result = ((result* 31)+((this.containerFormat == null)? 0 :this.containerFormat.hashCode()));
         result = ((result* 31)+((this.diskFormat == null)? 0 :this.diskFormat.hashCode()));
@@ -274,8 +220,8 @@ public class SwImageData {
         }
         SwImageData rhs = ((SwImageData) other);
         return super.equals(other) && (
-                ((this.name == rhs.name) || ((this.name!= null) && this.name.equals(rhs.name))) &&
-                ((this.version == rhs.version) || ((this.version!= null) && this.version.equals(rhs.version))) &&
+                ((this.imgName == rhs.imgName) || ((this.imgName != null) && this.imgName.equals(rhs.imgName))) &&
+                ((this.imgVersion == rhs.imgVersion) || ((this.imgVersion!= null) && this.imgVersion.equals(rhs.imgVersion))) &&
                 ((this.checksum == rhs.checksum) || ((this.checksum!= null) && this.checksum.equals(rhs.checksum))) &&
                 ((this.containerFormat == rhs.containerFormat) || ((this.containerFormat!= null) && this.containerFormat.equals(rhs.containerFormat))) &&
                 ((this.diskFormat == rhs.diskFormat) || ((this.diskFormat!= null) && this.diskFormat.equals(rhs.diskFormat))) &&
@@ -288,9 +234,53 @@ public class SwImageData {
 
     @JsonIgnore
     public boolean isValid() {
+        Set<String> validContainerFormats = new HashSet<String>();
+        validContainerFormats.add("aki");
+        validContainerFormats.add("ami");
+        validContainerFormats.add("ari");
+        validContainerFormats.add("bare");
+        validContainerFormats.add("docker");
+        validContainerFormats.add("ova");
+        validContainerFormats.add("ovf");
+            /* validContainerFormats = [ aki, ami, ari, bare, docker, ova, ovf]
+            The container format describes the container
+            file format in which software image is provided.
+            Description of valid values:
+            aki:a kernel image
+            ami: a machine image
+            ari: a ramdisk image
+            bare: the image does not have a container or  metadata envelope
+            docker: docker container format
+            ova: OVF package in a tarfile
+            ovf: OVF container format
+            */
 
-        return (((this.name != null) && (this.name.length() != 0)) &&
-                ((this.version!= null) && (this.version.length() != 0)) &&
+        Set<String> validDiskFormats = new HashSet<String>();
+        validDiskFormats.add("aki");
+        validDiskFormats.add("ami");
+        validDiskFormats.add("ari");
+        validDiskFormats.add("iso");
+        validDiskFormats.add("qcow2");
+        validDiskFormats.add("raw");
+        validDiskFormats.add("vdi");
+        validDiskFormats.add("vhd");
+        validDiskFormats.add("vhdx");
+        validDiskFormats.add("vmdk");
+            /* validDiskFormats =[ aki, ami, ari, iso, qcow2, raw, vdi, vhd, vhdx, vmdk ]
+            aki: a kernel image
+            ami: a machine image
+            ari: a ramdisk image
+            iso: an archive format for the data contents of an optical disc, such as CD-ROM
+            qcow2: a common disk image format, which can expand dynamically and supports copy on write
+            raw: an unstructured disk image format
+            vdi: a common disk image format
+            vhd: a common disk image format
+            vhdx: enhanced version of VHD format
+            vmdk: a common disk image format
+            */
+
+        return (((this.imgName != null) && (this.imgName.length() != 0)) &&
+                ((this.imgVersion!= null) && (this.imgVersion.length() != 0)) &&
                 ((this.checksum!= null) && (this.checksum.length() != 0)) &&
                 ((this.containerFormat!= null) && (this.containerFormat.length() != 0) && validContainerFormats.contains(this.containerFormat)) &&
                 ((this.diskFormat!= null) && (this.diskFormat.length() != 0) && validDiskFormats.contains(this.diskFormat)) &&

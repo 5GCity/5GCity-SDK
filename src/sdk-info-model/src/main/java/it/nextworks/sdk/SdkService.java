@@ -14,7 +14,6 @@ import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
-import org.springframework.context.annotation.Import;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -409,7 +408,7 @@ public class SdkService implements InstantiableCandidate {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("intMonitoringParameters")
-    public void setIntMonitoringParameters(Set<MonitoringParameter>intMonitoringParameters) {
+    public void setIntMonitoringParameters(Set<MonitoringParameter> intMonitoringParameters) {
         this.intMonitoringParameters.clear();
         this.intMonitoringParameters.addAll(intMonitoringParameters);
 
@@ -746,11 +745,11 @@ public class SdkService implements InstantiableCandidate {
                 validParameter = false;
                 break;
             }
-            if(mp instanceof TransformedMonParam){
-                validParameter = validParameter && (monitoringParameters.stream().map(MonitoringParameter::getName).collect(Collectors.toSet()).contains(((TransformedMonParam) mp).getTargetParameterId()));
+            if(mp instanceof MonParamTransformed){
+                validParameter = validParameter && (monitoringParameters.stream().map(MonitoringParameter::getName).collect(Collectors.toSet()).contains(((MonParamTransformed) mp).getTargetParameterId()));
             }
-            if(mp instanceof  AggregatedMonParam){
-                for(String s : ((AggregatedMonParam) mp).getParametersId()){
+            if(mp instanceof MonParamAggregated){
+                for(String s : ((MonParamAggregated) mp).getParametersId()){
                     validParameter = validParameter && (monitoringParameters.stream().map(MonitoringParameter::getName).collect(Collectors.toSet()).contains(s));
                 }
             }

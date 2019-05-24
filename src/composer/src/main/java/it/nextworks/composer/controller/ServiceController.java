@@ -181,17 +181,17 @@ public class ServiceController {
     @ApiResponses(value = {@ApiResponse(code = 200, message = ""),
         @ApiResponse(code = 404, message = "Base service not found"),
         @ApiResponse(code = 400, message = "Null service or invalid parameters provided")})
-    @RequestMapping(value = "/{serviceId}/create-descriptor", method = RequestMethod.POST)
+    @RequestMapping(value = "/{serviceId}/create_descriptor", method = RequestMethod.POST)
     public ResponseEntity<?> createDescriptor(
         @PathVariable Long serviceId,
         @RequestBody MakeDescriptorRequest makeDescriptorRequest
     ) {
         List<BigDecimal> parameterValues = makeDescriptorRequest.parameterValues;
-        log.info("Request create-descriptor of a service with id: {}, params: {}.", serviceId, parameterValues);
+        log.info("Request create_descriptor of a service with id: {}, params: {}.", serviceId, parameterValues);
         if (serviceId == null) {
-            log.error("Create-descriptor request without parameter serviceId");
+            log.error("create_descriptor request without parameter serviceId");
             return new ResponseEntity<>(
-                "Create-descriptor request without parameter serviceId",
+                "create_descriptor request without parameter serviceId",
                 HttpStatus.BAD_REQUEST
             );
         }
@@ -329,7 +329,7 @@ public class ServiceController {
     @ApiResponses(value = {
         @ApiResponse(code = 400, message = "Service not present in db or request cannot be validated"),
         @ApiResponse(code = 204, message = "Monitoring Param list Updated")})
-    @RequestMapping(value = "/{serviceId}/monitoring-params", method = RequestMethod.PUT)
+    @RequestMapping(value = "/{serviceId}/monitoring_params", method = RequestMethod.PUT)
     public ResponseEntity<?> updateMonitoringParametersForService(@PathVariable Long serviceId,
                                                                   @RequestBody MonitoringParameterWrapper monitoringParameters) {
         log.info("Request for update of a monitoringParameter list");
@@ -361,7 +361,7 @@ public class ServiceController {
     @ApiResponses(value = {@ApiResponse(code = 400, message = "Query without parameter serviceId"),
         @ApiResponse(code = 404, message = "SdkService not found on database"),
         @ApiResponse(code = 200, message = "OK")})
-    @RequestMapping(value = "/{serviceId}/monitoring-params", method = RequestMethod.GET)
+    @RequestMapping(value = "/{serviceId}/monitoring_params", method = RequestMethod.GET)
     public ResponseEntity<?> getMonitoringParametersForService(@PathVariable Long serviceId) {
         log.info("Request for get list of monitoringParams available on a specific service, identified by id: "
             + serviceId);
@@ -381,7 +381,7 @@ public class ServiceController {
     @ApiResponses(value = {@ApiResponse(code = 204, message = ""),
         @ApiResponse(code = 404, message = "Entity to be deleted not found"),
         @ApiResponse(code = 400, message = "Deletion request without parameter serviceId")})
-    @RequestMapping(value = "/{serviceId}/monitoring-params/{monitoringParameterId}", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/{serviceId}/monitoring_params/{monitoringParameterId}", method = RequestMethod.DELETE)
     public ResponseEntity<?> deleteMonitoringParametersForService(@PathVariable Long serviceId,
                                                                   @PathVariable Long monitoringParameterId) {
         log.info("Request for deletion of monitoring parameter from service identified by id: "

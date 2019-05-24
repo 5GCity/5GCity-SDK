@@ -1,5 +1,6 @@
 package it.nextworks.sdk;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import it.nextworks.composer.ComposerApplication;
 import it.nextworks.composer.executor.ServiceManager;
 import it.nextworks.composer.executor.repositories.SdkFunctionRepository;
@@ -79,8 +80,8 @@ public class SdkFunctionTest {
 //        return function;
 //    }
 
-    public static FunctionMonParam makeFunctionMonParam(){
-        FunctionMonParam param = new FunctionMonParam();
+    public static MonParamFunction makeFunctionMonParam(){
+        MonParamFunction param = new MonParamFunction();
         param.setParameterType(MonitoringParameterType.FUNCTION);
         param.setName("monparam");
         param.setMetricName("CPU_UTILIZATION");
@@ -89,8 +90,8 @@ public class SdkFunctionTest {
         return param;
     }
 
-    public static AggregatedMonParam makeAggregatedMonParam(){
-        AggregatedMonParam param = new AggregatedMonParam();
+    public static MonParamAggregated makeAggregatedMonParam(){
+        MonParamAggregated param = new MonParamAggregated();
         param.setParameterType(MonitoringParameterType.AGGREGATED);
         param.setName("monparam2");
         param.setAggregatorFunc(AggregatorFunc.AVG);
@@ -102,14 +103,30 @@ public class SdkFunctionTest {
         return param;
     }
 
-    public static TransformedMonParam makeTransformedMonParam(){
-        TransformedMonParam param = new TransformedMonParam();
+    public static MonParamTransformed makeTransformedMonParam(){
+        MonParamTransformed param = new MonParamTransformed();
         param.setParameterType(MonitoringParameterType.TRANSFORMED);
         param.setName("monparam3");
         param.setTransform(Transform.AVG_OVER_TIME);
         param.setTargetParameterId("monparam2");
 
         return param;
+    }
+
+    public static SwImageData generateFakeSwImageData(String name) {
+        SwImageData data = new SwImageData();
+
+        data.setImgName(name);
+        data.setImgVersion("1.0");
+        data.setChecksum("123456789abcdef");
+        data.setContainerFormat("bare");
+        data.setDiskFormat("qcow2");
+        data.setMinDisk(50000000);
+        data.setMinCpu(2);
+        data.setMinRam(4196);
+        data.setSize(2000000);
+
+        return  data;
     }
 
     public static SdkFunction makeNS1vPlateObject() {
@@ -132,11 +149,14 @@ public class SdkFunctionTest {
 
         function.setConnectionPoint(new HashSet<>(Arrays.asList(cp1)));
 
-        FunctionMonParam funParam = makeFunctionMonParam();
+        MonParamFunction funParam = makeFunctionMonParam();
         function.setMonitoringParameters(new HashSet<MonitoringParameter>(Arrays.asList(funParam)));
 
-        function.setGroupId("VIDED-ANALYSIS");
-        function.setPriority(4);
+        function.setAccessLevel(4);
+
+        SwImageData swImage = generateFakeSwImageData("vPlate-server");
+        function.setSwImageData(swImage);
+
         function.setEpoch(Instant.now().getEpochSecond());
 
         return function;
@@ -173,13 +193,15 @@ public class SdkFunctionTest {
 
         function.setConnectionPoint(new HashSet<>(Arrays.asList(cp1, cp2, cp3, cp4)));
 
-        FunctionMonParam funParam = makeFunctionMonParam();
-        AggregatedMonParam aggParam = makeAggregatedMonParam();
-        TransformedMonParam tranParam = makeTransformedMonParam();
+        MonParamFunction funParam = makeFunctionMonParam();
+        MonParamAggregated aggParam = makeAggregatedMonParam();
+        MonParamTransformed tranParam = makeTransformedMonParam();
         function.setMonitoringParameters(new HashSet<MonitoringParameter>(Arrays.asList(funParam, aggParam, tranParam)));
 
-        function.setGroupId("NETWORK-FUNCTIONS");
-        function.setPriority(4);
+        SwImageData swImage = generateFakeSwImageData("vFirewall");
+        function.setSwImageData(swImage);
+
+        function.setAccessLevel(4);
         function.setEpoch(Instant.now().getEpochSecond());
 
         return function;
@@ -219,11 +241,13 @@ public class SdkFunctionTest {
 
         function.setConnectionPoint(new HashSet<>(Arrays.asList(cp1, cp2, cp3, cp4)));
 
-        FunctionMonParam funParam = makeFunctionMonParam();
+        MonParamFunction funParam = makeFunctionMonParam();
         function.setMonitoringParameters(new HashSet<MonitoringParameter>(Arrays.asList(funParam)));
 
-        function.setGroupId("NETWORK-FUNCTIONS");
-        function.setPriority(4);
+        SwImageData swImage = generateFakeSwImageData("vFirewall");
+        function.setSwImageData(swImage);
+
+        function.setAccessLevel(4);
         function.setEpoch(Instant.now().getEpochSecond());
 
         return function;
@@ -250,13 +274,15 @@ public class SdkFunctionTest {
 
         function.setConnectionPoint(new HashSet<>(Arrays.asList(cp1)));
 
-        FunctionMonParam funParam = makeFunctionMonParam();
-        AggregatedMonParam aggParam = makeAggregatedMonParam();
-        TransformedMonParam tranParam = makeTransformedMonParam();
+        MonParamFunction funParam = makeFunctionMonParam();
+        MonParamAggregated aggParam = makeAggregatedMonParam();
+        MonParamTransformed tranParam = makeTransformedMonParam();
         function.setMonitoringParameters(new HashSet<MonitoringParameter>(Arrays.asList(funParam, aggParam, tranParam)));
 
-        function.setGroupId("WEB-APPLICATION");
-        function.setPriority(4);
+        SwImageData swImage = generateFakeSwImageData("miniweb-server");
+        function.setSwImageData(swImage);
+
+        function.setAccessLevel(4);
         function.setEpoch(Instant.now().getEpochSecond());
 
         return function;

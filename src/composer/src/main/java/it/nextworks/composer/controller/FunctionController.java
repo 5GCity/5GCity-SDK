@@ -47,7 +47,7 @@ import java.util.List;
 @RestController
 @CrossOrigin
 @RequestMapping("/sdk/functions")
-@Api(value = "SDK Service Descriptor NBI", description = "Operations on SDK Composer & Editor Module - SDK Function APIs")
+@Api(value = "SDK Function Descriptor NBI", description = "Operations on SDK Composer & Editor Module - SDK Function APIs")
 public class FunctionController {
 
     private static final Logger log = LoggerFactory.getLogger(FunctionController.class);
@@ -112,7 +112,7 @@ public class FunctionController {
      */
     @ApiOperation(value = "Create a new SDK Function")
     @ApiResponses(value = {
-        @ApiResponse(code = 400, message = "Function already present in db or service cannot be validated"),
+        @ApiResponse(code = 400, message = "Function already present in db or function cannot be validated"),
         @ApiResponse(code = 500, message = "Internal Server Error"),
         @ApiResponse(code = 201, message = "Function Created")})
     @RequestMapping(value = "/", method = RequestMethod.POST)
@@ -195,6 +195,41 @@ public class FunctionController {
         }
     }
 
+    @ApiOperation(value = "Create descriptor for SDK Function")
+    @ApiResponses(value = {@ApiResponse(code = 200, message = ""),
+        @ApiResponse(code = 404, message = "Base function not found"),
+        @ApiResponse(code = 400, message = "Null function or invalid parameters provided")})
+    @RequestMapping(value = "/{functionId}/create_descriptor", method = RequestMethod.POST)
+    public ResponseEntity<?> createDescriptor(
+        @PathVariable Long functionId,
+        @RequestBody MakeDescriptorRequest makeDescriptorRequest
+    ) {
+        List<BigDecimal> parameterValues = makeDescriptorRequest.parameterValues;
+        log.info("Request create_descriptor of a function with id: {}, params: {}.", functionId, parameterValues);
+        if (functionId == null) {
+            log.error("Create_descriptor request without parameter functionId");
+            return new ResponseEntity<>(
+                "Create_descriptor request without parameter functionId",
+                HttpStatus.BAD_REQUEST
+            );
+        }
+        // else:
+        try {
+            String descriptorId = functionManager.createFunctionDescriptor(functionId, parameterValues);
+            return new ResponseEntity<>(descriptorId, HttpStatus.OK);
+        } catch (NotExistingEntityException e) {
+            return new ResponseEntity<>(
+                e.getMessage(),
+                HttpStatus.NOT_FOUND
+            );
+        } catch (MalformedElementException e) {
+            return new ResponseEntity<>(
+                e.getMessage(),
+                HttpStatus.BAD_REQUEST
+            );
+        }
+    }
+
     @ApiOperation(value = "Publish SDK Function to Public Catalogue")
     @ApiResponses(value = {
         @ApiResponse(code = 202, message = "Descriptor created with returned id. The descriptor will be published to the public catalogue"),
@@ -222,7 +257,7 @@ public class FunctionController {
     @ApiResponses(value = {
         @ApiResponse(code = 400, message = "SDK Function not present in db or request cannot be validated"),
         @ApiResponse(code = 204, message = "Monitoring Param list Updated")})
-    @RequestMapping(value = "/{functionId}/monitoring-params", method = RequestMethod.PUT)
+    @RequestMapping(value = "/{functionId}/monitoring_params", method = RequestMethod.PUT)
     public ResponseEntity<?> updateMonitoringParametersForFunction(@PathVariable Long functionId,
                                                                    @RequestBody Set<MonitoringParameter> monitoringParameters) {
         log.info("Request for update of a monitoringParameter list");
@@ -243,10 +278,10 @@ public class FunctionController {
             log.error(e1.toString());
             return new ResponseEntity<String>(e1.toString(), HttpStatus.BAD_REQUEST);
         } catch (MalformedElementException e2) {
-            log.error("Malformed format for element MonitoringParameter. Unable to update service: "
+            log.error("Malformed format for element MonitoringParameter. Unable to update function "
                 + functionId);
             return new ResponseEntity<String>(
-                "Malformed format for element MonitoringParameter. Unable to update service: "
+                "Malformed format for element MonitoringParameter. Unable to update function: "
                     + functionId,
                 HttpStatus.BAD_REQUEST);
         }
@@ -256,8 +291,8 @@ public class FunctionController {
     @ApiResponses(value = {@ApiResponse(code = 400, message = "Query without parameter functionId"),
         @ApiResponse(code = 404, message = "SDK Function not found on database"),
         @ApiResponse(code = 200, message = "OK")})
-    @RequestMapping(value = "/{functionId}/monitoring-params", method = RequestMethod.GET)
-    public ResponseEntity<?> getMonitoringParametersForService(@PathVariable Long functionId) {
+    @RequestMapping(value = "/{functionId}/monitoring_params", method = RequestMethod.GET)
+    public ResponseEntity<?> getMonitoringParametersForFunction(@PathVariable Long functionId) {
         log.info("Request for get list of monitoringParams available on a specific Function, identified by id: "
             + functionId);
 
@@ -267,7 +302,7 @@ public class FunctionController {
                 + functionId);
             return new ResponseEntity<Set<MonitoringParameter>>(response, HttpStatus.OK);
         } catch (NotExistingEntityException e) {
-            log.debug("SdkService with uuid " + functionId + " not found on database ");
+            log.debug("SDK Function with uuid " + functionId + " not found on database ");
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
@@ -276,9 +311,9 @@ public class FunctionController {
     @ApiResponses(value = {@ApiResponse(code = 204, message = ""),
         @ApiResponse(code = 404, message = "Entity to be deleted not found"),
         @ApiResponse(code = 400, message = "Deletion request without parameter functionId")})
-    @RequestMapping(value = "/{functionId}/monitoring-params/{monitoringParameterId}", method = RequestMethod.DELETE)
-    public ResponseEntity<?> deleteMonitoringParametersForService(@PathVariable Long functionId,
-                                                                  @PathVariable Long monitoringParameterId) {
+    @RequestMapping(value = "/{functionId}/monitoring_params/{monitoringParameterId}", method = RequestMethod.DELETE)
+    public ResponseEntity<?> deleteMonitoringParametersForFunction(@PathVariable Long functionId,
+                                                                    @PathVariable Long monitoringParameterId) {
         log.info("Request for deletion of monitoring parameter from SDK Function identified by id: "
             + functionId);
 

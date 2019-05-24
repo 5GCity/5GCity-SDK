@@ -31,7 +31,7 @@ import java.util.List;
 
 @RestController
 @CrossOrigin
-@RequestMapping("/sdk/service-descriptor")
+@RequestMapping("/sdk/service_descriptor")
 @Api(value = "Sdk descriptor NBI", description = "Operations on SDK Composer Module - SDK Service Descriptor APIs")
 public class ServiceDescriptorsController {
 
@@ -68,7 +68,7 @@ public class ServiceDescriptorsController {
         }
     }
 
-    @ApiOperation(value = "Get all Sdk Service descriptor", response = SdkServiceDescriptor.class, responseContainer = "List")
+    @ApiOperation(value = "Get all SDK Service Descriptors", response = SdkServiceDescriptor.class, responseContainer = "List")
     @ApiResponses(value = {
         @ApiResponse(code = 200, message = "OK")
     })
@@ -79,7 +79,7 @@ public class ServiceDescriptorsController {
         return new ResponseEntity<>(allDescriptors, HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Get Sdk Service descriptor", response = SdkServiceDescriptor.class)
+    @ApiOperation(value = "Get SDK Service Descriptor", response = SdkServiceDescriptor.class)
     @ApiResponses(value = {
         @ApiResponse(code = 200, message = "OK"),
         @ApiResponse(code = 404, message = "Entity not found")
@@ -100,7 +100,7 @@ public class ServiceDescriptorsController {
         }
     }
 
-    @ApiOperation(value = "Delete Sdk Service descriptor")
+    @ApiOperation(value = "Delete SDK Service Descriptor")
     @ApiResponses(value = {
         @ApiResponse(code = 204, message = "OK"),
         @ApiResponse(code = 404, message = "Entity not found")
@@ -121,7 +121,7 @@ public class ServiceDescriptorsController {
         }
     }
 
-    @ApiOperation(value = "Get NSD from descriptor the response")
+    @ApiOperation(value = "Get NSD from descriptor")
     @ApiResponses(value = {@ApiResponse(code = 202, message = "The service will be published to the public catalogue"),
         @ApiResponse(code = 404, message = "Entity to be published not found"),
         @ApiResponse(code = 400, message = "Publication request without parameter serviceId or already published service")})

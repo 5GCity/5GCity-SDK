@@ -83,8 +83,8 @@ public class SdkServiceTest {
         return actionRules;
     }
 
-    private static ImportedMonParam makeImportedMonParam(String name, String targetId){
-        ImportedMonParam param = new ImportedMonParam();
+    private static MonParamImported makeImportedMonParam(String name, String targetId){
+        MonParamImported param = new MonParamImported();
         param.setName(name);
         param.setComponentIndex(0);
         param.setImportedParameterId(targetId);
@@ -92,8 +92,8 @@ public class SdkServiceTest {
         return param;
     }
 
-    public static AggregatedMonParam makeAggregatedMonParam(){
-        AggregatedMonParam param = new AggregatedMonParam();
+    public static MonParamAggregated makeAggregatedMonParam(){
+        MonParamAggregated param = new MonParamAggregated();
         param.setParameterType(MonitoringParameterType.AGGREGATED);
         param.setName("monparam4");
         param.setAggregatorFunc(AggregatorFunc.AVG);
@@ -105,8 +105,8 @@ public class SdkServiceTest {
         return param;
     }
 
-    public static TransformedMonParam makeTransformedMonParam(){
-        TransformedMonParam param = new TransformedMonParam();
+    public static MonParamTransformed makeTransformedMonParam(){
+        MonParamTransformed param = new MonParamTransformed();
         param.setParameterType(MonitoringParameterType.TRANSFORMED);
         param.setName("monparam5");
         param.setTransform(Transform.AVG_OVER_TIME);
@@ -203,12 +203,12 @@ public class SdkServiceTest {
         metadata.put("use.spam", "egg");
         service.setMetadata(metadata);
 
-        ImportedMonParam param1 = makeImportedMonParam("monparam1","7");
-        ImportedMonParam param2 = makeImportedMonParam("monparam2","8");
-        ImportedMonParam param3 = makeImportedMonParam("monparam3","9");
+        MonParamImported param1 = makeImportedMonParam("monparam1","7");
+        MonParamImported param2 = makeImportedMonParam("monparam2","8");
+        MonParamImported param3 = makeImportedMonParam("monparam3","9");
 
-        AggregatedMonParam param4 = makeAggregatedMonParam();
-        TransformedMonParam param5 = makeTransformedMonParam();
+        MonParamAggregated param4 = makeAggregatedMonParam();
+        MonParamTransformed param5 = makeTransformedMonParam();
 
         service.setExtMonitoringParameters(new HashSet<MonitoringParameter>(Arrays.asList(param1, param2, param4)));
         service.setIntMonitoringParameters(new HashSet<MonitoringParameter>(Arrays.asList(param3, param5)));
