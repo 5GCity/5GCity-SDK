@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
     "monitoringParameters",
     "groupId",
     "priority",
-    "ëpoch"
+    "epoch"
 })
 @Entity
 public class SdkFunction implements InstantiableCandidate {

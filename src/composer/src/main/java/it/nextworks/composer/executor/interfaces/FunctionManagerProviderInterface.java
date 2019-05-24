@@ -42,7 +42,7 @@ public interface FunctionManagerProviderInterface {
 
     //String createFunction(SdkFunction function);
 
-    String createFunction();
+    //String createFunction();
 
     String createFunction(SdkFunction function)
         throws NotExistingEntityException, MalformedElementException, NotYetImplementedException;

@@ -102,8 +102,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         */
     }
 
-
-
+    /*
     @Override
     public String createFunction() {
         Map<String, String> metadata = new HashMap<>();
@@ -168,7 +167,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
         return function.getId().toString();
     }
-
+    */
 
     @Override
     public String updateFunction(SdkFunction function) throws NotExistingEntityException, MalformedElementException, NotYetImplementedException {
