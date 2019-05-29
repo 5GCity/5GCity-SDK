@@ -21,6 +21,8 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import it.nextworks.composer.executor.FunctionManager;
+import it.nextworks.nfvmano.libs.common.exceptions.AlreadyExistingEntityException;
+import it.nextworks.nfvmano.libs.common.exceptions.NotPermittedOperationException;
 import it.nextworks.sdk.MonitoringParameter;
 import it.nextworks.sdk.SdkFunction;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
@@ -100,7 +102,7 @@ public class FunctionController {
                 return new ResponseEntity<SdkFunction>(result, HttpStatus.OK);
             } catch (NotExistingEntityException e) {
                 log.debug("The Sdk function identified by the functionId provided is not present");
-                return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
             }
         }
     }
@@ -134,6 +136,11 @@ public class FunctionController {
                     String.format("Malformed request: %s", e.getMessage()),
                     HttpStatus.BAD_REQUEST);
             } catch (NotExistingEntityException e) {
+                log.error("Malformed request: {}", e.getMessage());
+                return new ResponseEntity<String>(
+                    String.format("Malformed request: %s", e.getMessage()),
+                    HttpStatus.BAD_REQUEST);
+            }catch (AlreadyExistingEntityException e) {
                 log.error("Malformed request: {}", e.getMessage());
                 return new ResponseEntity<String>(
                     String.format("Malformed request: %s", e.getMessage()),
@@ -191,6 +198,10 @@ public class FunctionController {
                 log.error("Requested deletion for an entity which doesn't exist");
                 return new ResponseEntity<String>("Requested deletion for an entity which doesn't exist",
                     HttpStatus.NOT_FOUND);
+            }catch (NotPermittedOperationException e){
+                log.error("Function with ID " + functionId + " used by a service");
+                return new ResponseEntity<String>(e.getMessage(),
+                    HttpStatus.BAD_REQUEST);
             }
         }
     }

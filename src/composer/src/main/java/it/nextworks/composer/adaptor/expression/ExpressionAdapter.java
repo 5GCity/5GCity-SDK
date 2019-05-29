@@ -4,10 +4,7 @@ import it.nextworks.composer.adaptor.interfaces.ServicesAdaptorProviderInterface
 import it.nextworks.nfvmano.libs.common.enums.FlowPattern;
 import it.nextworks.nfvmano.libs.common.enums.LayerProtocol;
 import it.nextworks.nfvmano.libs.common.enums.ServiceAvailabilityLevel;
-import it.nextworks.nfvmano.libs.descriptors.elements.ConnectivityType;
-import it.nextworks.nfvmano.libs.descriptors.elements.LinkBitrateRequirements;
-import it.nextworks.nfvmano.libs.descriptors.elements.ServiceAvailability;
-import it.nextworks.nfvmano.libs.descriptors.elements.VlProfile;
+import it.nextworks.nfvmano.libs.descriptors.elements.*;
 import it.nextworks.nfvmano.libs.descriptors.nsd.nodes.NS.NSNode;
 import it.nextworks.nfvmano.libs.descriptors.nsd.nodes.NS.NSProperties;
 import it.nextworks.nfvmano.libs.descriptors.nsd.nodes.NS.NSRequirements;
@@ -100,7 +97,7 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
             new ArrayList<>(),
             vnfdData.flavour,
             vnfdData.flavour,
-            null
+            new VnfProfile(vnfdData.instantiationLevel, 1, 1)
         );
         VNFRequirements vnfRequirements = new VNFRequirements(
             new ArrayList<>(vnfdData.vLinks)

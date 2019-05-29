@@ -28,5 +28,6 @@ public interface SdkSubFunctionRepository extends JpaRepository<SubFunction, Lon
 
     Optional<SubFunction> findByIdAndOuterServiceId(Long id, Long serviceId);
 
+    Optional<SubFunction> findByComponentId(Long id);
 
 }

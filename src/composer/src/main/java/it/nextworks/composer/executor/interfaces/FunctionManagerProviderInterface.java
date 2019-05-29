@@ -15,11 +15,15 @@
  */
 package it.nextworks.composer.executor.interfaces;
 
+import it.nextworks.nfvmano.libs.common.exceptions.AlreadyExistingEntityException;
+import it.nextworks.nfvmano.libs.common.exceptions.NotPermittedOperationException;
 import it.nextworks.sdk.SdkFunction;
 import it.nextworks.sdk.MonitoringParameter;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
 import it.nextworks.sdk.exceptions.MalformedElementException;
 import org.hibernate.cfg.NotYetImplementedException;
+import org.omg.CosNaming.NamingContextPackage.AlreadyBound;
+
 import java.util.List;
 import java.util.Set;
 import java.math.BigDecimal;
@@ -45,7 +49,7 @@ public interface FunctionManagerProviderInterface {
     //String createFunction();
 
     String createFunction(SdkFunction function)
-        throws NotExistingEntityException, MalformedElementException, NotYetImplementedException;
+        throws NotExistingEntityException, MalformedElementException, AlreadyExistingEntityException;
 
     String updateFunction(SdkFunction function)
         throws NotExistingEntityException, MalformedElementException;
@@ -54,7 +58,7 @@ public interface FunctionManagerProviderInterface {
         throws NotExistingEntityException;
 
     void deleteFunction(Long functionId)
-        throws NotExistingEntityException;
+        throws NotExistingEntityException, NotPermittedOperationException;
 
     String createFunctionDescriptor(Long functionId, List<BigDecimal> parameterValues)
         throws NotExistingEntityException, MalformedElementException, NotYetImplementedException;
@@ -62,11 +66,11 @@ public interface FunctionManagerProviderInterface {
         throws NotExistingEntityException, MalformedElementException;
 
     void updateMonitoringParameters(Long functionId, Set<MonitoringParameter> monitoringParameters)
-        throws NotExistingEntityException, MalformedElementException, NotYetImplementedException;
+        throws NotExistingEntityException, MalformedElementException;
 
     void deleteMonitoringParameters(Long functionId, Long monitoringParameterId)
-        throws NotExistingEntityException, MalformedElementException, NotYetImplementedException;
+        throws NotExistingEntityException, MalformedElementException;
 
     Set<MonitoringParameter> getMonitoringParameters(Long functionId)
-        throws NotExistingEntityException, NotYetImplementedException;
+        throws NotExistingEntityException;
 }

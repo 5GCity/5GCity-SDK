@@ -66,7 +66,7 @@ class ServiceInfoBuilder {
         SdkFunction template = function.getTemplate();
         functions.put(id, function);
         func2vnfd.put(id, template.getVnfdId());
-        func2vnfdVersion.put(id, template.getVnfdVersion());
+        func2vnfdVersion.put(id, template.getVersion());
         func2flavour.put(id, function.getFlavour());
         func2level.put(id, function.getLevel());
         monitoringParameters.addAll(template.getMonitoringParameters());

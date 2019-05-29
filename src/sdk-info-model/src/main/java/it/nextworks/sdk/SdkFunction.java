@@ -50,7 +50,9 @@ import java.util.stream.Collectors;
     "groupId",
     "accessLevel",
     "swImageData",
-    "epoch"
+    "epoch",
+    "minInstancesCount",
+    "maxInstancesCount"
 })
 @Entity
 public class SdkFunction implements InstantiableCandidate {
@@ -74,7 +76,7 @@ public class SdkFunction implements InstantiableCandidate {
 
     private String vnfdId;
 
-    private String vnfdVersion;
+    //private String vnfdVersion;
 
     private String flavourExpression;
 
@@ -99,7 +101,7 @@ public class SdkFunction implements InstantiableCandidate {
 
     private String vendor;
 
-    private String version;
+    private String version = "1.0";
 
     private String ownerId;
 
@@ -109,11 +111,15 @@ public class SdkFunction implements InstantiableCandidate {
 
     private String groupId;
 
-    private Integer accessLevel;
+    private Integer accessLevel = 4;//TODO default to?
 
     private SwImageData swImageData;
 
     private Long epoch;
+
+    private Integer minInstancesCount = 1;
+
+    private Integer maxInstancesCount;
 
     @JsonProperty("ownerId")
     public String getOwnerId() {
@@ -196,6 +202,7 @@ public class SdkFunction implements InstantiableCandidate {
         this.vnfdId = vnfdId;
     }
 
+    /*
     @JsonProperty("vnfdVersion")
     public String getVnfdVersion() {
         return vnfdVersion;
@@ -205,6 +212,7 @@ public class SdkFunction implements InstantiableCandidate {
     public void setVnfdVersion(String vnfdVersion) {
         this.vnfdVersion = vnfdVersion;
     }
+    */
 
     @JsonProperty("flavourExpression")
     public String getFlavourExpression() {
@@ -240,6 +248,11 @@ public class SdkFunction implements InstantiableCandidate {
     @JsonProperty("metadata")
     public Map<String, String> getMetadata() {
         return metadata.stream().collect(Collectors.toMap(Metadata::getKey, Metadata::getValue));
+    }
+
+    @JsonIgnore
+    public Set<Metadata> getMetadata2() {
+        return metadata;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -356,6 +369,26 @@ public class SdkFunction implements InstantiableCandidate {
         this.epoch = epoch;
     }
 
+    @JsonProperty("minInstancesCount")
+    public Integer getMinInstancesCount() {
+        return minInstancesCount;
+    }
+
+    @JsonProperty("minInstancesCount")
+    public void setMinInstancesCount(Integer minInstancesCount) {
+        this.minInstancesCount = minInstancesCount;
+    }
+
+    @JsonProperty("maxInstancesCount")
+    public Integer getMaxInstancesCount() {
+        return maxInstancesCount;
+    }
+
+    @JsonProperty("maxInstancesCount")
+    public void setMaxInstancesCount(Integer maxInstancesCount) {
+        this.maxInstancesCount = maxInstancesCount;
+    }
+
     @Override
     @JsonIgnore
     public SdkServiceComponentType getType() {
@@ -436,6 +469,14 @@ public class SdkFunction implements InstantiableCandidate {
         sb.append('=');
         sb.append(((this.swImageData == null) ? "<null>" : this.swImageData));
         sb.append(',');
+        sb.append("minInstancesCount");
+        sb.append('=');
+        sb.append(((this.minInstancesCount == null) ? "<null>" : this.minInstancesCount));
+        sb.append(',');
+        sb.append("maxInstancesCount");
+        sb.append('=');
+        sb.append(((this.maxInstancesCount == null) ? "<null>" : this.maxInstancesCount));
+        sb.append(',');
         sb.append("epoch");
         sb.append('=');
         sb.append(((this.epoch == null) ? "<null>" : this.epoch));
@@ -495,6 +536,8 @@ public class SdkFunction implements InstantiableCandidate {
         result = ((result * 31) + ((this.visibility == null) ? 0 : this.visibility.hashCode()));
         result = ((result * 31) + ((this.parameters == null) ? 0 : this.parameters.hashCode()));
         result = ((result * 31) + ((this.requiredPorts == null) ? 0 : this.requiredPorts.hashCode()));
+        result = ((result * 31) + ((this.minInstancesCount == null) ? 0 : this.minInstancesCount.hashCode()));
+        result = ((result * 31) + ((this.maxInstancesCount == null) ? 0 : this.maxInstancesCount.hashCode()));
         return result;
     }
 
@@ -528,6 +571,8 @@ public class SdkFunction implements InstantiableCandidate {
                 && ((this.groupId == rhs.groupId) || ((this.groupId != null) && this.groupId.equals(rhs.groupId)))
                 && ((this.accessLevel == rhs.accessLevel) || ((this.accessLevel != null) && this.accessLevel.equals(rhs.accessLevel)))
                 && ((this.swImageData == rhs.swImageData) || ((this.swImageData != null) && this.swImageData.equals(rhs.swImageData)))
+                && ((this.minInstancesCount == rhs.minInstancesCount) || ((this.minInstancesCount != null) && this.minInstancesCount.equals(rhs.minInstancesCount)))
+                && ((this.maxInstancesCount == rhs.maxInstancesCount) || ((this.maxInstancesCount != null) && this.maxInstancesCount.equals(rhs.maxInstancesCount)))
                 && ((this.epoch == rhs.epoch) || ((this.epoch != null) && this.epoch.equals(rhs.epoch)))
                 && ((this.requiredPorts == rhs.requiredPorts) || ((this.requiredPorts != null) && this.requiredPorts.equals(rhs.requiredPorts)))
                 && ((this.parameters == rhs.parameters) || ((this.parameters != null) && this.parameters.equals(rhs.parameters))));
@@ -547,10 +592,12 @@ public class SdkFunction implements InstantiableCandidate {
             && instantiationLevelExpression != null
             && flavourExpression != null
             && validateExpressions()
-            && vnfdVersion != null
+            //&& vnfdVersion != null
             && validateMonitoringParameters()
             && validateRequiredPorts()
-            && swImageData.isValid();
+            && swImageData.isValid()
+            && minInstancesCount > 0
+            && maxInstancesCount > 0 && maxInstancesCount >= minInstancesCount;
     }
 
     private boolean validateMonitoringParameters() {

@@ -17,6 +17,10 @@ package it.nextworks.composer.executor;
 
 import it.nextworks.composer.executor.interfaces.FunctionManagerProviderInterface;
 import it.nextworks.composer.executor.repositories.SdkFunctionRepository;
+import it.nextworks.composer.executor.repositories.SdkSubFunctionRepository;
+import it.nextworks.composer.executor.repositories.SdkSubServiceRepository;
+import it.nextworks.nfvmano.libs.common.exceptions.AlreadyExistingEntityException;
+import it.nextworks.nfvmano.libs.common.exceptions.NotPermittedOperationException;
 import it.nextworks.sdk.*;
 import it.nextworks.sdk.enums.ConnectionPointType;
 import it.nextworks.sdk.enums.SdkServiceStatus;
@@ -29,12 +33,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Optional;
+import java.time.Instant;
+import java.util.*;
 
 @Service
 public class FunctionManager implements FunctionManagerProviderInterface {
@@ -43,6 +43,9 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
     @Autowired
     private SdkFunctionRepository functionRepository;
+
+    @Autowired
+    private SdkSubFunctionRepository subFunctionRepository;
 
     public FunctionManager() {
 
@@ -70,35 +73,46 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         return functionList;
     }
 
-    /*
-    @Override
-    public String createFunction(SdkFunction function) {
-        return null;
+    private void checkAndResolveFunction(SdkFunction function) throws AlreadyExistingEntityException {
+
+        //In case of new function, check if a function with the same vnfdId and version is present
+        if(function.getId() == null) {
+            Optional<SdkFunction> functionOptional = functionRepository.findByVnfdIdAndVersion(function.getVnfdId(), function.getVersion());
+            if (functionOptional.isPresent()) {
+                log.error("SdkFunction with vnfdId " + function.getVnfdId() + " and version " + function.getVersion() + " is already present");
+                throw new AlreadyExistingEntityException("SdkFunction with vnfdId " + function.getVnfdId() + " and version " + function.getVersion() + " is already present");
+            }
+        }
+
+        function.setEpoch(Instant.now().getEpochSecond());
+
+        //for the moment we consider single DF and IL, then we set static the expression
+        function.setFlavourExpression("static_df");
+        function.setInstantiationLevelExpression("static_il");
     }
-    */
 
     @Override
     public String createFunction(SdkFunction function)
-        throws NotExistingEntityException, MalformedElementException, NotYetImplementedException {
+        throws NotExistingEntityException, MalformedElementException, AlreadyExistingEntityException {
 
         log.info("Storing into database a new function");
+
+        //TODO remove? check if is UUID format?
+        if(function.getVnfdId() == null)
+            function.setVnfdId(UUID.randomUUID().toString());
 
         if (!function.isValid()) {
             log.error("Malformed SdkService");
             throw new MalformedElementException("Malformed SdkService");
         }
-        ////// TODO-NXW
-        throw new NotYetImplementedException();
-        /*
-        checkAndResolveFunction(function);
 
+        checkAndResolveFunction(function);
 
         log.debug("Storing into database function with name: " + function.getName());
 
         // Saving the function
         functionRepository.saveAndFlush(function);
         return function.getId().toString();
-        */
     }
 
     /*
@@ -169,16 +183,15 @@ public class FunctionManager implements FunctionManagerProviderInterface {
     */
 
     @Override
-    public String updateFunction(SdkFunction function) throws NotExistingEntityException, MalformedElementException, NotYetImplementedException {
+    public String updateFunction(SdkFunction function) throws NotExistingEntityException, MalformedElementException {
         log.info("Updating an existing Function with id: " + function.getId());
 
-        throw new NotYetImplementedException();
-        /*
         if (!function.isValid()) {
             log.error("Function id " + function.getId() + " is malformed");
             throw new MalformedElementException("Function id " + function.getId() + " is malformed");
         }
         log.debug("Function is valid");
+
         // Check if Function exists
         Optional<SdkFunction> func = functionRepository.findById(function.getId());
         if (!func.isPresent()) {
@@ -187,18 +200,42 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         }
         log.debug("Function found on db");
 
-        //checkAndResolveFunction(function);
+        try {
+            checkAndResolveFunction(function);
+        }catch (AlreadyExistingEntityException e){
+                //exception can't be raised in this case
+        }
 
         log.debug("Updating into database Function with id: " + function.getId());
 
-        //cleanOldRelations(func.get());
+        cleanOldRelations(func.get());
+
+        //TODO check if connectionpoints and monitoringparameters are used by a service, in this case the items can be just updated and not deleted (the ids need to be specified when update request is sent)
+        //TODO and for params?
 
         // Update Function on DB
         functionRepository.saveAndFlush(function);
         return function.getId().toString();
-         */
     }
 
+
+    private void cleanOldRelations(SdkFunction function){
+        for(MonitoringParameter mp : function.getMonitoringParameters()){
+            mp.setSdkFunction(null);
+        }
+
+        for(Metadata mp : function.getMetadata2()){
+            mp.setFunction(null);
+        }
+
+        for(ConnectionPoint mp : function.getConnectionPoint()){
+            mp.setSdkFunction(null);
+        }
+
+        for(RequiredPort rp : function.getRequiredPorts()){
+            rp.setFunction(null);
+        }
+    }
 
     @Override
     public SdkFunction getFunctionById(Long id) throws NotExistingEntityException {
@@ -213,7 +250,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
     }
 
     @Override
-    public void deleteFunction(Long functionId) throws NotExistingEntityException {
+    public void deleteFunction(Long functionId) throws NotExistingEntityException, NotPermittedOperationException {
         log.info("Request for deletion of Function with id: " + functionId);
         // No deletion required: all that depends on the Function will cascade.
         Optional<SdkFunction> function = functionRepository.findById(functionId);
@@ -221,6 +258,12 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             log.error("Function with ID " + functionId + " not found");
             return new NotExistingEntityException("Function with ID " + functionId + " not found");
         });
+
+        Optional<SubFunction> subFunction = subFunctionRepository.findByComponentId(functionId);
+        if(subFunction.isPresent()){
+            log.error("Function with ID " + functionId + " used by a service");
+            throw  new NotPermittedOperationException("Function with ID " + functionId + " used by a service");
+        }
         functionRepository.delete(s);
     }
 
@@ -280,7 +323,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
     @Override
     public void updateMonitoringParameters(Long functionId, Set<MonitoringParameter> monitoringParameters)
-        throws NotExistingEntityException, MalformedElementException, NotYetImplementedException {
+        throws NotExistingEntityException, MalformedElementException {
         log.info("Request to update list of scalingAspects for a specific SDK Function " + functionId);
         Optional<SdkFunction> function = functionRepository.findById(functionId);
         if (!function.isPresent()) {
@@ -295,6 +338,8 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         log.debug("Updating list of monitoring parameters on SDF Function with ID: " + functionId);
         function.get().setMonitoringParameters(monitoringParameters);
 
+        //TODO check monitoringparameters are imported by a service, in this case the items can be just updated and not deleted (the ids need to be specified when update request is sent)
+
         log.debug("Updating list of monitoring parameters on database");
         functionRepository.saveAndFlush(function.get());
 
@@ -302,7 +347,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
     @Override
     public void deleteMonitoringParameters(Long functionId, Long monitoringParameterId)
-        throws NotExistingEntityException, MalformedElementException, NotYetImplementedException {
+        throws NotExistingEntityException, MalformedElementException {
 
         log.info("Request to delete a monitoring parameter identified by id " + monitoringParameterId + " for a specific SDK Service " + functionId);
         Optional<SdkFunction> function = functionRepository.findById(functionId);
@@ -324,18 +369,20 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
         function.get().setMonitoringParameters(monitoringParameters);
 
+        //TODO check monitoringparameters are used by a service, in this case the items cannot be deleted
+
         functionRepository.saveAndFlush(function.get());
         log.debug("Monitoring parameter has been deleted.");
 
     }
 
     @Override
-    public Set<MonitoringParameter> getMonitoringParameters(Long functionId) throws NotExistingEntityException, NotYetImplementedException {
+    public Set<MonitoringParameter> getMonitoringParameters(Long functionId) throws NotExistingEntityException {
         log.info("Request to get the list of monitoring parameters for a specific SDK Function " + functionId);
         Optional<SdkFunction> function = functionRepository.findById(functionId);
         if (!function.isPresent()) {
             log.error("The SDK Function with ID: " + functionId + " is not present in database");
-            throw new NotExistingEntityException("The SDK Functionwith ID: " + functionId + " is not present in database");
+            throw new NotExistingEntityException("The SDK Function with ID: " + functionId + " is not present in database");
         }
 
         return (function.get().getMonitoringParameters());

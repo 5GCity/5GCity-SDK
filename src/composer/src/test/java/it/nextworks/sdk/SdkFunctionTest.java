@@ -141,7 +141,7 @@ public class SdkFunctionTest {
         function.setInstantiationLevelExpression("IF(size <= 1, small_il, IF(size <= 10, medium_il, big_il))");
         function.setParameters(Arrays.asList("isVideo", "size"));
         function.setVnfdId("aa333a44-6587-4940-b442-c029376bbb2e");
-        function.setVnfdVersion("v1.0");
+        //function.setVnfdVersion("v1.0");
         function.setOwnerId("NXW");
         function.setVnfdProvider("NXW");
         function.setGroupId("NXW");
@@ -181,7 +181,7 @@ public class SdkFunctionTest {
         function.setInstantiationLevelExpression("IF(traffic != 0, big_il, medium_il)");
         function.setParameters(Arrays.asList("traffic"));
         function.setVnfdId("aa6a284e-e369-4d7d-a465-57ddc6e8c027");
-        function.setVnfdVersion("v5.0");
+        //function.setVnfdVersion("v5.0");
         function.setOwnerId("NXW");
         function.setVnfdProvider("NXW");
         function.setGroupId("NXW");
@@ -203,6 +203,9 @@ public class SdkFunctionTest {
 
         function.setAccessLevel(4);
         function.setEpoch(Instant.now().getEpochSecond());
+
+        function.setMinInstancesCount(1);
+        function.setMaxInstancesCount(2);
 
         return function;
     }
@@ -229,7 +232,7 @@ public class SdkFunctionTest {
         function.setInstantiationLevelExpression("IF(traffic != 0, big_il, medium_il)");
         function.setParameters(Arrays.asList("traffic"));
         function.setVnfdId("a49ef787-aaba-4a06-a677-b30a2e883562");
-        function.setVnfdVersion("v6.0");
+        //function.setVnfdVersion("v6.0");
         function.setOwnerId("NXW");
         function.setVnfdProvider("NXW");
         function.setGroupId("NXW");
@@ -250,6 +253,9 @@ public class SdkFunctionTest {
         function.setAccessLevel(4);
         function.setEpoch(Instant.now().getEpochSecond());
 
+        function.setMinInstancesCount(1);
+        function.setMaxInstancesCount(2);
+
         return function;
     }
 
@@ -265,7 +271,7 @@ public class SdkFunctionTest {
         function.setInstantiationLevelExpression("IF(size <= 1, small_il, IF(size <= 10, medium_il, big_il))");
         function.setParameters(Arrays.asList("isVideo", "size"));
         function.setVnfdId("057289e2-7b8e-4280-8734-43b924f64b85");
-        function.setVnfdVersion("v1.0");
+        //function.setVnfdVersion("v1.0");
         function.setOwnerId("NXW");
         function.setVnfdProvider("NXW");
         function.setGroupId("NXW");
@@ -284,6 +290,9 @@ public class SdkFunctionTest {
 
         function.setAccessLevel(4);
         function.setEpoch(Instant.now().getEpochSecond());
+
+        function.setMinInstancesCount(1);
+        function.setMaxInstancesCount(2);
 
         return function;
     }
@@ -319,7 +328,7 @@ public class SdkFunctionTest {
 //    }
 
     @Test
-    //@Ignore // requires DB
+    @Ignore // requires DB
     public void testCityService() {
 
         SdkFunction ns1Firewall = makeNS1FirewallObject();

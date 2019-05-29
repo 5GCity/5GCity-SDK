@@ -307,7 +307,7 @@ public class SdkServiceTest {
 */
 
     @Test
-    //@Ignore // requires DB
+    @Ignore // requires DB
     public void testCityService() throws Exception {
 
         SdkFunction firewall = SdkFunctionTest.makeNS1FirewallObject();
@@ -382,7 +382,7 @@ public class SdkServiceTest {
     }
 
     @Test
-    //@Ignore // requires DB
+    @Ignore // requires DB
     public void testPublishService() throws Exception {
         List<BigDecimal> parameterValues = new ArrayList<>();
         parameterValues.add(new BigDecimal(1000));

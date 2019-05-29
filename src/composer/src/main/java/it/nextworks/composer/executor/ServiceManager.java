@@ -315,6 +315,9 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             log.error("Service with ID " + serviceId + " not found");
             return new NotExistingEntityException("Service with ID " + serviceId + " not found");
         });
+
+        //TODO check if service is used by other services
+
         serviceRepository.delete(s);
     }
 
