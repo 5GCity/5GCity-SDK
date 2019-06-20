@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import it.nextworks.sdk.enums.SdkFunctionStatus;
 import it.nextworks.sdk.enums.Visibility;
 import it.nextworks.sdk.enums.SdkServiceComponentType;
 import it.nextworks.sdk.evalex.ExtendedExpression;
@@ -32,6 +33,8 @@ import java.util.stream.Collectors;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "id",
+    "status",
+    "vnfInfoId",
     "ownerId",
     "name",
     "description",
@@ -60,6 +63,10 @@ public class SdkFunction implements InstantiableCandidate {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
+
+    private SdkFunctionStatus status;
+
+    private String vnfInfoId;
 
     @OneToMany(mappedBy = "sdkFunction", cascade = CascadeType.ALL, orphanRemoval = true)
     @OnDelete(action = OnDeleteAction.CASCADE)
@@ -120,6 +127,26 @@ public class SdkFunction implements InstantiableCandidate {
     private Integer minInstancesCount = 1;
 
     private Integer maxInstancesCount;
+
+    @JsonProperty("status")
+    public SdkFunctionStatus getStatus() {
+        return status;
+    }
+
+    @JsonProperty("status")
+    public void setStatus(SdkFunctionStatus status) {
+        this.status = status;
+    }
+
+    @JsonIgnore
+    public String getVnfInfoId() {
+        return vnfInfoId;
+    }
+
+    @JsonIgnore
+    public void setVnfInfoId(String vnfInfoId) {
+        this.vnfInfoId = vnfInfoId;
+    }
 
     @JsonProperty("ownerId")
     public String getOwnerId() {
@@ -449,6 +476,10 @@ public class SdkFunction implements InstantiableCandidate {
         sb.append('=');
         sb.append(((this.id == null) ? "<null>" : this.id));
         sb.append(',');
+        sb.append("status");
+        sb.append('=');
+        sb.append(((this.status == null) ? "<null>" : this.status));
+        sb.append(',');
         sb.append("ownerId");
         sb.append('=');
         sb.append(((this.ownerId == null) ? "<null>" : this.ownerId));
@@ -538,6 +569,7 @@ public class SdkFunction implements InstantiableCandidate {
         result = ((result * 31) + ((this.requiredPorts == null) ? 0 : this.requiredPorts.hashCode()));
         result = ((result * 31) + ((this.minInstancesCount == null) ? 0 : this.minInstancesCount.hashCode()));
         result = ((result * 31) + ((this.maxInstancesCount == null) ? 0 : this.maxInstancesCount.hashCode()));
+        result = ((result * 31) + ((this.status == null) ? 0 : this.status.hashCode()));
         return result;
     }
 
@@ -575,6 +607,7 @@ public class SdkFunction implements InstantiableCandidate {
                 && ((this.maxInstancesCount == rhs.maxInstancesCount) || ((this.maxInstancesCount != null) && this.maxInstancesCount.equals(rhs.maxInstancesCount)))
                 && ((this.epoch == rhs.epoch) || ((this.epoch != null) && this.epoch.equals(rhs.epoch)))
                 && ((this.requiredPorts == rhs.requiredPorts) || ((this.requiredPorts != null) && this.requiredPorts.equals(rhs.requiredPorts)))
+                && ((this.status == rhs.status) || ((this.status != null) && this.status.equals(rhs.status)))
                 && ((this.parameters == rhs.parameters) || ((this.parameters != null) && this.parameters.equals(rhs.parameters))));
     }
 
@@ -588,6 +621,7 @@ public class SdkFunction implements InstantiableCandidate {
             && version != null && version.length() > 0
             && vendor != null && vendor.length() > 0
             && vnfdId != null && vnfdId.length() > 0
+            && checkVnfdIdFormat()
             && vnfdProvider != null && vnfdProvider.length() > 0
             && instantiationLevelExpression != null
             && flavourExpression != null
@@ -600,11 +634,21 @@ public class SdkFunction implements InstantiableCandidate {
             && maxInstancesCount > 0 && maxInstancesCount >= minInstancesCount;
     }
 
+    private boolean checkVnfdIdFormat(){
+        String regex = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$";//UUID format
+        if(vnfdId.matches(regex))
+            return true;
+        return false;
+    }
+
     private boolean validateMonitoringParameters() {
-        boolean validParameter;
+        boolean validParameter = true;
         final Set<String> parametersName = new HashSet<String>();
-        validParameter = monitoringParameters.stream().allMatch(MonitoringParameter::isValid);
         for (MonitoringParameter mp : monitoringParameters) {
+            if(!mp.isValid()) {
+                validParameter = false;
+                break;
+            }
             if (!parametersName.add(mp.getName())) {
                 validParameter = false;
                 break;
@@ -623,25 +667,27 @@ public class SdkFunction implements InstantiableCandidate {
     }
 
     private boolean validateRequiredPorts() {
-        if (requiredPorts != null)
-            return requiredPorts.stream().allMatch(RequiredPort::isValid);
-        else
-            return true;
+        boolean validPort = true;
+        for(RequiredPort rp : requiredPorts){
+            if(!rp.isValid()){
+                validPort = false;
+                break;
+            }
+
+            validPort = validPort && (connectionPoint.stream().map(ConnectionPoint::getName).collect(Collectors.toSet()).contains(rp.getConnectionPointId()));
+        }
+
+        return validPort;
     }
 
     private boolean validateCps() {
         return connectionPoint != null
             && connectionPoint.size() > 0
-            &&
-            connectionPoint.stream().allMatch(
-                cp -> cp.isValid() && cp.getInternalCpId() == null && cp.getInternalCpName() == null
-            )
+            && connectionPoint.stream().allMatch(cp -> cp.isValid() && cp.getInternalCpId() == null && cp.getInternalCpName() == null)
             && connectionPoint.stream()
-            .map(ConnectionPoint::getName)
-            .distinct()
-            .count()
-            ==
-            connectionPoint.size();  // I.e. cp names are unique in the service
+                            .map(ConnectionPoint::getName)
+                            .distinct()
+                            .count() == connectionPoint.size();  // I.e. cp names are unique in the service
     }
 
     private boolean validateExpressions() {

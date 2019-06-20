@@ -386,8 +386,8 @@ public class SdkServiceTest {
     public void testPublishService() throws Exception {
         List<BigDecimal> parameterValues = new ArrayList<>();
         parameterValues.add(new BigDecimal(1000));
-        //serviceManager.publishService(Long.valueOf(10), parameterValues);
-        serviceManager.publishService(Long.valueOf(40));
+        serviceManager.publishService(Long.valueOf(10), parameterValues);
+        //serviceManager.publishService(Long.valueOf(40));
     }
 }
 

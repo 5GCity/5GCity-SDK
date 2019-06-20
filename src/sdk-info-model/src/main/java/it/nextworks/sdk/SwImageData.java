@@ -234,6 +234,19 @@ public class SwImageData {
 
     @JsonIgnore
     public boolean isValid() {
+
+        return (((this.imgName != null) && (this.imgName.length() != 0)) &&
+                ((this.imgVersion!= null) && (this.imgVersion.length() != 0)) &&
+                (this.minDisk > 0) &&
+                (this.minRam > 0 ) &&
+                (this.minCpu > 0) &&
+                (this.size > 0) &&
+                validateContainerFormat()&&
+                validateDiskFormat());
+
+    }
+
+    private boolean validateContainerFormat(){
         Set<String> validContainerFormats = new HashSet<String>();
         validContainerFormats.add("aki");
         validContainerFormats.add("ami");
@@ -242,6 +255,7 @@ public class SwImageData {
         validContainerFormats.add("docker");
         validContainerFormats.add("ova");
         validContainerFormats.add("ovf");
+
             /* validContainerFormats = [ aki, ami, ari, bare, docker, ova, ovf]
             The container format describes the container
             file format in which software image is provided.
@@ -255,6 +269,14 @@ public class SwImageData {
             ovf: OVF container format
             */
 
+        if(this.containerFormat != null){
+            return validContainerFormats.contains(this.containerFormat.toLowerCase());
+        }
+
+        return true;
+    }
+
+    private boolean validateDiskFormat(){
         Set<String> validDiskFormats = new HashSet<String>();
         validDiskFormats.add("aki");
         validDiskFormats.add("ami");
@@ -266,7 +288,8 @@ public class SwImageData {
         validDiskFormats.add("vhd");
         validDiskFormats.add("vhdx");
         validDiskFormats.add("vmdk");
-            /* validDiskFormats =[ aki, ami, ari, iso, qcow2, raw, vdi, vhd, vhdx, vmdk ]
+
+        /* validDiskFormats =[ aki, ami, ari, iso, qcow2, raw, vdi, vhd, vhdx, vmdk ]
             aki: a kernel image
             ami: a machine image
             ari: a ramdisk image
@@ -279,14 +302,10 @@ public class SwImageData {
             vmdk: a common disk image format
             */
 
-        return (((this.imgName != null) && (this.imgName.length() != 0)) &&
-                ((this.imgVersion!= null) && (this.imgVersion.length() != 0)) &&
-                ((this.checksum!= null) && (this.checksum.length() != 0)) &&
-                ((this.containerFormat!= null) && (this.containerFormat.length() != 0) && validContainerFormats.contains(this.containerFormat)) &&
-                ((this.diskFormat!= null) && (this.diskFormat.length() != 0) && validDiskFormats.contains(this.diskFormat)) &&
-                (this.minDisk > 0) &&
-                (this.minRam > 0 ) &&
-                (this.minCpu > 0) &&
-                (this.size > 0));
+        if(this.diskFormat != null){
+            return validDiskFormats.contains(this.diskFormat.toLowerCase());
+        }
+
+        return true;
     }
 }

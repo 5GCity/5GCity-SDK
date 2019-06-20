@@ -121,16 +121,15 @@ public class ServiceDescriptorsController {
         }
     }
 
-    @ApiOperation(value = "Get NSD from descriptor")
-    @ApiResponses(value = {@ApiResponse(code = 202, message = "The service will be published to the public catalogue"),
-        @ApiResponse(code = 404, message = "Entity to be published not found"),
-        @ApiResponse(code = 400, message = "Publication request without parameter serviceId or already published service")})
+    @ApiOperation(value = "Get NSD from service descriptor")
+    @ApiResponses(value = {@ApiResponse(code = 202, message = "NSD content"),
+        @ApiResponse(code = 400, message = "Service descriptor not found")})
     @RequestMapping(value = "/{serviceDescriptorId}/nsd", method = RequestMethod.GET)
     public ResponseEntity<?> getDescriptorNsd(@PathVariable Long serviceDescriptorId) throws NotExistingEntityException {
         log.info("Request GET descriptors descriptor " + serviceDescriptorId);
         if (serviceDescriptorId == null) {
             log.error("GET descriptor nsd request without parameter serviceDescriptorId");
-            return new ResponseEntity<String>("GET descriptor nsd request without parameter serviceDescriptorId", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<String>("GET descriptor nsd request without parameter serviceDescriptorId", HttpStatus.NOT_FOUND);
         } else {
             DescriptorTemplate descriptorTemplate = serviceManager.generateTemplate(serviceDescriptorId);
             return new ResponseEntity<>(descriptorTemplate, HttpStatus.OK);

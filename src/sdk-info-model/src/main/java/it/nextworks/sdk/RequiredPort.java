@@ -29,7 +29,7 @@ public class RequiredPort {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    private Long connectionPointId;
+    private String connectionPointId;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @Fetch(FetchMode.SELECT)
@@ -39,18 +39,23 @@ public class RequiredPort {
     @ManyToOne
     private SdkFunction function;
 
-    @JsonIgnore
+    @JsonProperty("id")
     public Long getId() {
         return id;
     }
 
-    @JsonProperty("connectionPointId")
-    public Long getConnectionPointId() {
+    @JsonProperty("id")
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    @JsonProperty("connectionPointName")
+    public String getConnectionPointId() {
         return connectionPointId;
     }
 
-    @JsonProperty("connectionPointId")
-    public void setConnectionPointId(Long connectionPointId) {
+    @JsonProperty("connectionPointName")
+    public void setConnectionPointId(String connectionPointId) {
         this.connectionPointId = connectionPointId;
     }
 
@@ -77,6 +82,7 @@ public class RequiredPort {
     @JsonIgnore
     public boolean isValid() {
         return this.connectionPointId != null
+            && connectionPointId.length() > 0
             && ports != null && !(ports.isEmpty());
     }
 

@@ -317,7 +317,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         });
 
         //TODO check if service is used by other services
-
+        //TODO delete also in Catalogue
         serviceRepository.delete(s);
     }
 
@@ -418,10 +418,11 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         // asynchronously.
         dispatchPublishRequest(
             servicePackagePath,
-            successful -> {
-                if (successful) {
+            nsInfoId -> {
+                if (nsInfoId != null) {
                     log.info("Service descriptor {} successfully published", serviceDescriptorId);
                     descriptor.setStatus(SdkServiceStatus.COMMITTED);
+                    descriptor.setNsInfoId(nsInfoId);
                     serviceDescriptorRepository.saveAndFlush(descriptor);
                 } else {
                     descriptor.setStatus(SdkServiceStatus.SAVED);
@@ -483,10 +484,11 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
         dispatchPublishRequest(
             servicePackagePath,
-            successful -> {
-                if (successful) {
+            nsInfoId -> {
+                if (nsInfoId != null) {
                     log.info("Service descriptor {} successfully published", serviceDescriptorId);
                     descriptor.setStatus(SdkServiceStatus.COMMITTED);
+                    descriptor.setNsInfoId(nsInfoId);
                     serviceDescriptorRepository.save(descriptor);
                 } else {
                     descriptor.setStatus(SdkServiceStatus.SAVED);
@@ -497,15 +499,33 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         );
     }
 
-    private void dispatchPublishRequest(String servicePackagePath, Consumer<Boolean> callback) {
+    private void dispatchPublishRequest(String servicePackagePath, Consumer<String> callback) {
         // TODO: dispatch publish operation to driver, then return immediately
         executor.execute(() -> {
                 try {
-                    String s = cataloguePlugin.uploadNetworkService(servicePackagePath, "multipart/form-data", null);
-                    callback.accept(true);
+                    String nsInfoId = cataloguePlugin.uploadNetworkService(servicePackagePath, "multipart/form-data", null);
+                    callback.accept(nsInfoId);
                 } catch (Exception exc) {
                     log.error(
                         "Could not push service package. Cause: {}",
+                        exc.getMessage()
+                    );
+                    log.debug("Details: ", exc);
+                    callback.accept(null);
+                }
+            }
+        );
+    }
+
+    private void dispatchUnPublishRequest(String nsInfoId, Consumer<Boolean> callback) {
+        // TODO: dispatch unpublish operation to driver, then return immediately
+        executor.execute(() -> {
+                try {
+                    cataloguePlugin.deleteNetworkService(nsInfoId);
+                    callback.accept(true);
+                } catch (Exception exc) {
+                    log.error(
+                        "Could not delete service package. Cause: {}",
                         exc.getMessage()
                     );
                     log.debug("Details: ", exc);
@@ -513,11 +533,6 @@ public class ServiceManager implements ServiceManagerProviderInterface {
                 }
             }
         );
-    }
-
-    private void dispatchUnPublishRequest(Long serviceDescriptorId, Consumer<Boolean> callback) {
-        // TODO: dispatch unpublish operation to driver, then return immediately
-        throw new NotYetImplementedException();
     }
 
 
@@ -549,10 +564,11 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         }
 
         dispatchUnPublishRequest(
-            serviceDescriptorId,
+            descriptor.getNsInfoId(),
             successful -> {
                 if (successful) {
                     descriptor.setStatus(SdkServiceStatus.SAVED);
+                    descriptor.setNsInfoId(null);
                     serviceDescriptorRepository.saveAndFlush(descriptor);
                     log.info("Successfully un-published descriptor {}", serviceDescriptorId);
                 } else {
@@ -562,7 +578,6 @@ public class ServiceManager implements ServiceManagerProviderInterface {
                 }
             }
         );
-
     }
 
     @Override
@@ -594,6 +609,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         throws NotExistingEntityException, MalformedElementException {
 
         log.info("Request to delete a monitoring parameter identified by id " + monitoringParameterId + " for a specific SDK Service " + serviceId);
+
         Optional<SdkService> service = serviceRepository.findById(serviceId);
         if (!service.isPresent()) {
             log.error("The Service with ID: " + serviceId + " is not present in database");

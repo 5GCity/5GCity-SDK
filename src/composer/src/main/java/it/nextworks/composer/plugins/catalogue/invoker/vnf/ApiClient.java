@@ -7,50 +7,38 @@ import it.nextworks.composer.plugins.catalogue.invoker.vnf.auth.HttpBasicAuth;
 import it.nextworks.composer.plugins.catalogue.invoker.vnf.auth.OAuth;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpRequest;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.InvalidMediaTypeException;
-import org.springframework.http.MediaType;
-import org.springframework.http.RequestEntity;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.*;
 import org.springframework.http.RequestEntity.BodyBuilder;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.BufferingClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
-import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
+import javax.swing.text.Document;
+import java.io.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.TimeZone;
 
 @javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2018-11-21T15:10:42.557+01:00")
-@Component("it.nextworks.composer.plugins.catalogue.invoker.vnf.ApiClient")
 public class ApiClient {
+    private static final Logger log = LoggerFactory.getLogger(ApiClient.class);
     private boolean debugging = false;
     private HttpHeaders defaultHeaders = new HttpHeaders();
     private String basePath = "https://localhost";
@@ -66,8 +54,6 @@ public class ApiClient {
         init();
     }
 
-
-    @Autowired
     public ApiClient(RestTemplate restTemplate, Catalogue catalogue) {
         this.basePath = catalogue.getUrl();
         this.restTemplate = restTemplate;
@@ -89,6 +75,27 @@ public class ApiClient {
         //authentications = new HashMap<String, Authentication>();
         // Prevent the authentications from being modified.
         //authentications = Collections.unmodifiableMap(authentications);
+    }
+
+    /**
+     * This method is used to allows PATCH operation for HttpURLConnection class
+     * @param methods is a method name
+     */
+    public void allowMethods(String methods) {
+        try {
+            Field methodsField = HttpURLConnection.class.getDeclaredField("methods");
+            Field modifiersField = Field.class.getDeclaredField("modifiers");
+            modifiersField.setAccessible(true);
+            modifiersField.setInt(methodsField, methodsField.getModifiers() & ~Modifier.FINAL);
+            methodsField.setAccessible(true);
+            String[] oldMethods = (String[])methodsField.get(null);
+            Set<String> methodsSet = new LinkedHashSet<>(Arrays.asList(oldMethods));
+            methodsSet.addAll(Arrays.asList(methods));
+            String[] newMethods = methodsSet.toArray(new String[0]);
+            methodsField.set(null, /*static field*/newMethods);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     /**
@@ -491,6 +498,15 @@ public class ApiClient {
     public <T> T invokeAPI(String path, HttpMethod method, MultiValueMap<String, String> queryParams, Object body, HttpHeaders headerParams, MultiValueMap<String, Object> formParams, List<MediaType> accept, MediaType contentType, String[] authNames, ParameterizedTypeReference<T> returnType) throws RestClientException {
         updateParamsForAuth(authNames, queryParams, headerParams);
 
+        /*List<HttpMessageConverter<?>> messageConverters = new ArrayList<HttpMessageConverter<?>>();
+        //Add the Jackson Message converter
+        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
+        // Note: here we are making this converter to process any kind of response,
+        // not only application/*json, which is the default behaviour
+        converter.setSupportedMediaTypes(Arrays.asList(new MediaType[]{MediaType.ALL}));
+        messageConverters.add(converter);
+        restTemplate.setMessageConverters(messageConverters);*/
+
         final UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(basePath).path(path);
         if (queryParams != null) {
             builder.queryParams(queryParams);
@@ -527,6 +543,38 @@ public class ApiClient {
         }
     }
 
+    public Object invokeApi(String path, HttpMethod method, Object body) throws RestClientException {
+        File tempFile = null;
+        MultipartFile multipartFile = (MultipartFile) body;
+        try {
+            String extension = "." + multipartFile.getOriginalFilename();
+            tempFile = File.createTempFile("temp", extension);
+            multipartFile.transferTo(tempFile);
+        } catch (IOException e) {
+            log.error("Something went wrong with conversion from multipartfile to File");
+            e.printStackTrace();
+        }
+        LinkedMultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+        log.debug("Adding filesystemresource to multivaluemap");
+        map.add("file", new FileSystemResource(tempFile));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        final UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(basePath).path(path);
+        HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
+        Document document = null;
+        try {
+            ResponseEntity<Document> responseEntity =
+                    restTemplate.exchange(builder.build().toUri(), method, requestEntity, Document.class);
+            document = responseEntity.getBody();
+        } catch (Exception e) {
+            log.debug("Got exception when sending request. " + e.getMessage());
+            throw new RestClientException("Got exception when sending request. " + e.getMessage());
+        }
+
+        return document;
+    }
+
     /**
      * Add headers to the request that is being built
      *
@@ -551,6 +599,16 @@ public class ApiClient {
      */
     protected RestTemplate buildRestTemplate() {
         RestTemplate restTemplate = new RestTemplate();
+
+        /*List<HttpMessageConverter<?>> messageConverters = new ArrayList<HttpMessageConverter<?>>();
+        //Add the Jackson Message converter
+        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
+        // Note: here we are making this converter to process any kind of response,
+        // not only application/*json, which is the default behaviour
+        converter.setSupportedMediaTypes(Arrays.asList(new MediaType[]{MediaType.MULTIPART_FORM_DATA}));
+        messageConverters.add(converter);
+        restTemplate.setMessageConverters(messageConverters);*/
+
         // This allows us to read the response more than once - Necessary for debugging.
         restTemplate.setRequestFactory(new BufferingClientHttpRequestFactory(restTemplate.getRequestFactory()));
         return restTemplate;

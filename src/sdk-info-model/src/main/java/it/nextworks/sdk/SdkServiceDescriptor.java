@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 @JsonPropertyOrder({
     "id",
     "status",
+    "nsInfoId",
     "componentType",
     "parameters",
     "subDescriptor"
@@ -47,6 +48,8 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
     private Long id;
 
     private SdkServiceStatus status;
+
+    private String nsInfoId;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @Fetch(FetchMode.SELECT)
@@ -105,6 +108,16 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
     @JsonProperty("id")
     void setId(Long id) {
         this.id = id;
+    }
+
+    @JsonIgnore
+    public String getNsInfoId() {
+        return nsInfoId;
+    }
+
+    @JsonIgnore
+    public void setNsInfoId(String nsInfoId) {
+        this.nsInfoId = nsInfoId;
     }
 
     @JsonIgnore

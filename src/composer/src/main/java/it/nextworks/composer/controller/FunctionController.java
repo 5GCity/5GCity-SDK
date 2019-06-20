@@ -23,10 +23,13 @@ import io.swagger.annotations.ApiResponses;
 import it.nextworks.composer.executor.FunctionManager;
 import it.nextworks.nfvmano.libs.common.exceptions.AlreadyExistingEntityException;
 import it.nextworks.nfvmano.libs.common.exceptions.NotPermittedOperationException;
+import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
 import it.nextworks.sdk.MonitoringParameter;
 import it.nextworks.sdk.SdkFunction;
+import it.nextworks.sdk.exceptions.AlreadyPublishedServiceException;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
 import it.nextworks.sdk.exceptions.MalformedElementException;
+import it.nextworks.sdk.exceptions.NotPublishedServiceException;
 import org.hibernate.cfg.NotYetImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,32 +71,28 @@ public class FunctionController {
      * @return functionList List<Function>
      */
     @ApiOperation(value = "Get the complete list of the SDK Functions available in database", response = SdkFunction.class, responseContainer = "List")
-    @ApiResponses(value = {
-        @ApiResponse(code = 200, message = "")
-    })
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "")})
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public ResponseEntity<?> getFunctions() {
-//        functionManager.createFunction();
-        log.info("Request for get FUNCTIONS");
+        log.info("Request for getting functions");
         List<SdkFunction> response = new ArrayList<>();
         response = functionManager.getFunctions();
         return new ResponseEntity<List<SdkFunction>>(response, HttpStatus.OK);
     }
 
-
     /**
      * @param functionId Id of the function to be returned
      * @return function
      */
-    @ApiOperation(value = "Search a SDK Function with an UUID", response = SdkFunction.class)
+    @ApiOperation(value = "Search a SDK Function using the ID", response = SdkFunction.class)
     @ApiResponses(value = {
         @ApiResponse(code = 400, message = "Query without parameter functionId"),
-        @ApiResponse(code = 404, message = "SdkFunction not found on database"),
+        @ApiResponse(code = 404, message = "SDK Function not found on database"),
         @ApiResponse(code = 200, message = "")
     })
     @RequestMapping(value = "/{functionId}", method = RequestMethod.GET)
     public ResponseEntity<?> getFunction(@PathVariable Long functionId) {
-        log.info("Receiving a request to get the function identified by id: " + functionId);
+        log.info("Receiving a request to get the function with ID: " + functionId);
         if (functionId == null) {
             return new ResponseEntity<String>("Query without parameter functionId", HttpStatus.BAD_REQUEST);
         } else {
@@ -101,7 +100,7 @@ public class FunctionController {
                 SdkFunction result = functionManager.getFunction(functionId);
                 return new ResponseEntity<SdkFunction>(result, HttpStatus.OK);
             } catch (NotExistingEntityException e) {
-                log.debug("The Sdk function identified by the functionId provided is not present");
+                log.debug(e.toString());
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
             }
         }
@@ -114,75 +113,52 @@ public class FunctionController {
      */
     @ApiOperation(value = "Create a new SDK Function")
     @ApiResponses(value = {
-        @ApiResponse(code = 400, message = "Function already present in db or function cannot be validated"),
-        @ApiResponse(code = 500, message = "Internal Server Error"),
-        @ApiResponse(code = 201, message = "Function Created")})
+        @ApiResponse(code = 400, message = "SDK Function already present on database or function cannot be validated"),
+        @ApiResponse(code = 201, message = "Function created")})
     @RequestMapping(value = "/", method = RequestMethod.POST)
     public ResponseEntity<?> createFunction(@RequestBody SdkFunction request) {
         log.info("Request for creation of a new function");
-        if (request.getId() == null && request.isValid()) {
-            try {
-                functionManager.createFunction(request);
-                log.debug("Function entity created");
-                return new ResponseEntity<>(request.getId(), HttpStatus.CREATED);
-            } catch (NotYetImplementedException e) {
-                log.error("NotYetImplementedException request");
-                return new ResponseEntity<String>(
-                    String.format("MNotYetImplementedException request"),
-                    HttpStatus.INTERNAL_SERVER_ERROR);
-            } catch (MalformedElementException e) {
-                log.error("Malformed request: {}", e.getMessage());
-                return new ResponseEntity<String>(
-                    String.format("Malformed request: %s", e.getMessage()),
-                    HttpStatus.BAD_REQUEST);
-            } catch (NotExistingEntityException e) {
-                log.error("Malformed request: {}", e.getMessage());
-                return new ResponseEntity<String>(
-                    String.format("Malformed request: %s", e.getMessage()),
-                    HttpStatus.BAD_REQUEST);
-            }catch (AlreadyExistingEntityException e) {
-                log.error("Malformed request: {}", e.getMessage());
-                return new ResponseEntity<String>(
-                    String.format("Malformed request: %s", e.getMessage()),
-                    HttpStatus.BAD_REQUEST);
-            }
-        } else {
-            log.error("The function provided cannot be validated");
-            return new ResponseEntity<String>("The function provided cannot be validated", HttpStatus.BAD_REQUEST);
+        try {
+            functionManager.createFunction(request);
+            log.debug("Function entity created");
+            return new ResponseEntity<>(request.getId(), HttpStatus.CREATED);
+        } catch (MalformedElementException | AlreadyExistingEntityException e) {
+            log.error(e.toString());
+            return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
-    @ApiOperation(value = "Modify an existing  SDK Function")
+    @ApiOperation(value = "Modify an existing SDK Function")
     @ApiResponses(value = {
-        @ApiResponse(code = 400, message = "Function not present in db or function cannot be validated"),
-        @ApiResponse(code = 204, message = "Function Updated")})
+        @ApiResponse(code = 400, message = "SDK Function cannot be validated"),
+        @ApiResponse(code = 404, message = "SDK Function not present on database"),
+        @ApiResponse(code = 403, message = "SDK Function cannot be updated"),
+        @ApiResponse(code = 204, message = "SDK Function updated")})
     @RequestMapping(value = "/", method = RequestMethod.PUT)
     public ResponseEntity<?> updateFunction(@RequestBody SdkFunction request) {
         log.info("Request for update of a function");
-        if (request.isValid()) {
-            try {
-                functionManager.updateFunction(request);
-                log.debug("function entity updated");
-                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-            } catch (NotExistingEntityException e) {
-                log.error(e.getMessage());
-                return new ResponseEntity<String>(
-                    e.getMessage(), HttpStatus.BAD_REQUEST);
-            } catch (MalformedElementException e1) {
-                log.error("Function with id " + request.getId() + " is malformatted");
-                return new ResponseEntity<String>(
-                    "Function with id " + request.getId() + " is malformatted", HttpStatus.BAD_REQUEST);
-            }
-        } else {
-            log.error("The function provided cannot be validated");
-            return new ResponseEntity<String>("The function provided cannot be validated", HttpStatus.BAD_REQUEST);
-        }
 
+        try {
+            functionManager.updateFunction(request);
+            log.debug("Function entity updated");
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } catch (NotExistingEntityException e) {
+            log.error(e.toString());
+            return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (MalformedElementException e) {
+            log.error(e.toString());
+            return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (NotPermittedOperationException e){
+                log.error(e.toString());
+                return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
+        }
     }
 
-    @ApiOperation(value = "Delete SDK Function from database")
-    @ApiResponses(value = {@ApiResponse(code = 204, message = ""),
-        @ApiResponse(code = 404, message = "Entity to be deleted not found"),
+    @ApiOperation(value = "Delete a SDK Function from database")
+    @ApiResponses(value = {
+        @ApiResponse(code = 204, message = ""),
+        @ApiResponse(code = 404, message = "SDK Function not present on database"),
+        @ApiResponse(code = 403, message = "SDK Function cannot be deleted"),
         @ApiResponse(code = 400, message = "Deletion request without parameter functionId")})
     @RequestMapping(value = "/{functionId}", method = RequestMethod.DELETE)
     public ResponseEntity<?> deleteFunction(@PathVariable Long functionId) {
@@ -195,17 +171,16 @@ public class FunctionController {
                 functionManager.deleteFunction(functionId);
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             } catch (NotExistingEntityException e) {
-                log.error("Requested deletion for an entity which doesn't exist");
-                return new ResponseEntity<String>("Requested deletion for an entity which doesn't exist",
-                    HttpStatus.NOT_FOUND);
+                log.error(e.toString());
+                return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
             }catch (NotPermittedOperationException e){
-                log.error("Function with ID " + functionId + " used by a service");
-                return new ResponseEntity<String>(e.getMessage(),
-                    HttpStatus.BAD_REQUEST);
+                log.error(e.toString());
+                return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
             }
         }
     }
 
+    /*
     @ApiOperation(value = "Create descriptor for SDK Function")
     @ApiResponses(value = {@ApiResponse(code = 200, message = ""),
         @ApiResponse(code = 404, message = "Base function not found"),
@@ -240,106 +215,152 @@ public class FunctionController {
             );
         }
     }
+    */
 
     @ApiOperation(value = "Publish SDK Function to Public Catalogue")
     @ApiResponses(value = {
-        @ApiResponse(code = 202, message = "Descriptor created with returned id. The descriptor will be published to the public catalogue"),
-        @ApiResponse(code = 404, message = "Function to be published not found"),
-        @ApiResponse(code = 400, message = "Null function or invalid parameters provided")})
+        @ApiResponse(code = 202, message = "Descriptor created with returned ID. The descriptor will be published to the public catalogue"),
+        @ApiResponse(code = 404, message = "SDK Function not present on database"),
+        @ApiResponse(code = 400, message = "Publish request without parameter functionId or SDK Function already published")})
     @RequestMapping(value = "/{functionId}/publish", method = RequestMethod.POST)
-    public ResponseEntity<?> publishFunction(@PathVariable Long functionId, List<BigDecimal> parameterValues) {
-        log.info("Request create-function and publication of a function with id: {}, params: {}.", functionId, parameterValues);
+    public ResponseEntity<?> publishFunction(@PathVariable Long functionId) {
+        log.info("Request publication of a function with ID: {}", functionId);
         if (functionId == null) {
-            log.error("Create-function/publication request without parameter functionId");
-            return new ResponseEntity<>("Create-function/publication request without parameter functionId", HttpStatus.BAD_REQUEST);
+            log.error("Publication request without parameter functionId");
+            return new ResponseEntity<>("Publication request without parameter functionId", HttpStatus.BAD_REQUEST);
         }
-        // else:
         try {
-            functionManager.publishFunction(functionId, parameterValues);
+            functionManager.publishFunction(functionId);
             return new ResponseEntity<>(HttpStatus.ACCEPTED);
         } catch (NotExistingEntityException e) {
+            log.error(e.toString());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-        } catch (MalformedElementException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }catch (AlreadyPublishedServiceException e) {
+            log.error(e.toString());
+            return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @ApiOperation(value = "Unpublish SDK Function from Public Catalogue")
+    @ApiResponses(value = {
+        @ApiResponse(code = 202, message = "The SDK Function will be removed from the public catalogue"),
+        @ApiResponse(code = 404, message = "SDK Function not present on database"),
+        @ApiResponse(code = 400, message = "Publish request without parameter functionId or SDK Function not yet published")})
+    @RequestMapping(value = "/{functionId}/unpublish", method = RequestMethod.POST)
+    public ResponseEntity<?> unPublishFunction(@PathVariable Long functionId) {
+        log.info("Request to unpublish function with ID " + functionId + " from the public catalogue");
+        if (functionId == null) {
+            log.error("Request without parameter functionId");
+            return new ResponseEntity<String>("Request without parameter functionId", HttpStatus.BAD_REQUEST);
+        } else {
+            try {
+                functionManager.unPublishFunction(functionId);
+                return new ResponseEntity<>(HttpStatus.ACCEPTED);
+            } catch (NotExistingEntityException e) {
+                log.error(e.toString());
+                return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
+            } catch (NotPublishedServiceException e) {
+                log.error(e.toString());
+                return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            }
         }
     }
 
     @ApiOperation(value = "Modify an existing list of monitoring parameters related to a SDK Function")
     @ApiResponses(value = {
-        @ApiResponse(code = 400, message = "SDK Function not present in db or request cannot be validated"),
-        @ApiResponse(code = 204, message = "Monitoring Param list Updated")})
+        @ApiResponse(code = 400, message = "SDK Function or Monitoring Parameters cannot be validated"),
+        @ApiResponse(code = 404, message = "SDK Function or Monitoring Parameters not present on database"),
+        @ApiResponse(code = 403, message = "Monitoring Parameters cannot be updated"),
+        @ApiResponse(code = 204, message = "Monitoring Parameters updated")})
     @RequestMapping(value = "/{functionId}/monitoring_params", method = RequestMethod.PUT)
-    public ResponseEntity<?> updateMonitoringParametersForFunction(@PathVariable Long functionId,
-                                                                   @RequestBody Set<MonitoringParameter> monitoringParameters) {
+    public ResponseEntity<?> updateMonitoringParametersForFunction(@PathVariable Long functionId, @RequestBody Set<MonitoringParameter> monitoringParameters) {
         log.info("Request for update of a monitoringParameter list");
-
-        for (MonitoringParameter param : monitoringParameters) {
-            if (!param.isValid()) {
-                log.error("Monitoring param list provided cannot be validated");
-                return new ResponseEntity<String>("Monitoring param list provided cannot be validated",
-                    HttpStatus.BAD_REQUEST);
+        if (functionId == null) {
+            log.error("Request without parameter functionId");
+            return new ResponseEntity<String>("Request without parameter functionId", HttpStatus.BAD_REQUEST);
+        } else {
+            try {
+                functionManager.updateMonitoringParameters(functionId, monitoringParameters);
+                log.debug("Function entity updated with the requested monitoring parameters");
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            } catch (NotExistingEntityException e) {
+                log.error(e.toString());
+                return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
+            } catch (MalformedElementException e) {
+                log.error(e.toString());
+                return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            } catch(NotPermittedOperationException e){
+                log.error(e.toString());
+                return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
             }
-        }
-
-        try {
-            functionManager.updateMonitoringParameters(functionId, monitoringParameters);
-            log.debug("Function entity updated with the requested monitoring parameters");
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (NotExistingEntityException e1) {
-            log.error(e1.toString());
-            return new ResponseEntity<String>(e1.toString(), HttpStatus.BAD_REQUEST);
-        } catch (MalformedElementException e2) {
-            log.error("Malformed format for element MonitoringParameter. Unable to update function "
-                + functionId);
-            return new ResponseEntity<String>(
-                "Malformed format for element MonitoringParameter. Unable to update function: "
-                    + functionId,
-                HttpStatus.BAD_REQUEST);
         }
     }
 
-    @ApiOperation(value = "Get the list of  Monitoring Parameters for a SDK Function identified by UUID", response = MonitoringParameter.class, responseContainer = "List")
-    @ApiResponses(value = {@ApiResponse(code = 400, message = "Query without parameter functionId"),
-        @ApiResponse(code = 404, message = "SDK Function not found on database"),
+    @ApiOperation(value = "Get the list of  Monitoring Parameters for a SDK Function with ID", response = MonitoringParameter.class, responseContainer = "List")
+    @ApiResponses(value = {
+        @ApiResponse(code = 400, message = "Query without parameter functionId"),
+        @ApiResponse(code = 404, message = "SDK Function or Monitoring Parameters not present on database"),
         @ApiResponse(code = 200, message = "OK")})
     @RequestMapping(value = "/{functionId}/monitoring_params", method = RequestMethod.GET)
     public ResponseEntity<?> getMonitoringParametersForFunction(@PathVariable Long functionId) {
-        log.info("Request for get list of monitoringParams available on a specific Function, identified by id: "
-            + functionId);
-
-        try {
-            Set<MonitoringParameter> response = functionManager.getMonitoringParameters(functionId);
-            log.debug("Returning list of monitoringParams related to a specific SDK Function identified by uuid: "
-                + functionId);
-            return new ResponseEntity<Set<MonitoringParameter>>(response, HttpStatus.OK);
-        } catch (NotExistingEntityException e) {
-            log.debug("SDK Function with uuid " + functionId + " not found on database ");
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        log.info("Request for get list of monitoringParams available on a specific function with ID " + functionId);
+        if (functionId == null) {
+            log.error("Request without parameter functionId");
+            return new ResponseEntity<String>("Request without parameter functionId", HttpStatus.BAD_REQUEST);
+        } else {
+            try {
+                Set<MonitoringParameter> response = functionManager.getMonitoringParameters(functionId);
+                log.debug("Returning list of monitoringParams related to a specific function with ID " + functionId);
+                return new ResponseEntity<Set<MonitoringParameter>>(response, HttpStatus.OK);
+            } catch (NotExistingEntityException e) {
+                log.debug(e.toString());
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+            }
         }
     }
 
-    @ApiOperation(value = "Delete monitoring param from SDK Function")
-    @ApiResponses(value = {@ApiResponse(code = 204, message = ""),
-        @ApiResponse(code = 404, message = "Entity to be deleted not found"),
-        @ApiResponse(code = 400, message = "Deletion request without parameter functionId")})
+    @ApiOperation(value = "Delete Monitoring Parameters from SDK Function")
+    @ApiResponses(value = {
+        @ApiResponse(code = 204, message = ""),
+        @ApiResponse(code = 404, message = "SDK Function or Monitoring Parameters not present on database"),
+        @ApiResponse(code = 403, message = "Monitoring Parameters cannot be deleted"),
+        @ApiResponse(code = 400, message = "Deletion request without parameter functionId or function cannot be validated")})
     @RequestMapping(value = "/{functionId}/monitoring_params/{monitoringParameterId}", method = RequestMethod.DELETE)
-    public ResponseEntity<?> deleteMonitoringParametersForFunction(@PathVariable Long functionId,
-                                                                    @PathVariable Long monitoringParameterId) {
-        log.info("Request for deletion of monitoring parameter from SDK Function identified by id: "
-            + functionId);
-
-        try {
-            functionManager.deleteMonitoringParameters(functionId, monitoringParameterId);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (NotExistingEntityException e) {
-            log.error("Requested deletion for an entity which doesn't exist");
-            return new ResponseEntity<String>("Requested deletion for an entity which doesn't exist",
-                HttpStatus.NOT_FOUND);
-        } catch (MalformedElementException e) {
-            log.error("Malformed Request. Monitoring parameters are malformed");
-            return new ResponseEntity<String>("Malformed Request. Monitoring parameters are malformed",
-                HttpStatus.NOT_FOUND);
+    public ResponseEntity<?> deleteMonitoringParametersForFunction(@PathVariable Long functionId, @PathVariable Long monitoringParameterId) {
+        log.info("Request for deletion of monitoring parameter from SDK Function identified by id: " + functionId);
+        if (functionId == null) {
+            log.error("Request without parameter functionId");
+            return new ResponseEntity<String>("Request without parameter functionId", HttpStatus.BAD_REQUEST);
+        }else {
+            try {
+                functionManager.deleteMonitoringParameters(functionId, monitoringParameterId);
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            } catch (NotExistingEntityException e) {
+                log.error(e.toString());
+                return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
+            } catch (NotPermittedOperationException e) {
+                log.error(e.toString());
+                return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
+            } catch (MalformedElementException e) {
+                log.error(e.toString());
+                return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            }
         }
+    }
 
+    @ApiOperation(value = "Get Vnfd from SDK Function")
+    @ApiResponses(value = {
+        @ApiResponse(code = 202, message = "VNFD Content"),
+        @ApiResponse(code = 400, message = "SDK function not present on databse")})
+    @RequestMapping(value = "/{functionId}/vnfd", method = RequestMethod.GET)
+    public ResponseEntity<?> getVnfd(@PathVariable Long functionId) throws NotExistingEntityException {
+        log.info("Request GET Vnfd for Function with ID " + functionId);
+        if (functionId == null) {
+            log.error("GET Vnfd request without parameter functionId");
+            return new ResponseEntity<String>("GET Vnfd request without parameter functionId", HttpStatus.BAD_REQUEST);
+        } else {
+            DescriptorTemplate descriptorTemplate = functionManager.generateTemplate(functionId);
+            return new ResponseEntity<>(descriptorTemplate, HttpStatus.OK);
+        }
     }
 }

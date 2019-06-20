@@ -30,7 +30,7 @@ public class ArchiveBuilder {
                 serviceName = node.getKey();
         }
 
-        Date date= new Date();
+        Date date = new Date();
         long time = date.getTime();
         Timestamp ts = new Timestamp(time);
         List<String> strings = new ArrayList<>();
@@ -53,15 +53,21 @@ public class ArchiveBuilder {
             strings.add("\tns_vendor_id: " + template.getMetadata().getVendor());
             strings.add("\tns_version: " + template.getMetadata().getVersion());
             strings.add(String.format("\tns_release_date_time: %1$TD %1$TT", ts));
-            strings.add("\nmonitoring:");
-            strings.add("\tmain_monitoring_descriptor:");
-            strings.add("\t\tSource: Files/Monitoring/monitoringParameters.json");
-            strings.add("\nactions:");
-            strings.add("\tmain_actions_descriptor:");
-            strings.add("\t\tSource: Files/Monitoring/actions.json");
-            strings.add("\naction_rules:");
-            strings.add("\tmain_action_rules_descriptor:");
-            strings.add("\t\tSource: Files/Monitoring/actionRules.json");
+            if(monitoringParameters.size() != 0) {
+                strings.add("\nmonitoring:");
+                strings.add("\tmain_monitoring_descriptor:");
+                strings.add("\t\tSource: Files/Monitoring/monitoringParameters.json");
+            }
+            if(actions.size() != 0) {
+                strings.add("\nactions:");
+                strings.add("\tmain_actions_descriptor:");
+                strings.add("\t\tSource: Files/Monitoring/actions.json");
+            }
+            if(actionRules.size() != 0) {
+                strings.add("\naction_rules:");
+                strings.add("\tmain_action_rules_descriptor:");
+                strings.add("\t\tSource: Files/Monitoring/actionRules.json");
+            }
             Files.write(manifest.toPath(), strings);
             strings.clear();
             File license = new File(licenses, "LICENSE");
@@ -82,15 +88,23 @@ public class ArchiveBuilder {
 
             //Create descriptor files
             File descriptorFile = new File(definitions, serviceName + ".yaml");
-            File monitoringParamsFile = new File(monitoring, "monitoringParameters.json");
-            File actionsFile = new File(monitoring, "actions.json");
-            File actionRulesFile = new File(monitoring, "actionRules.json");
-
             ObjectMapper mapper = new ObjectMapper();
             mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-            mapper.writeValue(monitoringParamsFile, monitoringParameters);
-            mapper.writeValue(actionsFile, actions);
-            mapper.writeValue(actionRulesFile, actionRules);
+            File monitoringParamsFile;
+            File actionsFile;
+            File actionRulesFile;
+            if(monitoringParameters.size() != 0) {
+                monitoringParamsFile = new File(monitoring, "monitoringParameters.json");
+                mapper.writeValue(monitoringParamsFile, monitoringParameters);
+            }
+            if(actions.size() != 0) {
+                actionsFile = new File(monitoring, "actions.json");
+                mapper.writeValue(actionsFile, actions);
+            }
+            if(actionRules.size() != 0) {
+                actionRulesFile = new File(monitoring, "actionRules.json");
+                mapper.writeValue(actionRulesFile, actionRules);
+            }
             mapper = new ObjectMapper(new YAMLFactory());
             mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
             mapper.writeValue(descriptorFile, template);
@@ -103,6 +117,95 @@ public class ArchiveBuilder {
         }
 
         return servicePackagePath;
+    }
+
+    public static String createVNFCSAR(DescriptorTemplate template, Set<MonitoringParameter> monitoringParameters, String cloudInit){
+
+        String functionName = "descriptor";
+        String functionPackagePath;
+        Map<String, Node> nodes = template.getTopologyTemplate().getNodeTemplates();
+        for(Map.Entry<String, Node> node : nodes.entrySet()){
+            if(node.getValue().getType().equals("tosca.nodes.nfv.VNF"))
+                functionName = node.getKey();
+        }
+
+        Date date = new Date();
+        long time = date.getTime();
+        Timestamp ts = new Timestamp(time);
+        List<String> strings = new ArrayList<>();
+
+        try{
+            //Create directories
+            File root = makeFolder(functionName);
+            File definitions = makeSubFolder(root, "Definitions");
+            File files = makeSubFolder(root, "Files");
+            File licenses = makeSubFolder(files, "Licences");
+            File monitoring = makeSubFolder(files, "Monitoring");
+            File scripts = makeSubFolder(files, "Scripts");
+            File tests = makeSubFolder(files, "Tests");
+            File metadata = makeSubFolder(root, "TOSCA-Metadata");
+
+            //Create standard files
+            File manifest = new File(root, functionName + ".mf");
+            strings.add("metadata:");
+            strings.add("\tvnf_product_name: " + functionName);
+            strings.add("\tvnf_provider_id: " + template.getMetadata().getVendor());
+            strings.add("\tvnf_package_version: " + template.getMetadata().getVersion());
+            strings.add(String.format("\tvnf_release_date_time: %1$TD %1$TT", ts));
+            if(monitoringParameters.size() != 0){
+                strings.add("\nmonitoring:");
+                strings.add("\tmain_monitoring_descriptor:");
+                strings.add("\t\tSource: Files/Monitoring/monitoringParameters.json");
+            }
+            if(cloudInit != null) {
+                strings.add("\nconfiguration:");
+                strings.add("\tcloud_init:");
+                strings.add("\t\tSource: Files/Scripts/cloud-init.txt");
+            }
+            Files.write(manifest.toPath(), strings);
+            strings.clear();
+            File license = new File(licenses, "LICENSE");
+            Files.write(license.toPath(), strings);
+            File changeLog = new File(files, "ChangeLog.txt");
+            strings.add(String.format("%1$TD %1$TT - New VNF Package according to ETSI GS NFV-SOL004 v 2.5.1", ts));
+            Files.write(changeLog.toPath(), strings);
+            strings.clear();
+            File certificate = new File(files, functionName + ".cert");
+            Files.write(certificate.toPath(), strings);
+            File toscaMetadata = new File(metadata, "TOSCA.meta");
+            strings.add("TOSCA-Meta-File-Version: 1.0");
+            strings.add("CSAR-Version: 1.1");
+            strings.add("CreatedBy: 5GCity-SDK");
+            strings.add("Entry-Definitions: Definitions/"+ functionName + ".yaml");
+            Files.write(toscaMetadata.toPath(), strings);
+            strings.clear();
+
+            //Create descriptor files
+            File descriptorFile = new File(definitions, functionName + ".yaml");
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+            File monitoringParamsFile;
+            if(monitoringParameters.size() != 0) {
+                monitoringParamsFile = new File(monitoring, "monitoringParameters.json");
+                mapper.writeValue(monitoringParamsFile, monitoringParameters);
+            }
+            File cloudInitFile;
+            if(cloudInit != null){
+                cloudInitFile = new File(scripts, "cloud-init.txt");
+                Files.write(cloudInitFile.toPath(), cloudInit.getBytes());
+            }
+            mapper = new ObjectMapper(new YAMLFactory());
+            mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+            mapper.writeValue(descriptorFile, template);
+
+            functionPackagePath = compress(root.toPath().toString());
+        } catch (IOException e) {
+            throw new IllegalStateException(
+                String.format("Could not write files. Error: %s", e.getMessage())
+            );
+        }
+
+        return functionPackagePath;
     }
 
     public static File makeFolder(String name) {
@@ -201,26 +304,6 @@ public class ArchiveBuilder {
             }
         } finally {
             res.close();
-        }
-    }
-
-    public static void unzip(File zipfile, File directory) throws IOException {
-        ZipFile zfile = new ZipFile(zipfile);
-        Enumeration<? extends ZipEntry> entries = zfile.entries();
-        while (entries.hasMoreElements()) {
-            ZipEntry entry = entries.nextElement();
-            File file = new File(directory, entry.getName());
-            if (entry.isDirectory()) {
-                file.mkdirs();
-            } else {
-                file.getParentFile().mkdirs();
-                InputStream in = zfile.getInputStream(entry);
-                try {
-                    copy(in, file);
-                } finally {
-                    in.close();
-                }
-            }
         }
     }
 

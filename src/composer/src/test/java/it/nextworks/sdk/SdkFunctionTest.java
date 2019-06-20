@@ -2,14 +2,13 @@ package it.nextworks.sdk;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import it.nextworks.composer.ComposerApplication;
+import it.nextworks.composer.executor.FunctionManager;
 import it.nextworks.composer.executor.ServiceManager;
 import it.nextworks.composer.executor.repositories.SdkFunctionRepository;
 //import it.nextworks.sdk.enums.Direction;
 //import it.nextworks.sdk.enums.MonitoringParameterName;
-import it.nextworks.sdk.enums.AggregatorFunc;
-import it.nextworks.sdk.enums.MetricType;
-import it.nextworks.sdk.enums.MonitoringParameterType;
-import it.nextworks.sdk.enums.Transform;
+import it.nextworks.nfvmano.libs.common.exceptions.MalformattedElementException;
+import it.nextworks.sdk.enums.*;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,6 +40,9 @@ public class SdkFunctionTest {
 
     @Autowired
     private SdkFunctionRepository functionRepository;
+
+    @Autowired
+    private FunctionManager functionManager;
 
 //    public static SdkFunction makeTestObject() {
 //        Map<String, String> metadata = new HashMap<>();
@@ -159,6 +161,11 @@ public class SdkFunctionTest {
 
         function.setEpoch(Instant.now().getEpochSecond());
 
+        function.setStatus(SdkFunctionStatus.SAVED);
+
+        function.setMinInstancesCount(1);
+        function.setMaxInstancesCount(2);
+
         return function;
     }
 
@@ -180,7 +187,7 @@ public class SdkFunctionTest {
         function.setFlavourExpression("static_df");
         function.setInstantiationLevelExpression("IF(traffic != 0, big_il, medium_il)");
         function.setParameters(Arrays.asList("traffic"));
-        function.setVnfdId("aa6a284e-e369-4d7d-a465-57ddc6e8c027");
+        function.setVnfdId("bd6a284e-e369-4d7d-a465-57ddc6e8c027");
         //function.setVnfdVersion("v5.0");
         function.setOwnerId("NXW");
         function.setVnfdProvider("NXW");
@@ -207,6 +214,7 @@ public class SdkFunctionTest {
         function.setMinInstancesCount(1);
         function.setMaxInstancesCount(2);
 
+        function.setStatus(SdkFunctionStatus.SAVED);
         return function;
     }
     
@@ -256,6 +264,8 @@ public class SdkFunctionTest {
         function.setMinInstancesCount(1);
         function.setMaxInstancesCount(2);
 
+        function.setStatus(SdkFunctionStatus.SAVED);
+
         return function;
     }
 
@@ -293,6 +303,8 @@ public class SdkFunctionTest {
 
         function.setMinInstancesCount(1);
         function.setMaxInstancesCount(2);
+
+        function.setStatus(SdkFunctionStatus.SAVED);
 
         return function;
     }
@@ -372,4 +384,9 @@ public class SdkFunctionTest {
         //assertEquals(ns2Firewall, f2w2);
     }
 
+    @Test
+    @Ignore // requires DB
+    public void testRetrieveFunctionsFromCatalogue() throws Exception {
+        functionManager.getVnfdFromCatalogue();
+    }
 }

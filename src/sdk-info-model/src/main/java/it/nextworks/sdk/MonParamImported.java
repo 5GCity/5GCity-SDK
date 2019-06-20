@@ -56,6 +56,8 @@ public class MonParamImported extends MonitoringParameter {
         return super.isValid()
             && componentIndex != null
             && importedParameterId != null;
+
+        //TODO check if importedParameter id is present in db and if belong to the right component index
     }
 
     @Override

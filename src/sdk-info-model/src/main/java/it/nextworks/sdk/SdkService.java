@@ -52,7 +52,7 @@ import java.util.stream.Stream;
     "intMonitoringParameters",
     "visibility",
     "groupId",
-    "priority"
+    "accessLevel"
 })
 @Entity
 public class SdkService implements InstantiableCandidate {
@@ -63,7 +63,7 @@ public class SdkService implements InstantiableCandidate {
 
     private String name;
 
-    private String version;
+    private String version = "1.0";
 
     private String designer;
 
@@ -132,7 +132,7 @@ public class SdkService implements InstantiableCandidate {
 
     private Visibility visibility = Visibility.fromValue("PRIVATE");
 
-    private Integer priority;
+    private Integer accessLevel = 4;
 
     @Override
     public SdkServiceDescriptor makeDescriptor(List<BigDecimal> parameterValues) {
@@ -467,14 +467,14 @@ public class SdkService implements InstantiableCandidate {
         this.groupId = groupId;
     }
 
-    @JsonProperty("priority")
-    public Integer getPriority() {
-        return priority;
+    @JsonProperty("accessLevel")
+    public Integer getAccessLevel() {
+        return accessLevel;
     }
 
-    @JsonProperty("priority")
-    public void setPriority(Integer priority) {
-        this.priority = priority;
+    @JsonProperty("accessLevel")
+    public void setAccessLevel(Integer accessLevel) {
+        this.accessLevel = accessLevel;
     }
 
     @Override
@@ -666,19 +666,11 @@ public class SdkService implements InstantiableCandidate {
 
     private boolean validateCps() {
         return connectionPoint != null
-            &&
-            connectionPoint.stream().allMatch(
-                cp -> cp.isValid() && (
-                    // internal => internalCpId != null
-                    !(cp.getType() == ConnectionPointType.INTERNAL) || cp.getInternalCpId() != null
-                )
-            )
+            && connectionPoint.stream().allMatch(cp -> cp.isValid() && (!(cp.getType() == ConnectionPointType.INTERNAL) || cp.getInternalCpId() != null))
             && connectionPoint.stream()
-            .map(ConnectionPoint::getName)
-            .distinct()
-            .count()
-            ==
-            connectionPoint.size();  // I.e. cp names are unique in the service
+                            .map(ConnectionPoint::getName)
+                            .distinct()
+                            .count() == connectionPoint.size();  // I.e. cp names are unique in the service
     }
 
     private boolean validateL3Connectivity() {
@@ -709,19 +701,17 @@ public class SdkService implements InstantiableCandidate {
     private boolean validateAction(){
         boolean validActions = true;
         final Set<String> actionNames = new HashSet<String>();
-        if(actions != null) {
-            validActions = actions.stream().allMatch(ServiceAction::isValid);
-
-            for(ServiceAction ac : actions){
-                if(!actionNames.add(ac.getName()))
-                    validActions = false;
-            }
+        for(ServiceAction ac : actions){
+            if(!ac.isValid() || !actionNames.add(ac.getName()))
+                validActions = false;
+                break;
         }
+
         if(actionRules != null) {
-            validActions = validActions && actionRules.stream().allMatch(ServiceActionRule::isValid);
             for(ServiceActionRule ar : actionRules){
-                if(!actionNames.containsAll(ar.getActionsId())){
+                if(!ar.isValid() || !actionNames.containsAll(ar.getActionsId())){
                     validActions = false;
+                    break;
                 }
                 for(RuleCondition rc : ar.getConditions()){
                     validActions = validActions && (intMonitoringParameters.stream().map(MonitoringParameter::getName).collect(Collectors.toSet()).contains(rc.getParameterId())
@@ -734,14 +724,13 @@ public class SdkService implements InstantiableCandidate {
     }
 
     private boolean validateMonitoringParameters(){
-        boolean validParameter;
+        boolean validParameter = true;
         final Set<String> parametersName = new HashSet<String>();
         Set<MonitoringParameter> monitoringParameters = new HashSet<>();
         monitoringParameters.addAll(extMonitoringParameters);
         monitoringParameters.addAll(intMonitoringParameters);
-        validParameter = monitoringParameters.stream().allMatch(MonitoringParameter::isValid);
         for(MonitoringParameter mp : monitoringParameters){
-            if(!parametersName.add(mp.getName())) {
+            if(!mp.isValid() || !parametersName.add(mp.getName())) {
                 validParameter = false;
                 break;
             }
@@ -795,9 +784,9 @@ public class SdkService implements InstantiableCandidate {
         sb.append(((this.visibility == null) ? "<null>" : this.visibility));
         sb.append(',');
         sb.append("\n    ");
-        sb.append("priority");
+        sb.append("accessLevel");
         sb.append('=');
-        sb.append(((this.priority == null) ? "<null>" : this.priority));
+        sb.append(((this.accessLevel == null) ? "<null>" : this.accessLevel));
         sb.append(',');
         sb.append("\n    ");
         sb.append("license");
@@ -885,7 +874,7 @@ public class SdkService implements InstantiableCandidate {
         result = ((result * 31) + ((this.ownerId == null) ? 0 : this.ownerId.hashCode()));
         result = ((result * 31) + ((this.visibility == null) ? 0 : this.visibility.hashCode()));
         result = ((result * 31) + ((this.groupId == null) ? 0 : this.groupId.hashCode()));
-        result = ((result * 31) + ((this.priority == null) ? 0 : this.priority.hashCode()));
+        result = ((result * 31) + ((this.accessLevel == null) ? 0 : this.accessLevel.hashCode()));
         result = ((result * 31) + ((this.actions == null) ? 0 : this.actions.hashCode()));
         result = ((result * 31) + ((this.actionRules == null) ? 0 : this.actionRules.hashCode()));
         return result;
@@ -915,7 +904,7 @@ public class SdkService implements InstantiableCandidate {
             && ((this.ownerId == rhs.ownerId) || ((this.ownerId != null) && this.ownerId.equals(rhs.ownerId))))
             && ((this.visibility == rhs.visibility) || ((this.visibility != null) && this.visibility.equals(rhs.visibility))))
             && ((this.groupId == rhs.groupId) || ((this.groupId != null) && this.groupId.equals(rhs.groupId))))
-            && ((this.priority == rhs.priority) || ((this.priority != null) && this.priority.equals(rhs.priority))))
+            && ((this.accessLevel == rhs.accessLevel) || ((this.accessLevel != null) && this.accessLevel.equals(rhs.accessLevel))))
             && ((this.actions == rhs.actions) || ((this.actions != null) && this.actions.equals(rhs.actions))))
             && ((this.actionRules == rhs.actionRules) || ((this.actionRules != null) && this.actionRules.equals(rhs.actionRules))))
             && ((this.parameters == rhs.parameters) || ((this.parameters != null) && this.parameters.equals(rhs.parameters))));

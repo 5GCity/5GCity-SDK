@@ -2,6 +2,7 @@ package it.nextworks.composer.adaptor.interfaces;
 
 
 import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
+import it.nextworks.sdk.SdkFunction;
 import it.nextworks.sdk.SdkService;
 import it.nextworks.sdk.SdkServiceDescriptor;
 
@@ -27,6 +28,8 @@ public interface ServicesAdaptorProviderInterface {
      * @return the new Network Service
      */
     DescriptorTemplate generateNetworkServiceDescriptor(SdkServiceDescriptor serviceInstance);
+
+    DescriptorTemplate generateVirtualNetworkFunctionDescriptor(SdkFunction functionInstance);
 
     // Should there be a "publish" op? Isn't that for the service?
     /* *
