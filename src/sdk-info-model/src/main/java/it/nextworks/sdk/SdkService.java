@@ -679,6 +679,18 @@ public class SdkService implements InstantiableCandidate {
         // TODO check the connection point names match
     }
 
+    private boolean validateComponentIndex(){
+        boolean validComponent = true;
+        final Set<Integer> componentIndexes = new HashSet<Integer>();
+        for(SdkServiceComponent component : this.getComponents())
+        if (!componentIndexes.add(component.getComponentIndex())) {
+            validComponent = false;
+            break;
+        }
+
+        return validComponent;
+    }
+
     @JsonIgnore
     @Override
     public boolean isValid() {
@@ -695,7 +707,8 @@ public class SdkService implements InstantiableCandidate {
                 && parameters != null
                 && validateLinks()
                 && validateExpressions()
-                && validateCps();
+                && validateCps()
+                && validateComponentIndex();
     }
 
     private boolean validateAction(){

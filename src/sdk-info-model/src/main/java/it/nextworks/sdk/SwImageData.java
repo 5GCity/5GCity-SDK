@@ -44,13 +44,13 @@ public class SwImageData {
 
     private String  diskFormat;
 
-    private Integer minDisk; // in MB
+    private Integer minDisk; // in GB
 
     private Integer minRam; // in MB
 
     private Integer minCpu = 1;
 
-    private Integer size; // in MB
+    private Integer size; // in GB
 
     public SwImageData() {
     }

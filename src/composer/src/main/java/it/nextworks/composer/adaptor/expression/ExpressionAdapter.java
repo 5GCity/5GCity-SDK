@@ -6,6 +6,8 @@ import it.nextworks.nfvmano.libs.descriptors.capabilities.VirtualComputeCapabili
 import it.nextworks.nfvmano.libs.descriptors.capabilities.VirtualComputeCapabilityProperties;
 import it.nextworks.nfvmano.libs.descriptors.elements.*;
 import it.nextworks.nfvmano.libs.descriptors.elements.SwImageData;
+import it.nextworks.nfvmano.libs.descriptors.interfaces.LcmOperation;
+import it.nextworks.nfvmano.libs.descriptors.interfaces.Vnflcm;
 import it.nextworks.nfvmano.libs.descriptors.nsd.nodes.NS.NSNode;
 import it.nextworks.nfvmano.libs.descriptors.nsd.nodes.NS.NSProperties;
 import it.nextworks.nfvmano.libs.descriptors.nsd.nodes.NS.NSRequirements;
@@ -14,6 +16,7 @@ import it.nextworks.nfvmano.libs.descriptors.nsd.nodes.NsVirtualLink.NsVirtualLi
 import it.nextworks.nfvmano.libs.descriptors.templates.*;
 import it.nextworks.nfvmano.libs.descriptors.templates.Metadata;
 import it.nextworks.nfvmano.libs.descriptors.vnfd.nodes.VDU.*;
+import it.nextworks.nfvmano.libs.descriptors.vnfd.nodes.VNF.VNFInterfaces;
 import it.nextworks.nfvmano.libs.descriptors.vnfd.nodes.VNF.VNFNode;
 import it.nextworks.nfvmano.libs.descriptors.vnfd.nodes.VNF.VNFProperties;
 import it.nextworks.nfvmano.libs.descriptors.vnfd.nodes.VNF.VNFRequirements;
@@ -253,7 +256,7 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
         VNFProperties vnfProperties = new VNFProperties(
             function.getVnfdId(),
             function.getVersion(),
-            function.getVnfdProvider(),
+            function.getVendor(),
             function.getName(),
             function.getSwImageData().getVersion(),
             function.getName(),
@@ -270,13 +273,29 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
             new VnfProfile(function.getInstantiationLevelExpression(), 1, 1)
         );
 
+        VNFInterfaces interfaces = null;
+        if(function.getMetadata().keySet().contains("cloud-init")){
+            interfaces = new VNFInterfaces(
+                null,
+                new Vnflcm(
+                    null,
+                    new LcmOperation("cloud-init.txt"),
+                    null, null, null, null, null,
+                    null, null, null, null, null,
+                    null, null, null, null, null,
+                    null, null, null, null, null,
+                    null, null, null, null, null, null
+                )
+            );
+        }
+
         return new VNFNode(
             "tosca.nodes.nfv.VNF",
             null,  // name is ignored
             vnfProperties,
             null,
             null,  // not used
-            null
+            interfaces
         );
     }
 

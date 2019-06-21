@@ -109,11 +109,9 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
     }
 
-    @PostConstruct
-    @Scheduled(fixedDelay = 3600000, initialDelay = 3600000)//run every hour
+    //@PostConstruct
+    @Scheduled(fixedDelay = 3600000/*, initialDelay = 3600000*/)//run every hour
     public void getVnfdFromCatalogue() throws MalformattedElementException, FailedOperationException{
-
-        //TODO add a way for not performing this task? such as a variable in application properites?
         log.info("Started retrieving VNFDs from Catalogue");
 
         String storagePath = "/tmp/fromCatalogue/";
@@ -151,15 +149,12 @@ public class FunctionManager implements FunctionManagerProviderInterface {
                     log.info("Creating function with vnfdID " + dt.getMetadata().getDescriptorId() + " and version " + dt.getMetadata().getVersion());
                     createFunctionFromVnfd(csarInfo, mf, storagePath);
                 }
-            }catch (IOException e) {
+            }catch (IOException | FailedOperationException e) {
                 log.error("Error while parsing VNF Pkg : " + e.getMessage());
                 throw new MalformattedElementException("Error while parsing VNF Pkg : " + e.getMessage());
             } catch (MalformattedElementException e) {
                 log.error("Error while parsing VNF Pkg, not aligned with CSAR format: " + e.getMessage());
                 throw new MalformattedElementException("Error while parsing VNF Pkg, not aligned with CSAR format : " + e.getMessage());
-            } catch(FailedOperationException e){
-                log.error("Error while parsing VNF Pkg : " + e.getMessage());
-                throw new MalformattedElementException("Error while parsing VNF Pkg : " + e.getMessage());
             }
         }
 
@@ -173,6 +168,536 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         }
 
         log.info("Finished retrieving VNFDs from Catalogue");
+    }
+
+    @Override
+    public SdkFunction getFunction(Long id) throws NotExistingEntityException {
+        Optional<SdkFunction> result = functionRepository.findById(id);
+        if (result.isPresent()) {
+            return result.get();
+        } else {
+            log.error("No function with ID " + id + " was found.");
+            throw new NotExistingEntityException("No function with ID " + id + " was found.");
+        }
+    }
+
+    @Override
+    public List<SdkFunction> getFunctions() {
+        List<SdkFunction> functionList = functionRepository.findAll();
+        if (functionList.size() == 0) {
+            log.debug("No functions are available");
+        } else
+            log.debug("Functions present in database: " + functionList.size());
+        return functionList;
+    }
+
+    @Override
+    public String createFunction(SdkFunction function)
+        throws MalformedElementException, AlreadyExistingEntityException {
+
+        log.info("Storing into database a new function");
+
+        if(function.getId() != null){
+            log.error("Function ID cannot be specified in function creation");
+            throw new MalformedElementException("Function ID cannot be specified in function creation");
+        }
+
+        if (!function.isValid()) {
+            log.error("Malformed SdkFunction");
+            throw new MalformedElementException("Malformed SdkFunction");
+        }
+        log.debug("Function is valid");
+
+        checkAndResolveFunction(function);
+
+        for(MonitoringParameter mp : function.getMonitoringParameters()){
+            if (mp.getId() != null) {
+                log.error("Monitoring parameter ID cannot be specified in function creation");
+                throw new MalformedElementException("Monitoring parameter ID cannot be specified in function creation");
+            }
+        }
+        for(RequiredPort rp : function.getRequiredPorts()){
+            if (rp.getId() != null) {
+                log.error("Required port ID cannot be specified in function creation");
+                throw new MalformedElementException("Required port ID cannot be specified in function creation");
+            }
+        }
+        for(ConnectionPoint cp : function.getConnectionPoint()){
+            if (cp.getId() != null) {
+                log.error("Connection point ID cannot be specified in function creation");
+                throw new MalformedElementException("Connection point ID cannot be specified in function creation");
+            }
+        }
+
+        log.debug("Storing into database function with name: " + function.getName());
+
+        // Saving the function
+        functionRepository.saveAndFlush(function);
+        return function.getId().toString();
+    }
+
+    @Override
+    public String updateFunction(SdkFunction function) throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException {
+        log.info("Updating an existing Function with ID " + function.getId());
+
+        if(function.getId() == null){
+            log.error("Function ID needs to be specified");
+            throw new MalformedElementException("Function ID needs to be specified");
+        }
+
+        if (!function.isValid()) {
+            log.error("Malformed SdkFunction");
+            throw new MalformedElementException("Malformed SdkFunction");
+        }
+        log.debug("Function is valid");
+
+        //Check if Function exists
+        Optional<SdkFunction> func = functionRepository.findById(function.getId());
+        if (!func.isPresent()) {
+            log.error("Function with ID " + function.getId() + " not present in database");
+            throw new NotExistingEntityException("Function with ID " + function.getId() + " not present in database");
+        }
+        log.debug("Function found on db");
+
+        //update not allowed if the function is published to catalogue
+        if(func.get().getStatus().equals(SdkFunctionStatus.COMMITTED)){
+            log.error("Function with ID " + function.getId() + " published to the catalogue. Please unpublish it before updating");
+            throw  new NotPermittedOperationException("Function with ID " + function.getId() + " published to the catalogue. Please unpublish it before updating");
+        }
+
+        //update not allowed if the function is used by a service
+        List<SubFunction> subFunctions = subFunctionRepository.findByComponentId(function.getId());
+        if(subFunctions.size() != 0){
+            log.error("Function with ID " + function.getId() + " used by a service");
+            throw  new NotPermittedOperationException("Function with ID " + function.getId() + " used by a service");
+        }
+
+        for(MonitoringParameter param : function.getMonitoringParameters()) {
+            if (param.getId() != null) {
+                Optional<MonitoringParameter> mp = monitoringParameterRepository.findById(param.getId());
+                if (!mp.isPresent()) {
+                    log.error("Monitoring parameter with ID " + param.getId() + " is not present in database");
+                    throw new NotExistingEntityException("Monitoring parameter with ID " + param.getId() + " is not present in database");
+                }
+
+                if ((mp.get().getSdkFunction() == null) || (mp.get().getSdkFunction().getId() != function.getId())) {
+                    log.error("Monitoring parameter with ID " + param.getId() + " does not belong to function with ID " + function.getId());
+                    throw new NotPermittedOperationException("Monitoring parameter with ID " + param.getId() + " does not belong to function with ID " + function.getId());
+                }
+            }
+        }
+
+        for(ConnectionPoint param : function.getConnectionPoint()) {
+            if (param.getId() != null) {
+                Optional<ConnectionPoint> cp = connectionpointRepository.findById(param.getId());
+                if (!cp.isPresent()) {
+                    log.error("Connection point with ID " + param.getId() + " is not present in database");
+                    throw new NotExistingEntityException("Connection point with ID " + param.getId() + " is not present in database");
+                }
+
+                if ((cp.get().getSdkFunction() == null) || (cp.get().getSdkFunction().getId() != function.getId())) {
+                    log.error("Connection point with ID " + param.getId() + " does not belong to function with ID " + function.getId());
+                    throw new NotPermittedOperationException("Connection point with ID " + param.getId() + " does not belong to function with ID " + function.getId());
+                }
+            }
+        }
+
+        for(RequiredPort param : function.getRequiredPorts()) {
+            if (param.getId() != null) {
+                Optional<RequiredPort> rp = requiredPortRepository.findById(param.getId());
+                if (!rp.isPresent()) {
+                    log.error("Required port with ID " + param.getId() + " is not present in database");
+                    throw new NotExistingEntityException("Required port with ID " + param.getId() + " is not present in database");
+                }
+
+                if ((rp.get().getFunction() == null) || (rp.get().getFunction().getId() != function.getId())) {
+                    log.error("Required port with ID " + param.getId() + " does not belong to function with ID " + function.getId());
+                    throw new NotPermittedOperationException("Required port with ID " + param.getId() + " does not belong to function with ID " + function.getId());
+                }
+            }
+        }
+
+        try {
+            checkAndResolveFunction(function);
+        }catch (AlreadyExistingEntityException e){
+                //exception cannot be raised in this case
+        }
+
+        log.debug("Updating into database Function with ID " + function.getId());
+
+        cleanOldRelations(func.get());
+
+        // Update Function on DB
+        functionRepository.saveAndFlush(function);
+        return function.getId().toString();
+    }
+
+    @Override
+    public SdkFunction getFunctionById(Long id) throws NotExistingEntityException {
+        log.info("Request for Function with ID " + id);
+        Optional<SdkFunction> function = functionRepository.findById(id);
+        if (function.isPresent()) {
+            return function.get();
+        } else {
+            log.error("Function with ID " + id + " not found");
+            throw new NotExistingEntityException("Function with ID " + id + " not found");
+        }
+    }
+
+    @Override
+    public void deleteFunction(Long functionId) throws NotExistingEntityException, NotPermittedOperationException {
+        log.info("Request for deletion of Function with ID " + functionId);
+        // No deletion required: all that depends on the Function will cascade.
+        Optional<SdkFunction> function = functionRepository.findById(functionId);
+        SdkFunction s = function.orElseThrow(() -> {
+            log.error("Function with ID " + functionId + " not found");
+            return new NotExistingEntityException("Function with ID " + functionId + " not found");
+        });
+
+        //delete not allowed if the function is published to catalogue
+        if(s.getStatus().equals(SdkFunctionStatus.COMMITTED)){
+            log.error("Function with ID " + s.getId() + " published to the catalogue. Please unpublish it before deleting");
+            throw  new NotPermittedOperationException("Function with ID " + s.getId() + " published to the catalogue. Please unpublish it before deleting");
+        }
+
+        //delete not allowed if the function is used by a service
+        List<SubFunction> subFunctions = subFunctionRepository.findByComponentId(functionId);
+        if(subFunctions.size() != 0){
+            log.error("Function with ID " + functionId + " used by a service");
+            throw  new NotPermittedOperationException("Function with ID " + functionId + " used by a service");
+        }
+
+        functionRepository.delete(s);
+    }
+
+    /*
+    @Override
+    public String createFunctionDescriptor(Long functionId, List<BigDecimal> parameterValues)
+        throws NotExistingEntityException, MalformedElementException, NotYetImplementedException {
+        log.info("Request create-descriptor of function with uuid: " + functionId);
+
+        // Check if function exists
+        Optional<SdkFunction> optFunction = functionRepository.findById(functionId);
+
+        SdkFunction function = optFunction.orElseThrow(() -> {
+            log.error("Function with UUID: " + functionId + " is not present in database");
+            return new NotExistingEntityException("Function with UUID: " + functionId + " is not present in database");
+        });
+
+        throw new NotYetImplementedException();
+        /*
+        SdkServiceDescriptor descriptor;
+
+        try {
+            descriptor = adapter.createServiceDescriptor(service, parameterValues);
+        } catch (IllegalArgumentException exc) {
+            log.error("Malformed create-descriptor request: {}", exc.getMessage());
+            throw new MalformedElementException(exc.getMessage(), exc);
+        }
+        descriptor.setStatus(SdkServiceStatus.SAVED);
+        serviceDescriptorRepository.saveAndFlush(descriptor);
+        log.info(
+            "Descriptor for service {} successfully created. Descriptor ID {}.",
+            serviceId,
+            descriptor.getId()
+        );
+        return descriptor.getId().toString();
+
+    }
+    */
+
+    @Override
+    public void updateMonitoringParameters(Long functionId, Set<MonitoringParameter> monitoringParameters)
+        throws NotExistingEntityException, NotPermittedOperationException, MalformedElementException {
+        log.info("Request to update list of monitoring parameters for a specific SDK Function " + functionId);
+
+        for (MonitoringParameter param : monitoringParameters) {
+            if (!param.isValid()) {
+                log.error("Monitoring param list provided cannot be validated");
+                throw new MalformedElementException("Monitoring param list provided cannot be validated");
+            }
+
+            if(param.getId() != null) {
+                Optional<MonitoringParameter> mp = monitoringParameterRepository.findById(param.getId());
+                if (!mp.isPresent()) {
+                    log.error("Monitoring parameter with ID " + param.getId() + " is not present in database");
+                    throw new NotExistingEntityException("Monitoring parameter with ID " + param.getId() + " is not present in database");
+                }
+
+                if ((mp.get().getSdkFunction() == null) || (mp.get().getSdkFunction().getId() != functionId)) {
+                    log.error("Monitoring parameter with ID " + param.getId() + " does not belong to function with ID " + functionId);
+                    throw new NotPermittedOperationException("Monitoring parameter with ID " + param.getId() + " does not belong to function with ID " + functionId);
+                }
+            }
+        }
+
+        Optional<SdkFunction> function = functionRepository.findById(functionId);
+        if (!function.isPresent()) {
+            log.error("Function with ID " + functionId + " is not present in database");
+            throw new NotExistingEntityException("Function with ID " + functionId + " is not present in database");
+        }
+
+        //update not allowed if the function is used by a service
+        List<SubFunction> subFunctions = subFunctionRepository.findByComponentId(functionId);
+        if(subFunctions.size() != 0){
+            log.error("Function with ID " + functionId + " used by a service");
+            throw  new NotPermittedOperationException("Function with ID " + functionId + " used by a service");
+        }
+
+        //update not allowed if the function is published to catalogue
+        if(function.get().getStatus().equals(SdkFunctionStatus.COMMITTED)){
+            log.error("Function with ID " + functionId + " published to the catalogue. Please unpublish it before updating");
+            throw  new NotPermittedOperationException("Function with ID " + functionId + " published to the catalogue. Please unpublish it before updating");
+        }
+
+        for(MonitoringParameter mp : function.get().getMonitoringParameters()){
+            mp.setSdkFunction(null);
+        }
+
+        log.debug("Updating list of monitoring parameters on function with ID " + functionId);
+        function.get().setMonitoringParameters(monitoringParameters);
+
+        if (!function.get().isValid()) {
+            log.error("Malformed SdkFunction");
+            throw new MalformedElementException("Malformed SdkFunction");
+        }
+        log.debug("Updating list of monitoring parameters on database");
+        functionRepository.saveAndFlush(function.get());
+    }
+
+    @Override
+    public void deleteMonitoringParameters(Long functionId, Long monitoringParameterId)
+        throws NotExistingEntityException, NotPermittedOperationException, MalformedElementException {
+
+        log.info("Request to delete a monitoring parameter identified by id " + monitoringParameterId + " for a specific SDK Service " + functionId);
+
+        Optional<MonitoringParameter> mp = monitoringParameterRepository.findById(monitoringParameterId);
+        if (!mp.isPresent()) {
+            log.error("Monitoring parameter with ID " + monitoringParameterId + " is not present in database");
+            throw new NotExistingEntityException("Monitoring parameter with ID " + monitoringParameterId + " is not present in database");
+        }
+
+        Optional<SdkFunction> function = functionRepository.findById(functionId);
+        if (!function.isPresent()) {
+            log.error("Function with ID: " + functionId + " is not present in database");
+            throw new NotExistingEntityException("Function with ID " + functionId + " is not present in database");
+        }
+
+        if((mp.get().getSdkFunction() == null) || (mp.get().getSdkFunction().getId() != functionId)){
+            log.error("Monitoring parameter with ID " + monitoringParameterId + " does not belong to function with ID " + functionId);
+            throw  new NotPermittedOperationException("Monitoring parameter with ID " + monitoringParameterId + " does not belong to function with ID " + functionId);
+        }
+
+        //delete not allowed if the function is used by a service
+        List<SubFunction> subFunctions = subFunctionRepository.findByComponentId(functionId);
+        if(subFunctions.size() != 0){
+            log.error("Function with ID " + functionId + " used by a service");
+            throw  new NotPermittedOperationException("Function with ID " + functionId + " used by a service");
+        }
+
+        //delete not allowed if the function is published to catalogue
+        if(function.get().getStatus().equals(SdkFunctionStatus.COMMITTED)){
+            log.error("Function with ID " + functionId + " published to the catalogue. Please unpublish it before deleting");
+            throw  new NotPermittedOperationException("Function with ID " + functionId + " published to the catalogue. Please unpublish it before deleting");
+        }
+
+        Set<MonitoringParameter> monitoringParameters = new HashSet<>();
+
+        monitoringParameters.addAll(function.get().getMonitoringParameters());
+        for (MonitoringParameter param : monitoringParameters) {
+            if(param.getId().compareTo(monitoringParameterId) == 0){
+                param.setSdkFunction(null);
+                monitoringParameters.remove(param);
+                break;
+            }
+        }
+
+        function.get().setMonitoringParameters(monitoringParameters);
+
+        if (!function.get().isValid()) {
+            log.error("Malformed SdkFunction");
+            throw new MalformedElementException("Malformed SdkFunction");
+        }
+        functionRepository.saveAndFlush(function.get());
+        log.debug("Monitoring parameter has been deleted.");
+    }
+
+    @Override
+    public Set<MonitoringParameter> getMonitoringParameters(Long functionId) throws NotExistingEntityException {
+        log.info("Request to get the list of monitoring parameters for a specific SDK Function " + functionId);
+        Optional<SdkFunction> function = functionRepository.findById(functionId);
+        if (!function.isPresent()) {
+            log.error("Function with ID " + functionId + " is not present in database");
+            throw new NotExistingEntityException("Function with ID " + functionId + " is not present in database");
+        }
+
+        return (function.get().getMonitoringParameters());
+    }
+
+    @Override
+    public void publishFunction(Long functionId)
+        throws NotExistingEntityException, AlreadyPublishedServiceException {
+        log.info("Request for publication of function with ID " + functionId);
+
+        // Check if function exists
+        Optional<SdkFunction> optFunction = functionRepository.findById(functionId);
+
+        SdkFunction function = optFunction.orElseThrow(() -> {
+            log.error("Function  with ID " + functionId + " is not present in database");
+            return new NotExistingEntityException("Function with ID " + functionId + " is not present in database");
+        });
+
+        synchronized (this) { // To avoid multiple simultaneous calls
+            if (!function.getStatus().equals(SdkFunctionStatus.SAVED)) {
+                log.error("Requested publication for an entity already has been published");
+                throw new AlreadyPublishedServiceException(String.format("Requested publication for an entity already has been published"));
+            }
+            function.setStatus(SdkFunctionStatus.CHANGING);
+            functionRepository.saveAndFlush(function);
+            // After setting the status, no one can operate on this anymore (except us)
+        }
+
+        DescriptorTemplate vnfd = adapter.generateVirtualNetworkFunctionDescriptor(function);
+        String functionPackagePath = ArchiveBuilder.createVNFCSAR(vnfd, function.getMonitoringParameters(), function.getMetadata().get("cloud-init"));
+
+        // A thread will be created to handle this request in order to perform it
+        // asynchronously.
+        dispatchPublishRequest(
+            functionPackagePath,
+            vnfdInfoId -> {
+                if (vnfdInfoId != null) {
+                    log.info("Function with ID {} successfully published", functionId);
+                    function.setStatus(SdkFunctionStatus.COMMITTED);
+                    function.setVnfInfoId(vnfdInfoId);
+                    functionRepository.saveAndFlush(function);
+                } else {
+                    function.setStatus(SdkFunctionStatus.SAVED);
+                    functionRepository.saveAndFlush(function);
+                    log.error("Error while publishing function with ID {}", functionId);
+                }
+            }
+        );
+    }
+
+    @Override
+    public void unPublishFunction(Long functionId)
+        throws NotExistingEntityException, NotPublishedServiceException {
+        log.info("Requested deletion of the publication of the function with ID {}", functionId);
+        Optional<SdkFunction> optFunction = functionRepository.findById(functionId);
+        SdkFunction function = optFunction.orElseThrow(() -> {
+            log.error("The Function with ID {} is not present in database", functionId);
+            return new NotExistingEntityException(String.format("Function with ID %s is not present in database", functionId));
+        });
+
+        synchronized (this) { // To avoid multiple simultaneous calls
+            // Check if is already published
+            if (!function.getStatus().equals(SdkFunctionStatus.COMMITTED)) {
+                log.error("Function with ID {} is not in status COMMITTED.", functionId);
+                throw new NotPublishedServiceException(String.format("Function with ID %s is not in status COMMITTED", functionId));
+            }
+            function.setStatus(SdkFunctionStatus.CHANGING);
+            functionRepository.saveAndFlush(function);
+            // After setting the status, no one can operate on this anymore (except us)
+        }
+
+        dispatchUnPublishRequest(
+            function.getVnfInfoId(),
+            successful -> {
+                if (successful) {
+                    function.setStatus(SdkFunctionStatus.SAVED);
+                    function.setVnfInfoId(null);
+                    functionRepository.saveAndFlush(function);
+                    log.info("Successfully un-published function with ID {}", functionId);
+                } else {
+                    function.setStatus(SdkFunctionStatus.COMMITTED);
+                    functionRepository.saveAndFlush(function);
+                    log.error("Error while un-publishing function with ID {}", functionId);
+                }
+            }
+        );
+    }
+
+    @Override
+    public DescriptorTemplate generateTemplate(Long functionId)
+        throws NotExistingEntityException {
+        Optional<SdkFunction> optFunction = functionRepository.findById(functionId);
+
+        SdkFunction function = optFunction.orElseThrow(() -> {
+            log.error("Function with ID {} is not present in database", functionId);
+            return new NotExistingEntityException(String.format("Function with ID {} is not present in database", functionId));
+        });
+        return adapter.generateVirtualNetworkFunctionDescriptor(function);
+    }
+
+    private void checkAndResolveFunction(SdkFunction function) throws AlreadyExistingEntityException {
+
+        //In case of new function, check if a function with the same vnfdId and version is present
+        if(function.getId() == null) {
+            Optional<SdkFunction> functionOptional = functionRepository.findByVnfdIdAndVersion(function.getVnfdId(), function.getVersion());
+            if (functionOptional.isPresent()) {
+                log.error("Function with vnfdID " + function.getVnfdId() + " and version " + function.getVersion() + " is already present");
+                throw new AlreadyExistingEntityException("Function with vnfdID " + function.getVnfdId() + " and version " + function.getVersion() + " is already present");
+            }
+        }
+
+        function.setEpoch(Instant.now().getEpochSecond());
+
+        //for the moment we consider single DF and IL, then we set static the expression
+        function.setFlavourExpression("static_df");
+        function.setInstantiationLevelExpression("static_il");
+
+        function.setStatus(SdkFunctionStatus.SAVED);
+    }
+
+    private void cleanOldRelations(SdkFunction function){
+        for(MonitoringParameter mp : function.getMonitoringParameters()){
+            mp.setSdkFunction(null);
+        }
+        for(Metadata mp : function.getMetadata2()){
+            mp.setFunction(null);
+        }
+        for(ConnectionPoint mp : function.getConnectionPoint()){
+            mp.setSdkFunction(null);
+        }
+        for(RequiredPort rp : function.getRequiredPorts()){
+            rp.setFunction(null);
+        }
+    }
+
+    private void dispatchPublishRequest(String functionPackagePath, Consumer<String> callback) {
+        // TODO: dispatch publish operation to driver, then return immediately
+        executor.execute(() -> {
+                try {
+                    String vnfdInfoId = cataloguePlugin.uploadNetworkFunction(functionPackagePath, "multipart/form-data", null);
+                    callback.accept(vnfdInfoId);
+                } catch (Exception exc) {
+                    log.error(
+                        "Could not push function package. Cause: {}",
+                        exc.getMessage()
+                    );
+                    log.debug("Details: ", exc);
+                    callback.accept(null);
+                }
+            }
+        );
+    }
+
+    private void dispatchUnPublishRequest(String vnfInfoId, Consumer<Boolean> callback) {
+        // TODO: dispatch unpublish operation to driver, then return immediately
+        executor.execute(() -> {
+                try {
+                    cataloguePlugin.deleteNetworkFunction(vnfInfoId);
+                    callback.accept(true);
+                } catch (Exception exc) {
+                    log.error(
+                        "Could not delete function package. Cause: {}",
+                        exc.getMessage()
+                    );
+                    log.debug("Details: ", exc);
+                    callback.accept(false);
+                }
+            }
+        );
     }
 
     private void createFunctionFromVnfd(CSARInfo csarInfo, String mf, String storagePath) throws MalformattedElementException, IOException, FailedOperationException{
@@ -191,7 +716,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             //For the moment consider only one VNFNode
             VNFNode vnfNode = dt.getTopologyTemplate().getVNFNodes().values().iterator().next();
             sdkFunction.setName(vnfNode.getProperties().getProductName());
-            sdkFunction.setVnfdProvider(vnfNode.getProperties().getProvider());
+            //sdkFunction.setVnfdProvider(vnfNode.getProperties().getProvider());
 
             //TODO ownerID, groupid, visibility, accessLevel?
             sdkFunction.setOwnerId("Undefined");
@@ -328,549 +853,6 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         } finally {
             br.close();
         }
-    }
-
-    @Override
-    public SdkFunction getFunction(Long id) throws NotExistingEntityException {
-        Optional<SdkFunction> result = functionRepository.findById(id);
-        if (result.isPresent()) {
-            return result.get();
-        } else {
-            log.error("No Function with ID " + id + " was found.");
-            throw new NotExistingEntityException("No Function with ID " + id + " was found.");
-        }
-    }
-
-
-    @Override
-    public List<SdkFunction> getFunctions() {
-        List<SdkFunction> functionList = functionRepository.findAll();
-        if (functionList.size() == 0) {
-            log.debug("No Functions are available");
-        } else
-            log.debug("Functions present in DB: " + functionList.size());
-        return functionList;
-    }
-
-    private void checkAndResolveFunction(SdkFunction function) throws AlreadyExistingEntityException {
-
-        //In case of new function, check if a function with the same vnfdId and version is present
-        if(function.getId() == null) {
-            Optional<SdkFunction> functionOptional = functionRepository.findByVnfdIdAndVersion(function.getVnfdId(), function.getVersion());
-            if (functionOptional.isPresent()) {
-                log.error("Function with vnfdID " + function.getVnfdId() + " and version " + function.getVersion() + " is already present");
-                throw new AlreadyExistingEntityException("Function with vnfdID " + function.getVnfdId() + " and version " + function.getVersion() + " is already present");
-            }
-        }
-
-        function.setEpoch(Instant.now().getEpochSecond());
-
-        //for the moment we consider single DF and IL, then we set static the expression
-        function.setFlavourExpression("static_df");
-        function.setInstantiationLevelExpression("static_il");
-
-        function.setStatus(SdkFunctionStatus.SAVED);
-    }
-
-    @Override
-    public String createFunction(SdkFunction function)
-        throws MalformedElementException, AlreadyExistingEntityException {
-
-        log.info("Storing into database a new function");
-
-        if(function.getId() != null){
-            log.error("Function ID cannot be specified in function creation");
-            throw new MalformedElementException("Function ID cannot be specified in function creation");
-        }
-
-        if (!function.isValid()) {
-            log.error("Malformed SdkFunction");
-            throw new MalformedElementException("Malformed SdkFunction");
-        }
-        log.debug("Function is valid");
-
-        checkAndResolveFunction(function);
-
-        for(MonitoringParameter mp : function.getMonitoringParameters()){
-            if (mp.getId() != null) {
-                log.error("Monitoring parameter ID cannot be specified in function creation");
-                throw new MalformedElementException("Monitoring parameter ID cannot be specified in function creation");
-            }
-        }
-
-        for(RequiredPort rp : function.getRequiredPorts()){
-            if (rp.getId() != null) {
-                log.error("Required port ID cannot be specified in function creation");
-                throw new MalformedElementException("Required port ID cannot be specified in function creation");
-            }
-        }
-
-        for(ConnectionPoint cp : function.getConnectionPoint()){
-            if (cp.getId() != null) {
-                log.error("Connection point ID cannot be specified in function creation");
-                throw new MalformedElementException("Connection point ID cannot be specified in function creation");
-            }
-        }
-
-        log.debug("Storing into database function with name: " + function.getName());
-
-        // Saving the function
-        functionRepository.saveAndFlush(function);
-        return function.getId().toString();
-    }
-
-    @Override
-    public String updateFunction(SdkFunction function) throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException {
-        log.info("Updating an existing Function with ID " + function.getId());
-
-        if(function.getId() == null){
-            log.error("Function ID needs to be specified");
-            throw new MalformedElementException("Function ID needs to be specified");
-        }
-
-        if (!function.isValid()) {
-            log.error("Malformed SdkFunction");
-            throw new MalformedElementException("Malformed SdkFunction");
-        }
-        log.debug("Function is valid");
-
-        //Check if Function exists
-        Optional<SdkFunction> func = functionRepository.findById(function.getId());
-        if (!func.isPresent()) {
-            log.error("Function with ID " + function.getId() + " not present in database");
-            throw new NotExistingEntityException("Function with ID " + function.getId() + " not present in database");
-        }
-        log.debug("Function found on db");
-
-        //update not allowed if the function is published to catalogue
-        if(func.get().getStatus().equals(SdkFunctionStatus.COMMITTED)){
-            log.error("Function with ID " + function.getId() + " published to the catalogue. Please unpublish it before updating");
-            throw  new NotPermittedOperationException("Function with ID " + function.getId() + " published to the catalogue. Please unpublish it before updating");
-        }
-
-        //update not allowed if the function is used by a service
-        Optional<SubFunction> subFunction = subFunctionRepository.findByComponentId(function.getId());
-        if(subFunction.isPresent()){
-            log.error("Function with ID " + function.getId() + " used by a service");
-            throw  new NotPermittedOperationException("Function with ID " + function.getId() + " used by a service");
-        }
-
-        for(MonitoringParameter param : function.getMonitoringParameters()) {
-            if (param.getId() != null) {
-                Optional<MonitoringParameter> mp = monitoringParameterRepository.findById(param.getId());
-                if (!mp.isPresent()) {
-                    log.error("Monitoring parameter with ID " + param.getId() + " is not present in database");
-                    throw new NotExistingEntityException("Monitoring parameter with ID " + param.getId() + " is not present in database");
-                }
-
-                if (mp.get().getSdkFunction().getId() != function.getId()) {
-                    log.error("Monitoring parameter with ID " + param.getId() + " does not belong to function with ID " + function.getId());
-                    throw new NotPermittedOperationException("Monitoring parameter with ID " + param.getId() + " does not belong to function with ID " + function.getId());
-                }
-            }
-        }
-
-        for(ConnectionPoint param : function.getConnectionPoint()) {
-            if (param.getId() != null) {
-                Optional<ConnectionPoint> cp = connectionpointRepository.findById(param.getId());
-                if (!cp.isPresent()) {
-                    log.error("Connection point with ID " + param.getId() + " is not present in database");
-                    throw new NotExistingEntityException("Connection point with ID " + param.getId() + " is not present in database");
-                }
-
-                if (cp.get().getSdkFunction().getId() != function.getId()) {
-                    log.error("Connection point with ID " + param.getId() + " does not belong to function with ID " + function.getId());
-                    throw new NotPermittedOperationException("Connection point with ID " + param.getId() + " does not belong to function with ID " + function.getId());
-                }
-            }
-        }
-
-        for(RequiredPort param : function.getRequiredPorts()) {
-            if (param.getId() != null) {
-                Optional<RequiredPort> rp = requiredPortRepository.findById(param.getId());
-                if (!rp.isPresent()) {
-                    log.error("Required port with ID " + param.getId() + " is not present in database");
-                    throw new NotExistingEntityException("Required port with ID " + param.getId() + " is not present in database");
-                }
-
-                if (rp.get().getFunction().getId() != function.getId()) {
-                    log.error("Required port with ID " + param.getId() + " does not belong to function with ID " + function.getId());
-                    throw new NotPermittedOperationException("Required port with ID " + param.getId() + " does not belong to function with ID " + function.getId());
-                }
-            }
-        }
-
-        try {
-            checkAndResolveFunction(function);
-        }catch (AlreadyExistingEntityException e){
-                //exception cannot be raised in this case
-        }
-
-        log.debug("Updating into database Function with ID " + function.getId());
-
-        cleanOldRelations(func.get());
-
-        // Update Function on DB
-        functionRepository.saveAndFlush(function);
-        return function.getId().toString();
-    }
-
-
-    private void cleanOldRelations(SdkFunction function){
-        for(MonitoringParameter mp : function.getMonitoringParameters()){
-            mp.setSdkFunction(null);
-        }
-        for(Metadata mp : function.getMetadata2()){
-            mp.setFunction(null);
-        }
-        for(ConnectionPoint mp : function.getConnectionPoint()){
-            mp.setSdkFunction(null);
-        }
-        for(RequiredPort rp : function.getRequiredPorts()){
-            rp.setFunction(null);
-        }
-    }
-
-    @Override
-    public SdkFunction getFunctionById(Long id) throws NotExistingEntityException {
-        log.info("Request for Function with ID " + id);
-        Optional<SdkFunction> function = functionRepository.findById(id);
-        if (function.isPresent()) {
-            return function.get();
-        } else {
-            log.error("Function with ID " + id + " not found");
-            throw new NotExistingEntityException("Function with ID " + id + " not found");
-        }
-    }
-
-    @Override
-    public void deleteFunction(Long functionId) throws NotExistingEntityException, NotPermittedOperationException {
-        log.info("Request for deletion of Function with ID " + functionId);
-        // No deletion required: all that depends on the Function will cascade.
-        Optional<SdkFunction> function = functionRepository.findById(functionId);
-        SdkFunction s = function.orElseThrow(() -> {
-            log.error("Function with ID " + functionId + " not found");
-            return new NotExistingEntityException("Function with ID " + functionId + " not found");
-        });
-
-        //delete not allowed if the function is published to catalogue
-        if(s.getStatus().equals(SdkFunctionStatus.COMMITTED)){
-            log.error("Function with ID " + s.getId() + " published to the catalogue. Please unpublish it before deleting");
-            throw  new NotPermittedOperationException("Function with ID " + s.getId() + " published to the catalogue. Please unpublish it before deleting");
-        }
-
-        //delete not allowed if the function is used by a service
-        Optional<SubFunction> subFunction = subFunctionRepository.findByComponentId(functionId);
-        if(subFunction.isPresent()){
-            log.error("Function with ID " + functionId + " used by a service");
-            throw  new NotPermittedOperationException("Function with ID " + functionId + " used by a service");
-        }
-
-        functionRepository.delete(s);
-    }
-
-    /*
-    @Override
-    public String createFunctionDescriptor(Long functionId, List<BigDecimal> parameterValues)
-        throws NotExistingEntityException, MalformedElementException, NotYetImplementedException {
-        log.info("Request create-descriptor of function with uuid: " + functionId);
-
-        // Check if function exists
-        Optional<SdkFunction> optFunction = functionRepository.findById(functionId);
-
-        SdkFunction function = optFunction.orElseThrow(() -> {
-            log.error("Function with UUID: " + functionId + " is not present in database");
-            return new NotExistingEntityException("Function with UUID: " + functionId + " is not present in database");
-        });
-
-        throw new NotYetImplementedException();
-        /*
-        SdkServiceDescriptor descriptor;
-
-        try {
-            descriptor = adapter.createServiceDescriptor(service, parameterValues);
-        } catch (IllegalArgumentException exc) {
-            log.error("Malformed create-descriptor request: {}", exc.getMessage());
-            throw new MalformedElementException(exc.getMessage(), exc);
-        }
-        descriptor.setStatus(SdkServiceStatus.SAVED);
-        serviceDescriptorRepository.saveAndFlush(descriptor);
-        log.info(
-            "Descriptor for service {} successfully created. Descriptor ID {}.",
-            serviceId,
-            descriptor.getId()
-        );
-        return descriptor.getId().toString();
-
-    }
-    */
-
-    @Override
-    public void publishFunction(Long functionId)
-        throws NotExistingEntityException, AlreadyPublishedServiceException {
-        log.info("Request for publication of function with ID " + functionId);
-
-        // Check if function exists
-        Optional<SdkFunction> optFunction = functionRepository.findById(functionId);
-
-        SdkFunction function = optFunction.orElseThrow(() -> {
-            log.error("Function  with ID " + functionId + " is not present in database");
-            return new NotExistingEntityException("Function with ID " + functionId + " is not present in database");
-        });
-
-        synchronized (this) { // To avoid multiple simultaneous calls
-            if (!function.getStatus().equals(SdkFunctionStatus.SAVED)) {
-                log.error("Requested publication for an entity already has been published");
-                throw new AlreadyPublishedServiceException(String.format("Requested publication for an entity already has been published"));
-            }
-            function.setStatus(SdkFunctionStatus.CHANGING);
-            functionRepository.saveAndFlush(function);
-            // After setting the status, no one can operate on this anymore (except us)
-        }
-
-        DescriptorTemplate vnfd = adapter.generateVirtualNetworkFunctionDescriptor(function);
-        String functionPackagePath = ArchiveBuilder.createVNFCSAR(vnfd, function.getMonitoringParameters(), function.getMetadata().get("cloud-init"));
-
-        // A thread will be created to handle this request in order to perform it
-        // asynchronously.
-        dispatchPublishRequest(
-            functionPackagePath,
-            vnfdInfoId -> {
-                if (vnfdInfoId != null) {
-                    log.info("Function with ID {} successfully published", functionId);
-                    function.setStatus(SdkFunctionStatus.COMMITTED);
-                    function.setVnfInfoId(vnfdInfoId);
-                    functionRepository.saveAndFlush(function);
-                } else {
-                    function.setStatus(SdkFunctionStatus.SAVED);
-                    functionRepository.saveAndFlush(function);
-                    log.error("Error while publishing function with ID {}", functionId);
-                }
-            }
-        );
-    }
-
-    private void dispatchPublishRequest(String functionPackagePath, Consumer<String> callback) {
-        // TODO: dispatch publish operation to driver, then return immediately
-        executor.execute(() -> {
-                try {
-                    String vnfdInfoId = cataloguePlugin.uploadNetworkFunction(functionPackagePath, "multipart/form-data", null);
-                    callback.accept(vnfdInfoId);
-                } catch (Exception exc) {
-                    log.error(
-                        "Could not push function package. Cause: {}",
-                        exc.getMessage()
-                    );
-                    log.debug("Details: ", exc);
-                    callback.accept(null);
-                }
-            }
-        );
-    }
-
-    @Override
-    public void unPublishFunction(Long functionId)
-        throws NotExistingEntityException, NotPublishedServiceException {
-        log.info("Requested deletion of the publication of the function with ID {}", functionId);
-        Optional<SdkFunction> optFunction = functionRepository.findById(functionId);
-        SdkFunction function = optFunction.orElseThrow(() -> {
-            log.error("The Function with ID {} is not present in database", functionId);
-            return new NotExistingEntityException(String.format(
-                "Function with ID %s is not present in database",
-                functionId
-            ));
-        });
-
-        synchronized (this) { // To avoid multiple simultaneous calls
-            // Check if is already published
-            if (!function.getStatus().equals(SdkFunctionStatus.COMMITTED)) {
-                log.error("Function with ID {} is not in status COMMITTED.", functionId);
-                throw new NotPublishedServiceException(String.format(
-                    "Function with ID %s is not in status COMMITTED",
-                    functionId
-                ));
-            }
-            function.setStatus(SdkFunctionStatus.CHANGING);
-            functionRepository.saveAndFlush(function);
-            // After setting the status, no one can operate on this anymore (except us)
-        }
-
-        dispatchUnPublishRequest(
-            function.getVnfInfoId(),
-            successful -> {
-                if (successful) {
-                    function.setStatus(SdkFunctionStatus.SAVED);
-                    function.setVnfInfoId(null);
-                    functionRepository.saveAndFlush(function);
-                    log.info("Successfully un-published function with ID {}", functionId);
-                } else {
-                    function.setStatus(SdkFunctionStatus.COMMITTED);
-                    functionRepository.saveAndFlush(function);
-                    log.error("Error while un-publishing function with ID {}", functionId);
-                }
-            }
-        );
-    }
-
-    private void dispatchUnPublishRequest(String vnfInfoId, Consumer<Boolean> callback) {
-        // TODO: dispatch unpublish operation to driver, then return immediately
-        executor.execute(() -> {
-                try {
-                    cataloguePlugin.deleteNetworkFunction(vnfInfoId);
-                    callback.accept(true);
-                } catch (Exception exc) {
-                    log.error(
-                        "Could not delete function package. Cause: {}",
-                        exc.getMessage()
-                    );
-                    log.debug("Details: ", exc);
-                    callback.accept(false);
-                }
-            }
-        );
-    }
-
-    @Override
-    public void updateMonitoringParameters(Long functionId, Set<MonitoringParameter> monitoringParameters)
-        throws NotExistingEntityException, NotPermittedOperationException, MalformedElementException {
-        log.info("Request to update list of monitoring parameters for a specific SDK Function " + functionId);
-
-        for (MonitoringParameter param : monitoringParameters) {
-            if (!param.isValid()) {
-                log.error("Monitoring param list provided cannot be validated");
-                throw new MalformedElementException("Monitoring param list provided cannot be validated");
-            }
-
-            if(param.getId() != null) {
-                Optional<MonitoringParameter> mp = monitoringParameterRepository.findById(param.getId());
-                if (!mp.isPresent()) {
-                    log.error("Monitoring parameter with ID " + param.getId() + " is not present in database");
-                    throw new NotExistingEntityException("Monitoring parameter with ID " + param.getId() + " is not present in database");
-                }
-
-                if (mp.get().getSdkFunction().getId() != functionId) {
-                    log.error("Monitoring parameter with ID " + param.getId() + " does not belong to function with ID " + functionId);
-                    throw new NotPermittedOperationException("Monitoring parameter with ID " + param.getId() + " does not belong to function with ID " + functionId);
-                }
-            }
-        }
-
-        Optional<SdkFunction> function = functionRepository.findById(functionId);
-        if (!function.isPresent()) {
-            log.error("Function with ID " + functionId + " is not present in database");
-            throw new NotExistingEntityException("Function with ID " + functionId + " is not present in database");
-        }
-
-        //update not allowed if the function is used by a service
-        Optional<SubFunction> subFunction = subFunctionRepository.findByComponentId(functionId);
-        if(subFunction.isPresent()){
-            log.error("Function with ID " + functionId + " used by a service");
-            throw  new NotPermittedOperationException("Function with ID " + functionId + " used by a service");
-        }
-
-        //update not allowed if the function is published to catalogue
-        if(function.get().getStatus().equals(SdkFunctionStatus.COMMITTED)){
-            log.error("Function with ID " + functionId + " published to the catalogue. Please unpublish it before updating");
-            throw  new NotPermittedOperationException("Function with ID " + functionId + " published to the catalogue. Please unpublish it before updating");
-        }
-
-        for(MonitoringParameter mp : function.get().getMonitoringParameters()){
-            mp.setSdkFunction(null);
-        }
-
-        log.debug("Updating list of monitoring parameters on function with ID " + functionId);
-        function.get().setMonitoringParameters(monitoringParameters);
-
-        if (!function.get().isValid()) {
-            log.error("Malformed SdkFunction");
-            throw new MalformedElementException("Malformed SdkFunction");
-        }
-        log.debug("Updating list of monitoring parameters on database");
-        functionRepository.saveAndFlush(function.get());
-    }
-
-    @Override
-    public void deleteMonitoringParameters(Long functionId, Long monitoringParameterId)
-        throws NotExistingEntityException, NotPermittedOperationException, MalformedElementException {
-
-        log.info("Request to delete a monitoring parameter identified by id " + monitoringParameterId + " for a specific SDK Service " + functionId);
-
-        Optional<MonitoringParameter> mp = monitoringParameterRepository.findById(monitoringParameterId);
-        if (!mp.isPresent()) {
-            log.error("Monitoring parameter with ID " + monitoringParameterId + " is not present in database");
-            throw new NotExistingEntityException("Monitoring parameter with ID " + monitoringParameterId + " is not present in database");
-        }
-
-        Optional<SdkFunction> function = functionRepository.findById(functionId);
-        if (!function.isPresent()) {
-            log.error("Function with ID: " + functionId + " is not present in database");
-            throw new NotExistingEntityException("Function with ID " + functionId + " is not present in database");
-        }
-
-        if(mp.get().getSdkFunction().getId() != functionId){
-            log.error("Monitoring parameter with ID " + monitoringParameterId + " does not belong to function with ID " + functionId);
-            throw  new NotPermittedOperationException("Monitoring parameter with ID " + monitoringParameterId + " does not belong to function with ID " + functionId);
-        }
-
-        //delete not allowed if the function is used by a service
-        Optional<SubFunction> subFunction = subFunctionRepository.findByComponentId(functionId);
-        if(subFunction.isPresent()){
-            log.error("Function with ID " + functionId + " used by a service");
-            throw  new NotPermittedOperationException("Function with ID " + functionId + " used by a service");
-        }
-
-        //delete not allowed if the function is published to catalogue
-        if(function.get().getStatus().equals(SdkFunctionStatus.COMMITTED)){
-            log.error("Function with ID " + functionId + " published to the catalogue. Please unpublish it before deleting");
-            throw  new NotPermittedOperationException("Function with ID " + functionId + " published to the catalogue. Please unpublish it before deleting");
-        }
-
-        Set<MonitoringParameter> monitoringParameters = new HashSet<>();
-
-        monitoringParameters.addAll(function.get().getMonitoringParameters());
-        for (MonitoringParameter param : monitoringParameters) {
-            if(param.getId().compareTo(monitoringParameterId) == 0){
-                param.setSdkFunction(null);
-                monitoringParameters.remove(param);
-                break;
-            }
-        }
-
-        function.get().setMonitoringParameters(monitoringParameters);
-
-        if (!function.get().isValid()) {
-            log.error("Malformed SdkFunction");
-            throw new MalformedElementException("Malformed SdkFunction");
-        }
-        functionRepository.saveAndFlush(function.get());
-        log.debug("Monitoring parameter has been deleted.");
-    }
-
-    @Override
-    public Set<MonitoringParameter> getMonitoringParameters(Long functionId) throws NotExistingEntityException {
-        log.info("Request to get the list of monitoring parameters for a specific SDK Function " + functionId);
-        Optional<SdkFunction> function = functionRepository.findById(functionId);
-        if (!function.isPresent()) {
-            log.error("Function with ID " + functionId + " is not present in database");
-            throw new NotExistingEntityException("Function with ID " + functionId + " is not present in database");
-        }
-
-        return (function.get().getMonitoringParameters());
-    }
-
-    @Override
-    public DescriptorTemplate generateTemplate(Long functionId)
-        throws NotExistingEntityException {
-        Optional<SdkFunction> optFunction = functionRepository.findById(functionId);
-
-        SdkFunction function = optFunction.orElseThrow(() -> {
-            log.error("Function with ID {} is not present in database", functionId);
-            return new NotExistingEntityException(String.format(
-                "Function with ID {} is not present in database",
-                functionId
-            ));
-        });
-        return adapter.generateVirtualNetworkFunctionDescriptor(function);
     }
 }
 

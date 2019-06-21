@@ -20,9 +20,13 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import it.nextworks.composer.executor.ServiceManager;
+import it.nextworks.nfvmano.libs.common.exceptions.AlreadyExistingEntityException;
+import it.nextworks.nfvmano.libs.common.exceptions.NotPermittedOperationException;
 import it.nextworks.sdk.*;
 import it.nextworks.sdk.exceptions.MalformedElementException;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
+import it.nextworks.sdk.exceptions.NotPublishedServiceException;
+import org.aspectj.weaver.ast.Not;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,9 +66,8 @@ public class ServiceController {
     @ApiResponses(value = {@ApiResponse(code = 200, message = "")})
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public ResponseEntity<?> getServices() {
-        log.info("Request for get SERVICES");
+        log.info("Request for get services");
         List<SdkService> response = serviceManager.getServices();
-        log.info("Returned list for getServices with " + response.size() + " elements");
         return new ResponseEntity<List<SdkService>>(response, HttpStatus.OK);
     }
 
@@ -74,21 +77,23 @@ public class ServiceController {
      * @param serviceId Id of the service to be returned
      * @return service
      */
-    @ApiOperation(value = "Search a SDK Service with an UUID", response = SdkService.class)
-    @ApiResponses(value = {@ApiResponse(code = 400, message = "Query without parameter serviceId"),
-        @ApiResponse(code = 404, message = "SdkService not found on database"),
+    @ApiOperation(value = "Search a SDK Service with ID", response = SdkService.class)
+    @ApiResponses(value = {
+        @ApiResponse(code = 400, message = "Query without parameter serviceId"),
+        @ApiResponse(code = 404, message = "SdkService not found in database"),
         @ApiResponse(code = 200, message = "")})
     @RequestMapping(value = "/{serviceId}", method = RequestMethod.GET)
     public ResponseEntity<?> getService(@PathVariable Long serviceId) {
-        log.info("Request for get specific service id: " + serviceId);
+        log.info("Request for get specific service with ID " + serviceId);
         if (serviceId == null) {
             log.error("Query without parameter serviceId");
-            return new ResponseEntity<String>("Query without parameter functionId", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<String>("Query without parameter serviceId", HttpStatus.BAD_REQUEST);
         } else {
             try {
                 SdkService response = serviceManager.getServiceById(serviceId);
                 return new ResponseEntity<SdkService>(response, HttpStatus.OK);
             } catch (NotExistingEntityException e) {
+                log.error(e.toString());
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
         }
@@ -100,64 +105,53 @@ public class ServiceController {
      */
     @ApiOperation(value = "Create a new SDK Service")
     @ApiResponses(value = {
-        @ApiResponse(code = 400, message = "Service already present in db or service cannot be validated"),
-        @ApiResponse(code = 201, message = "Service Created")})
+        @ApiResponse(code = 400, message = "SDK Service already present in database or service cannot be validated"),
+        @ApiResponse(code = 201, message = "SDK Service created")})
     @RequestMapping(value = "/", method = RequestMethod.POST)
     public ResponseEntity<?> createService(@RequestBody SdkService request) {
         log.info("Request for creation of a new service");
-        if (request.getId() == null && request.isValid()) {
-            try {
-                serviceManager.createService(request);
-                log.debug("Service entity created");
-                return new ResponseEntity<>(request.getId(), HttpStatus.CREATED);
-            } catch (MalformedElementException e) {
-                log.error("Malformed request: {}", e.getMessage());
-                return new ResponseEntity<String>(
-                    String.format("Malformed request: %s", e.getMessage()),
-                    HttpStatus.BAD_REQUEST);
-            }catch (NotExistingEntityException e){
-                log.error("Malformed request: {}", e.getMessage());
-                return new ResponseEntity<String>(
-                    String.format("Malformed request: %s", e.getMessage()),
-                    HttpStatus.BAD_REQUEST);
-            }
-        } else {
-            log.error("The service provided cannot be validated");
-            return new ResponseEntity<String>("The service provided cannot be validated", HttpStatus.BAD_REQUEST);
+
+        try {
+            serviceManager.createService(request);
+            log.debug("Service entity created");
+            return new ResponseEntity<>(request.getId(), HttpStatus.CREATED);
+        } catch (MalformedElementException | AlreadyExistingEntityException | NotExistingEntityException e) {
+            log.error(e.toString());
+            return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
     @ApiOperation(value = "Modify an existing SDK Service")
     @ApiResponses(value = {
-        @ApiResponse(code = 400, message = "Service not present in db or service cannot be validated"),
-        @ApiResponse(code = 204, message = "Service Updated")})
+        @ApiResponse(code = 400, message = "SDK Service cannot be validated"),
+        @ApiResponse(code = 404, message = "SDK Service not present in database"),
+        @ApiResponse(code = 403, message = "SDK Service cannot be updated"),
+        @ApiResponse(code = 204, message = "SDK Service updated")})
     @RequestMapping(value = "/", method = RequestMethod.PUT)
     public ResponseEntity<?> updateService(@RequestBody SdkService request) {
         log.info("Request for update of a service");
-        if (request.isValid()) {
-            try {
-                serviceManager.updateService(request);
-                log.debug("Service entity updated");
-                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-            } catch (NotExistingEntityException e) {
-                log.error(e.getMessage());
-                return new ResponseEntity<String>(
-                    e.getMessage(), HttpStatus.BAD_REQUEST);
-            } catch (MalformedElementException e1) {
-                log.error("Service with id " + request.getId() + " is malformatted");
-                return new ResponseEntity<String>(
-                    "Service with id " + request.getId() + " is malformatted", HttpStatus.BAD_REQUEST);
-            }
-        } else {
-            log.error("The service provided cannot be validated");
-            return new ResponseEntity<String>("The service provided cannot be validated", HttpStatus.BAD_REQUEST);
-        }
 
+        try {
+            serviceManager.updateService(request);
+            log.debug("Service entity updated");
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } catch (NotExistingEntityException e) {
+            log.error(e.toString());
+            return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (MalformedElementException e) {
+            log.error(e.toString());
+            return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }catch (NotPermittedOperationException e){
+            log.error(e.toString());
+            return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
+        }
     }
 
-    @ApiOperation(value = "Delete SDK Service from database")
-    @ApiResponses(value = {@ApiResponse(code = 204, message = ""),
-        @ApiResponse(code = 404, message = "Entity to be deleted not found"),
+    @ApiOperation(value = "Delete a SDK Service from database")
+    @ApiResponses(value = {
+        @ApiResponse(code = 204, message = ""),
+        @ApiResponse(code = 404, message = "SDK Service not present in database"),
+        @ApiResponse(code = 403, message = "SDK Service cannot be deleted"),
         @ApiResponse(code = 400, message = "Deletion request without parameter serviceId")})
     @RequestMapping(value = "/{serviceId}", method = RequestMethod.DELETE)
     public ResponseEntity<?> deleteService(@PathVariable Long serviceId) {
@@ -170,237 +164,142 @@ public class ServiceController {
                 serviceManager.deleteService(serviceId);
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             } catch (NotExistingEntityException e) {
-                log.error("Requested deletion for an entity which doesn't exist");
-                return new ResponseEntity<String>("Requested deletion for an entity which doesn't exist",
-                    HttpStatus.NOT_FOUND);
+                log.error(e.toString());
+                return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
+            }catch (NotPermittedOperationException e){
+                log.error(e.toString());
+                return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
             }
         }
     }
 
     @ApiOperation(value = "Create descriptor for SDK Service")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = ""),
-        @ApiResponse(code = 404, message = "Base service not found"),
-        @ApiResponse(code = 400, message = "Null service or invalid parameters provided")})
+    @ApiResponses(value = {
+        @ApiResponse(code = 200, message = ""),
+        @ApiResponse(code = 404, message = "SDK Service not found"),
+        @ApiResponse(code = 400, message = "Create descriptor request without serviceId or provided parameters cannot be validated")})
     @RequestMapping(value = "/{serviceId}/create_descriptor", method = RequestMethod.POST)
-    public ResponseEntity<?> createDescriptor(
-        @PathVariable Long serviceId,
-        @RequestBody MakeDescriptorRequest makeDescriptorRequest
-    ) {
+    public ResponseEntity<?> createDescriptor(@PathVariable Long serviceId, @RequestBody MakeDescriptorRequest makeDescriptorRequest) {
         List<BigDecimal> parameterValues = makeDescriptorRequest.parameterValues;
-        log.info("Request create_descriptor of a service with id: {}, params: {}.", serviceId, parameterValues);
+        log.info("Request create descriptor of a service with ID {}, parameters : {}.", serviceId, parameterValues);
         if (serviceId == null) {
-            log.error("create_descriptor request without parameter serviceId");
-            return new ResponseEntity<>(
-                "create_descriptor request without parameter serviceId",
-                HttpStatus.BAD_REQUEST
-            );
+            log.error("Create descriptor request without parameter serviceId");
+            return new ResponseEntity<>("Create descriptor request without parameter serviceId", HttpStatus.BAD_REQUEST);
         }
-        // else:
         try {
             String descriptorId = serviceManager.createServiceDescriptor(serviceId, parameterValues);
             return new ResponseEntity<>(descriptorId, HttpStatus.OK);
         } catch (NotExistingEntityException e) {
-            return new ResponseEntity<>(
-                e.getMessage(),
-                HttpStatus.NOT_FOUND
-            );
+            log.error(e.toString());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (MalformedElementException e) {
-            return new ResponseEntity<>(
-                e.getMessage(),
-                HttpStatus.BAD_REQUEST
-            );
+            log.error(e.toString());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
     @ApiOperation(value = "Publish SDK Service to Public Catalogue")
     @ApiResponses(value = {
-        @ApiResponse(
-            code = 202,
-            message = "Descriptor created with returned id. The descriptor will be published to the public catalogue"
-        ),
-        @ApiResponse(code = 404, message = "Service to be published not found"),
-        @ApiResponse(code = 400, message = "Null service or invalid parameters provided")})
+        @ApiResponse(code = 202, message = "Network Service descriptor created. The descriptor will be published to the public catalogue"),
+        @ApiResponse(code = 404, message = "SDK Service not present in database"),
+        @ApiResponse(code = 400, message = "Publish request without parameter serviceId or provided parameters cannot be validated")})
     @RequestMapping(value = "/service/{serviceId}/publish", method = RequestMethod.POST)
     public ResponseEntity<?> publishService(@PathVariable Long serviceId, List<BigDecimal> parameterValues) {
-        log.info(
-            "Request create-service and publication of a service with id: {}, params: {}.",
-            serviceId,
-            parameterValues
-        );
+        log.info("Request publication of a service with ID {}, parameters : {}.", serviceId, parameterValues);
         if (serviceId == null) {
-            log.error("Create-service/publication request without parameter serviceId");
-            return new ResponseEntity<>(
-                "Create-service/publication request without parameter serviceId",
-                HttpStatus.BAD_REQUEST
-            );
+            log.error("Publication request without parameter serviceId");
+            return new ResponseEntity<>("Publication request without parameter serviceId", HttpStatus.BAD_REQUEST);
         }
-        // else:
         try {
             serviceManager.publishService(serviceId, parameterValues);
             return new ResponseEntity<>(HttpStatus.ACCEPTED);
         } catch (NotExistingEntityException e) {
-            return new ResponseEntity<>(
-                e.getMessage(),
-                HttpStatus.NOT_FOUND
-            );
+            log.error(e.toString());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (MalformedElementException e) {
-            return new ResponseEntity<>(
-                e.getMessage(),
-                HttpStatus.BAD_REQUEST
-            );
+            log.error(e.toString());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
-
-    /*
-    @ApiOperation(value = "Modify an existing list of scaling aspects")
-    @ApiResponses(value = {
-        @ApiResponse(code = 400, message = "Service not present in db or request cannot be validated"),
-        @ApiResponse(code = 204, message = "ScalingAspects Updated")})
-    @RequestMapping(value = "/{serviceId}/scalingaspects", method = RequestMethod.PUT)
-    public ResponseEntity<?> updateScalingAspects(@PathVariable Long serviceId, @RequestBody Set<ScalingAspect> scalingAspects) {
-        log.info("Request for update of a scaling aspect list");
-        for (ScalingAspect scaleAspect : scalingAspects) {
-            if (!scaleAspect.isValid()) {
-                log.error("ScalingAspect provided cannot be validated");
-                return new ResponseEntity<>("ScalingAspect provided cannot be validated", HttpStatus.BAD_REQUEST);
-            }
-        }
-        try {
-            serviceManager.updateScalingAspect(serviceId, scalingAspects);
-            log.debug("Service entity updated with the requested scaling aspects");
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (NotExistingEntityException e1) {
-            log.error("Service with id " + serviceId + " is not present in database");
-            return new ResponseEntity<String>("Service with id " + serviceId + " is not present in database",
-                HttpStatus.BAD_REQUEST);
-        } catch (MalformedElementException e2) {
-            log.error("Malformed format for element Scaling Aspect. Unable to update service: " + serviceId);
-            return new ResponseEntity<String>(
-                "Malformed format for element Scaling Aspect. Unable to update service: " + serviceId,
-                HttpStatus.BAD_REQUEST);
-        }
-    }
-
-    @ApiOperation(value = "Get the list of  ScalingAspects for a given SdkService identified by UUID", response = ScalingAspect.class, responseContainer = "List")
-    @ApiResponses(value = {@ApiResponse(code = 400, message = "Query without parameter serviceId"),
-        @ApiResponse(code = 404, message = "SdkService not found on database"),
-        @ApiResponse(code = 200, message = "OK")})
-    @RequestMapping(value = "/{serviceId}/scalingaspects", method = RequestMethod.GET)
-    public ResponseEntity<?> getScalingAspectsForService(@PathVariable Long serviceId) {
-        log.info("Request for get list of scalingAspect available on a specific service, identified by id: "
-            + serviceId);
-
-        try {
-            List<ScalingAspect> response = serviceManager.getScalingAspect(serviceId);
-            log.debug("Returning list of scaling aspect related to a specific Sdk Service identified by uuid: "
-                + serviceId);
-            return new ResponseEntity<List<ScalingAspect>>(response, HttpStatus.OK);
-        } catch (NotExistingEntityException e) {
-            log.debug("SdkService with uuid " + serviceId + " not found on database ");
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-    }
-
-    @ApiOperation(value = "Delete ScalingAspect from SdkService")
-    @ApiResponses(value = {@ApiResponse(code = 204, message = ""),
-        @ApiResponse(code = 404, message = "Entity to be deleted not found"),
-        @ApiResponse(code = 400, message = "Deletion request without parameter serviceId")})
-    @RequestMapping(value = "/{serviceId}/scalingaspects/{scalingAspectId}", method = RequestMethod.DELETE)
-    public ResponseEntity<?> deleteScalingAspects(@PathVariable Long serviceId, @PathVariable Long scalingAspectId) {
-        log.info("Request for deletion of a list of scalingAspects from service identified by id: "
-            + serviceId);
-
-        try {
-            serviceManager.deleteScalingAspect(serviceId, scalingAspectId);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (NotExistingEntityException e) {
-            log.error("Requested deletion for an entity which doesn't exist");
-            return new ResponseEntity<String>("Requested deletion for an entity which doesn't exist",
-                HttpStatus.NOT_FOUND);
-        } catch (MalformedElementException e) {
-            log.error("Malformed Request. Scaling Aspect parameters are malformed");
-            return new ResponseEntity<String>("Malformed Request. Scaling Aspect parameters are malformed",
-                HttpStatus.NOT_FOUND);
-        }
-    }
-    */
 
     @ApiOperation(value = "Modify an existing list of monitoring parameters related to a SDK Service")
     @ApiResponses(value = {
-        @ApiResponse(code = 400, message = "Service not present in db or request cannot be validated"),
-        @ApiResponse(code = 204, message = "Monitoring Param list Updated")})
+        @ApiResponse(code = 400, message = "SDK Service or Monitoring Parameters cannot be validated"),
+        @ApiResponse(code = 404, message = "SDK Service or Monitoring Parameters not present in database"),
+        @ApiResponse(code = 403, message = "Monitoring Parameters cannot be updated"),
+        @ApiResponse(code = 204, message = "Monitoring Parameters updated")})
     @RequestMapping(value = "/{serviceId}/monitoring_params", method = RequestMethod.PUT)
-    public ResponseEntity<?> updateMonitoringParametersForService(@PathVariable Long serviceId,
-                                                                  @RequestBody MonitoringParameterWrapper monitoringParameters) {
+    public ResponseEntity<?> updateMonitoringParametersForService(@PathVariable Long serviceId, @RequestBody MonitoringParameterWrapper monitoringParameters) {
         log.info("Request for update of a monitoringParameter list");
 
-        if (!monitoringParameters.isValid()) {
-            log.error("Monitoring param list provided cannot be validated");
-            return new ResponseEntity<String>("Monitoring param list provided cannot be validated",
-                HttpStatus.BAD_REQUEST);
+        if (serviceId == null) {
+            log.error("Request without parameter serviceId");
+            return new ResponseEntity<String>("Request without parameter serviceId", HttpStatus.BAD_REQUEST);
         }
-
         try {
             serviceManager.updateMonitoringParameters(serviceId, monitoringParameters.getExtMonitoringParameters(), monitoringParameters.getIntMonitoringParameters());
             log.debug("Service entity updated with the requested monitoring parameters");
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (NotExistingEntityException e1) {
-            log.error(e1.toString());
-            return new ResponseEntity<String>(e1.toString(), HttpStatus.BAD_REQUEST);
-        } catch (MalformedElementException e2) {
-            log.error("Malformed format for element MonitoringParameter. Unable to update service: "
-                + serviceId);
-            return new ResponseEntity<String>(
-                "Malformed format for element MonitoringParameter. Unable to update service: "
-                    + serviceId,
-                HttpStatus.BAD_REQUEST);
+        } catch (NotExistingEntityException e) {
+            log.error(e.toString());
+            return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (MalformedElementException e) {
+            log.error(e.toString());
+            return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch(NotPermittedOperationException e){
+            log.error(e.toString());
+            return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
         }
     }
 
-    @ApiOperation(value = "Get the list of  Monitoring Parameters for a SDK Service identified by UUID", response = MonitoringParameterWrapper.class)
-    @ApiResponses(value = {@ApiResponse(code = 400, message = "Query without parameter serviceId"),
-        @ApiResponse(code = 404, message = "SdkService not found on database"),
+    @ApiOperation(value = "Get the list of  Monitoring Parameters for a SDK Service with ID", response = MonitoringParameterWrapper.class)
+    @ApiResponses(value = {
+        @ApiResponse(code = 400, message = "Query without parameter serviceId"),
+        @ApiResponse(code = 404, message = "SDK Service or Monitoring Parameters not present in database"),
         @ApiResponse(code = 200, message = "OK")})
     @RequestMapping(value = "/{serviceId}/monitoring_params", method = RequestMethod.GET)
     public ResponseEntity<?> getMonitoringParametersForService(@PathVariable Long serviceId) {
-        log.info("Request for get list of monitoringParams available on a specific service, identified by id: "
-            + serviceId);
-
+        log.info("Request for get list of monitoringParams available on a specific service with ID " + serviceId);
+        if (serviceId == null) {
+            log.error("Request without parameter serviceId");
+            return new ResponseEntity<String>("Request without parameter serviceId", HttpStatus.BAD_REQUEST);
+        }
         try {
             MonitoringParameterWrapper response = serviceManager.getMonitoringParameters(serviceId);
-            log.debug("Returning list of monitoringParams related to a specific Sdk Service identified by uuid: "
-                + serviceId);
+            log.debug("Returning list of monitoringParams related to a specific service with " + serviceId);
             return new ResponseEntity<MonitoringParameterWrapper>(response, HttpStatus.OK);
-        } catch (NotExistingEntityException e) {
-            log.debug("SdkService with uuid " + serviceId + " not found on database ");
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }  catch (NotExistingEntityException e) {
+            log.debug(e.toString());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
     }
 
     @ApiOperation(value = "Delete monitoring param from SDK Service")
-    @ApiResponses(value = {@ApiResponse(code = 204, message = ""),
-        @ApiResponse(code = 404, message = "Entity to be deleted not found"),
-        @ApiResponse(code = 400, message = "Deletion request without parameter serviceId")})
+    @ApiResponses(value = {
+        @ApiResponse(code = 204, message = ""),
+        @ApiResponse(code = 404, message = "SDK Service or Monitoring Parameters not present in database"),
+        @ApiResponse(code = 403, message = "Monitoring Parameters cannot be deleted"),
+        @ApiResponse(code = 400, message = "Deletion request without parameter serviceId or service cannot be validated")})
     @RequestMapping(value = "/{serviceId}/monitoring_params/{monitoringParameterId}", method = RequestMethod.DELETE)
-    public ResponseEntity<?> deleteMonitoringParametersForService(@PathVariable Long serviceId,
-                                                                  @PathVariable Long monitoringParameterId) {
-        log.info("Request for deletion of monitoring parameter from service identified by id: "
-            + serviceId);
-
+    public ResponseEntity<?> deleteMonitoringParametersForService(@PathVariable Long serviceId, @PathVariable Long monitoringParameterId) {
+        log.info("Request for deletion of monitoring parameter from service identified by id: " + serviceId);
+        if (serviceId == null) {
+            log.error("Request without parameter serviceId");
+            return new ResponseEntity<String>("Request without parameter serviceId", HttpStatus.BAD_REQUEST);
+        }
         try {
             serviceManager.deleteMonitoringParameters(serviceId, monitoringParameterId);
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } catch (NotExistingEntityException e) {
-            log.error("Requested deletion for an entity which doesn't exist");
-            return new ResponseEntity<String>("Requested deletion for an entity which doesn't exist",
-                HttpStatus.NOT_FOUND);
+            log.error(e.toString());
+            return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (NotPermittedOperationException e) {
+            log.error(e.toString());
+            return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
         } catch (MalformedElementException e) {
-            log.error("Malformed Request. Monitoring parameters are malformed");
-            return new ResponseEntity<String>("Malformed Request. Monitoring parameters are malformed",
-                HttpStatus.NOT_FOUND);
+            log.error(e.toString());
+            return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
-
     }
-
 }
 

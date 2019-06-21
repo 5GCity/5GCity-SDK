@@ -15,18 +15,16 @@
  */
 package it.nextworks.composer.executor.repositories;
 
-import it.nextworks.sdk.SubFunction;
-import it.nextworks.sdk.SubService;
+import it.nextworks.sdk.L3Connectivity;
+import it.nextworks.sdk.Link;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
 import java.util.Optional;
 
-public interface SdkSubServiceRepository extends JpaRepository<SubService, Long> {
 
-    Optional<SubService> findById(Long id);
+public interface L3ConnectivityRepository extends JpaRepository<L3Connectivity, Long> {
 
-    Optional<SubService> findByIdAndOuterServiceId(Long id, Long serviceId);
+    Optional<L3Connectivity> findById(Long id);
 
-    List<SubService> findByComponentId(Long id);
+
 }

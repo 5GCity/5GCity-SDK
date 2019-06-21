@@ -15,6 +15,8 @@
  */
 package it.nextworks.composer.executor.interfaces;
 
+import it.nextworks.nfvmano.libs.common.exceptions.AlreadyExistingEntityException;
+import it.nextworks.nfvmano.libs.common.exceptions.NotPermittedOperationException;
 import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
 import it.nextworks.sdk.MonitoringParameter;
 import it.nextworks.sdk.MonitoringParameterWrapper;
@@ -36,17 +38,19 @@ public interface ServiceManagerProviderInterface {
 
     List<SdkService> getServices();
 
+    /*
     List<SdkService> getServicesUsingFunction(Long functionId)
         throws NotExistingEntityException;
+    */
 
     String createService(SdkService service)
-        throws NotExistingEntityException, MalformedElementException;
+        throws NotExistingEntityException, MalformedElementException, AlreadyExistingEntityException;
 
     String updateService(SdkService service)
-        throws NotExistingEntityException, MalformedElementException;
+        throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException;
 
     void deleteService(Long serviceId)
-        throws NotExistingEntityException;
+        throws NotExistingEntityException, NotPermittedOperationException;
 
     String createServiceDescriptor(Long serviceId, List<BigDecimal> parameterValues)
         throws NotExistingEntityException, MalformedElementException;
@@ -57,7 +61,7 @@ public interface ServiceManagerProviderInterface {
         throws NotExistingEntityException;
 
     void deleteServiceDescriptor(Long descriptorId)
-        throws NotExistingEntityException;
+        throws NotExistingEntityException, NotPermittedOperationException;
 
     String publishService(Long serviceId, List<BigDecimal> parameterValues)
         throws NotExistingEntityException, MalformedElementException;
@@ -68,7 +72,7 @@ public interface ServiceManagerProviderInterface {
     DescriptorTemplate generateTemplate(Long serviceDescriptorId)
         throws NotExistingEntityException;
 
-    void unPublishService(Long serviceInstanceId)
+    void unPublishService(Long serviceDescriptorId)
         throws NotExistingEntityException, NotPublishedServiceException;
 
     /*
@@ -83,13 +87,12 @@ public interface ServiceManagerProviderInterface {
     */
 
     void updateMonitoringParameters(Long serviceId, Set<MonitoringParameter> extMonitoringParameters, Set<MonitoringParameter> intMonitoringParameters)
-        throws NotExistingEntityException, MalformedElementException;
+        throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException;
 
     void deleteMonitoringParameters(Long serviceId, Long monitoringParameterId)
-        throws NotExistingEntityException, MalformedElementException;
+        throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException;
 
     MonitoringParameterWrapper getMonitoringParameters(Long serviceId)
         throws NotExistingEntityException;
-
 }
 

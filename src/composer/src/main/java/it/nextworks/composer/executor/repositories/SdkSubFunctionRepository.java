@@ -20,6 +20,7 @@ import it.nextworks.sdk.SdkFunction;
 import it.nextworks.sdk.SubFunction;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface SdkSubFunctionRepository extends JpaRepository<SubFunction, Long> {
@@ -28,6 +29,6 @@ public interface SdkSubFunctionRepository extends JpaRepository<SubFunction, Lon
 
     Optional<SubFunction> findByIdAndOuterServiceId(Long id, Long serviceId);
 
-    Optional<SubFunction> findByComponentId(Long id);
+    List<SubFunction> findByComponentId(Long id);
 
 }

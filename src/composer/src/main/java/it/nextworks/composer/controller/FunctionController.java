@@ -84,12 +84,11 @@ public class FunctionController {
      * @param functionId Id of the function to be returned
      * @return function
      */
-    @ApiOperation(value = "Search a SDK Function using the ID", response = SdkFunction.class)
+    @ApiOperation(value = "Search a SDK Function with ID", response = SdkFunction.class)
     @ApiResponses(value = {
         @ApiResponse(code = 400, message = "Query without parameter functionId"),
-        @ApiResponse(code = 404, message = "SDK Function not found on database"),
-        @ApiResponse(code = 200, message = "")
-    })
+        @ApiResponse(code = 404, message = "SDK Function not found in database"),
+        @ApiResponse(code = 200, message = "")})
     @RequestMapping(value = "/{functionId}", method = RequestMethod.GET)
     public ResponseEntity<?> getFunction(@PathVariable Long functionId) {
         log.info("Receiving a request to get the function with ID: " + functionId);
@@ -106,15 +105,14 @@ public class FunctionController {
         }
     }
 
-
     /**
      * @param request
      * @return
      */
     @ApiOperation(value = "Create a new SDK Function")
     @ApiResponses(value = {
-        @ApiResponse(code = 400, message = "SDK Function already present on database or function cannot be validated"),
-        @ApiResponse(code = 201, message = "Function created")})
+        @ApiResponse(code = 400, message = "SDK Function already present in database or function cannot be validated"),
+        @ApiResponse(code = 201, message = "SDK Function created")})
     @RequestMapping(value = "/", method = RequestMethod.POST)
     public ResponseEntity<?> createFunction(@RequestBody SdkFunction request) {
         log.info("Request for creation of a new function");
@@ -131,7 +129,7 @@ public class FunctionController {
     @ApiOperation(value = "Modify an existing SDK Function")
     @ApiResponses(value = {
         @ApiResponse(code = 400, message = "SDK Function cannot be validated"),
-        @ApiResponse(code = 404, message = "SDK Function not present on database"),
+        @ApiResponse(code = 404, message = "SDK Function not present in database"),
         @ApiResponse(code = 403, message = "SDK Function cannot be updated"),
         @ApiResponse(code = 204, message = "SDK Function updated")})
     @RequestMapping(value = "/", method = RequestMethod.PUT)
@@ -157,7 +155,7 @@ public class FunctionController {
     @ApiOperation(value = "Delete a SDK Function from database")
     @ApiResponses(value = {
         @ApiResponse(code = 204, message = ""),
-        @ApiResponse(code = 404, message = "SDK Function not present on database"),
+        @ApiResponse(code = 404, message = "SDK Function not present in database"),
         @ApiResponse(code = 403, message = "SDK Function cannot be deleted"),
         @ApiResponse(code = 400, message = "Deletion request without parameter functionId")})
     @RequestMapping(value = "/{functionId}", method = RequestMethod.DELETE)
@@ -219,12 +217,12 @@ public class FunctionController {
 
     @ApiOperation(value = "Publish SDK Function to Public Catalogue")
     @ApiResponses(value = {
-        @ApiResponse(code = 202, message = "Descriptor created with returned ID. The descriptor will be published to the public catalogue"),
-        @ApiResponse(code = 404, message = "SDK Function not present on database"),
+        @ApiResponse(code = 202, message = "Virtual Network Function descriptor created. The descriptor will be published to the public catalogue"),
+        @ApiResponse(code = 404, message = "SDK Function not present in database"),
         @ApiResponse(code = 400, message = "Publish request without parameter functionId or SDK Function already published")})
     @RequestMapping(value = "/{functionId}/publish", method = RequestMethod.POST)
     public ResponseEntity<?> publishFunction(@PathVariable Long functionId) {
-        log.info("Request publication of a function with ID: {}", functionId);
+        log.info("Request publication of a function with ID {}", functionId);
         if (functionId == null) {
             log.error("Publication request without parameter functionId");
             return new ResponseEntity<>("Publication request without parameter functionId", HttpStatus.BAD_REQUEST);
@@ -244,7 +242,7 @@ public class FunctionController {
     @ApiOperation(value = "Unpublish SDK Function from Public Catalogue")
     @ApiResponses(value = {
         @ApiResponse(code = 202, message = "The SDK Function will be removed from the public catalogue"),
-        @ApiResponse(code = 404, message = "SDK Function not present on database"),
+        @ApiResponse(code = 404, message = "SDK Function not present in database"),
         @ApiResponse(code = 400, message = "Publish request without parameter functionId or SDK Function not yet published")})
     @RequestMapping(value = "/{functionId}/unpublish", method = RequestMethod.POST)
     public ResponseEntity<?> unPublishFunction(@PathVariable Long functionId) {
@@ -269,7 +267,7 @@ public class FunctionController {
     @ApiOperation(value = "Modify an existing list of monitoring parameters related to a SDK Function")
     @ApiResponses(value = {
         @ApiResponse(code = 400, message = "SDK Function or Monitoring Parameters cannot be validated"),
-        @ApiResponse(code = 404, message = "SDK Function or Monitoring Parameters not present on database"),
+        @ApiResponse(code = 404, message = "SDK Function or Monitoring Parameters not present in database"),
         @ApiResponse(code = 403, message = "Monitoring Parameters cannot be updated"),
         @ApiResponse(code = 204, message = "Monitoring Parameters updated")})
     @RequestMapping(value = "/{functionId}/monitoring_params", method = RequestMethod.PUT)
@@ -299,7 +297,7 @@ public class FunctionController {
     @ApiOperation(value = "Get the list of  Monitoring Parameters for a SDK Function with ID", response = MonitoringParameter.class, responseContainer = "List")
     @ApiResponses(value = {
         @ApiResponse(code = 400, message = "Query without parameter functionId"),
-        @ApiResponse(code = 404, message = "SDK Function or Monitoring Parameters not present on database"),
+        @ApiResponse(code = 404, message = "SDK Function or Monitoring Parameters not present in database"),
         @ApiResponse(code = 200, message = "OK")})
     @RequestMapping(value = "/{functionId}/monitoring_params", method = RequestMethod.GET)
     public ResponseEntity<?> getMonitoringParametersForFunction(@PathVariable Long functionId) {
@@ -322,7 +320,7 @@ public class FunctionController {
     @ApiOperation(value = "Delete Monitoring Parameters from SDK Function")
     @ApiResponses(value = {
         @ApiResponse(code = 204, message = ""),
-        @ApiResponse(code = 404, message = "SDK Function or Monitoring Parameters not present on database"),
+        @ApiResponse(code = 404, message = "SDK Function or Monitoring Parameters not present in database"),
         @ApiResponse(code = 403, message = "Monitoring Parameters cannot be deleted"),
         @ApiResponse(code = 400, message = "Deletion request without parameter functionId or function cannot be validated")})
     @RequestMapping(value = "/{functionId}/monitoring_params/{monitoringParameterId}", method = RequestMethod.DELETE)
@@ -351,10 +349,10 @@ public class FunctionController {
     @ApiOperation(value = "Get Vnfd from SDK Function")
     @ApiResponses(value = {
         @ApiResponse(code = 202, message = "VNFD Content"),
-        @ApiResponse(code = 400, message = "SDK function not present on databse")})
+        @ApiResponse(code = 400, message = "SDK function not present in databse")})
     @RequestMapping(value = "/{functionId}/vnfd", method = RequestMethod.GET)
     public ResponseEntity<?> getVnfd(@PathVariable Long functionId) throws NotExistingEntityException {
-        log.info("Request GET Vnfd for Function with ID " + functionId);
+        log.info("Request GET Vnfd for function with ID " + functionId);
         if (functionId == null) {
             log.error("GET Vnfd request without parameter functionId");
             return new ResponseEntity<String>("GET Vnfd request without parameter functionId", HttpStatus.BAD_REQUEST);

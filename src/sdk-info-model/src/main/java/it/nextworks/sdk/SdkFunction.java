@@ -112,7 +112,7 @@ public class SdkFunction implements InstantiableCandidate {
 
     private String ownerId;
 
-    private String vnfdProvider;
+    //private String vnfdProvider;
 
     private Visibility visibility = Visibility.fromValue("PRIVATE");
 
@@ -158,6 +158,7 @@ public class SdkFunction implements InstantiableCandidate {
         this.ownerId = ownerId;
     }
 
+    /*
     @JsonProperty("vnfdProvider")
     public String getVnfdProvider() {
         return vnfdProvider;
@@ -167,6 +168,7 @@ public class SdkFunction implements InstantiableCandidate {
     public void setVnfdProvider(String vnfdProvider) {
         this.vnfdProvider = vnfdProvider;
     }
+    */
 
     @JsonProperty("visibility")
     public Visibility getVisibility() {
@@ -386,12 +388,12 @@ public class SdkFunction implements InstantiableCandidate {
     @JsonProperty("swImageData")
     public void setSwImageData(SwImageData swImageData) { this.swImageData = swImageData; }
 
-    @JsonProperty("epoch")
+    @JsonIgnore
     public Long getEpoch() {
         return epoch;
     }
 
-    @JsonProperty("epoch")
+    @JsonIgnore
     public void setEpoch(Long epoch) {
         this.epoch = epoch;
     }
@@ -460,9 +462,6 @@ public class SdkFunction implements InstantiableCandidate {
         sb.append('=');
         sb.append(((this.vnfdId == null) ? "<null>" : this.vnfdId));
         sb.append(',');
-        sb.append("vnfdProvider");
-        sb.append('=');
-        sb.append(((this.vnfdProvider == null) ? "<null>" : this.vnfdProvider));
         sb.append(',');
         sb.append("flavourExpression");
         sb.append('=');
@@ -550,7 +549,6 @@ public class SdkFunction implements InstantiableCandidate {
         result = ((result * 31) + ((this.metadata == null) ? 0 : this.metadata.hashCode()));
         result = ((result * 31) + ((this.instantiationLevelExpression == null) ? 0 : this.instantiationLevelExpression.hashCode()));
         result = ((result * 31) + ((this.vnfdId == null) ? 0 : this.vnfdId.hashCode()));
-        result = ((result * 31) + ((this.vnfdProvider == null) ? 0 : this.vnfdProvider.hashCode()));
         result = ((result * 31) + ((this.description == null) ? 0 : this.description.hashCode()));
         result = ((result * 31) + ((this.version == null) ? 0 : this.version.hashCode()));
         result = ((result * 31) + ((this.monitoringParameters == null) ? 0 : this.monitoringParameters.hashCode()));
@@ -597,7 +595,6 @@ public class SdkFunction implements InstantiableCandidate {
                 && ((this.connectionPoint == rhs.connectionPoint) || ((this.connectionPoint != null) && this.connectionPoint.equals(rhs.connectionPoint)))
                 && ((this.id == rhs.id) || ((this.id != null) && this.id.equals(rhs.id)))
                 && ((this.ownerId == rhs.ownerId) || ((this.ownerId != null) && this.ownerId.equals(rhs.ownerId)))
-                && ((this.vnfdProvider == rhs.vnfdProvider) || ((this.vnfdProvider != null) && this.vnfdProvider.equals(rhs.vnfdProvider)))
                 && ((this.visibility == rhs.visibility) || ((this.visibility != null) && this.visibility.equals(rhs.visibility)))
                 && ((this.ownerId == rhs.ownerId) || ((this.ownerId != null) && this.ownerId.equals(rhs.ownerId)))
                 && ((this.groupId == rhs.groupId) || ((this.groupId != null) && this.groupId.equals(rhs.groupId)))
@@ -622,7 +619,6 @@ public class SdkFunction implements InstantiableCandidate {
             && vendor != null && vendor.length() > 0
             && vnfdId != null && vnfdId.length() > 0
             && checkVnfdIdFormat()
-            && vnfdProvider != null && vnfdProvider.length() > 0
             && instantiationLevelExpression != null
             && flavourExpression != null
             && validateExpressions()

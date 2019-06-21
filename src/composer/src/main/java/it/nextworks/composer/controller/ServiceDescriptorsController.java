@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import it.nextworks.composer.executor.interfaces.ServiceManagerProviderInterface;
+import it.nextworks.nfvmano.libs.common.exceptions.NotPermittedOperationException;
 import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
 import it.nextworks.sdk.SdkServiceDescriptor;
 import it.nextworks.sdk.exceptions.AlreadyPublishedServiceException;
@@ -40,38 +41,8 @@ public class ServiceDescriptorsController {
     @Autowired
     ServiceManagerProviderInterface serviceManager;
 
-
-
-    @ApiOperation(value = "Publish Service to Public Catalogue" )
-    @ApiResponses(value = {@ApiResponse(code = 202, message = "The service will be published to the public catalogue"),
-        @ApiResponse(code = 404, message = "Entity to be published not found"),
-        @ApiResponse(code = 400, message = "Publication request without parameter serviceId or already published service")})
-    @RequestMapping(value = "/{serviceDescriptorId}/publish", method = RequestMethod.POST)
-    public ResponseEntity<?> publishService(@PathVariable Long serviceDescriptorId) {
-        log.info("Request to publish the service " + serviceDescriptorId + " to the public catalogue");
-        if (serviceDescriptorId == null) {
-            log.error("Publishing request without parameter serviceId");
-            return new ResponseEntity<String>("Publishing request without parameter serviceId", HttpStatus.BAD_REQUEST);
-        } else {
-            try {
-                serviceManager.publishService(serviceDescriptorId);
-                return new ResponseEntity<>(HttpStatus.ACCEPTED);
-            } catch (NotExistingEntityException e1) {
-                log.error("Requested publication for an entity which doesn't exist");
-                return new ResponseEntity<String>("Requested publication for an entity which doesn't exist",
-                    HttpStatus.NOT_FOUND);
-            } catch (AlreadyPublishedServiceException e2) {
-                log.error("Requested publication for an entity already has been published");
-                return new ResponseEntity<String>("Requested publication for an entity already has been published",
-                    HttpStatus.BAD_REQUEST);
-            }
-        }
-    }
-
     @ApiOperation(value = "Get all SDK Service Descriptors", response = SdkServiceDescriptor.class, responseContainer = "List")
-    @ApiResponses(value = {
-        @ApiResponse(code = 200, message = "OK")
-    })
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "OK")})
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public ResponseEntity<?> getAllDescriptor() {
         log.info("Request GET all descriptor");
@@ -79,35 +50,36 @@ public class ServiceDescriptorsController {
         return new ResponseEntity<>(allDescriptors, HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Get SDK Service Descriptor", response = SdkServiceDescriptor.class)
+    @ApiOperation(value = "Get SDK Service Descriptor with ID", response = SdkServiceDescriptor.class)
     @ApiResponses(value = {
-        @ApiResponse(code = 200, message = "OK"),
-        @ApiResponse(code = 404, message = "Entity not found")
-    })
+        @ApiResponse(code = 400, message = "Query without parameter serviceDescriptorId"),
+        @ApiResponse(code = 404, message = "SDK Service Descriptor not present in database"),
+        @ApiResponse(code = 200, message = "")})
     @RequestMapping(value = "/{serviceDescriptorId}", method = RequestMethod.GET)
     public ResponseEntity<?> getDescriptor(@PathVariable Long serviceDescriptorId) {
-        log.info("Request GET descriptor " + serviceDescriptorId);
+        log.info("Request GET descriptor wit ID" + serviceDescriptorId);
         if (serviceDescriptorId == null) {
             log.error("GET descriptor request without parameter serviceDescriptorId");
             return new ResponseEntity<>("GET descriptor request without parameter serviceDescriptorId", HttpStatus.BAD_REQUEST);
         }
-        // else:
         try {
             SdkServiceDescriptor descriptor = serviceManager.getServiceDescriptor(serviceDescriptorId);
             return new ResponseEntity<>(descriptor, HttpStatus.OK);
         } catch (NotExistingEntityException e) {
+            log.debug(e.toString());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
     }
 
-    @ApiOperation(value = "Delete SDK Service Descriptor")
+    @ApiOperation(value = "Delete SDK Service Descriptor from database")
     @ApiResponses(value = {
-        @ApiResponse(code = 204, message = "OK"),
-        @ApiResponse(code = 404, message = "Entity not found")
-    })
+        @ApiResponse(code = 204, message = ""),
+        @ApiResponse(code = 404, message = "SDK Service Descriptor not present in database"),
+        @ApiResponse(code = 403, message = "SDK Service Descriptor cannot be deleted"),
+        @ApiResponse(code = 400, message = "Deletion request without parameter serviceDescriptorId")})
     @RequestMapping(value = "/{serviceDescriptorId}", method = RequestMethod.DELETE)
     public ResponseEntity<?> deleteDescriptor(@PathVariable Long serviceDescriptorId) {
-        log.info("Request DELETE descriptor " + serviceDescriptorId);
+        log.info("Request DELETE descriptor with ID " + serviceDescriptorId);
         if (serviceDescriptorId == null) {
             log.error("DELETE descriptor request without parameter serviceDescriptorId");
             return new ResponseEntity<>("DELETE descriptor request without parameter serviceDescriptorId", HttpStatus.BAD_REQUEST);
@@ -117,50 +89,77 @@ public class ServiceDescriptorsController {
             serviceManager.deleteServiceDescriptor(serviceDescriptorId);
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } catch (NotExistingEntityException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+            log.error(e.toString());
+            return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }catch (NotPermittedOperationException e){
+            log.error(e.toString());
+            return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
         }
     }
 
-    @ApiOperation(value = "Get NSD from service descriptor")
-    @ApiResponses(value = {@ApiResponse(code = 202, message = "NSD content"),
-        @ApiResponse(code = 400, message = "Service descriptor not found")})
+    @ApiOperation(value = "Publish SDK Service to Public Catalogue" )
+    @ApiResponses(value = {
+        @ApiResponse(code = 202, message = "Network Service descriptor created. The descriptor will be published to the public catalogue"),
+        @ApiResponse(code = 404, message = "SDK Service Descriptor not present in database"),
+        @ApiResponse(code = 400, message = "Publish request without parameter serviceDescriptorId or SDK Service already published")})
+    @RequestMapping(value = "/{serviceDescriptorId}/publish", method = RequestMethod.POST)
+    public ResponseEntity<?> publishService(@PathVariable Long serviceDescriptorId) {
+        log.info("Request to publish the service, using the descriptor with ID " + serviceDescriptorId + ", to the public catalogue");
+        if (serviceDescriptorId == null) {
+            log.error("Publishing request without parameter serviceDescriptorId");
+            return new ResponseEntity<String>("Publishing request without parameter serviceDescriptorId", HttpStatus.BAD_REQUEST);
+        } else {
+            try {
+                serviceManager.publishService(serviceDescriptorId);
+                return new ResponseEntity<>(HttpStatus.ACCEPTED);
+            } catch (NotExistingEntityException e) {
+                log.error(e.toString());
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+            }catch (AlreadyPublishedServiceException e) {
+                log.error(e.toString());
+                return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            }
+        }
+    }
+
+    @ApiOperation(value = "Unpublish SDK Service from Public Catalogue")
+    @ApiResponses(value = {
+        @ApiResponse(code = 202, message = "The SDK Service will be removed from the public catalogue"),
+        @ApiResponse(code = 404, message = "SDK Service Descriptor not present in database"),
+        @ApiResponse(code = 400, message = "Publish request without parameter serviceDescriptorId or SDK Service not yet published")})
+    @RequestMapping(value = "/{serviceDescriptorId}/unpublish", method = RequestMethod.POST)
+    public ResponseEntity<?> unPublishService(@PathVariable Long serviceDescriptorId) {
+        log.info("Request to unpublish the service, using the descriptor with ID" + serviceDescriptorId + ", from the public catalogue");
+        if (serviceDescriptorId == null) {
+            log.error("Request without parameter serviceDescriptorId");
+            return new ResponseEntity<String>("Request without parameter serviceDescriptorId", HttpStatus.BAD_REQUEST);
+        } else {
+            try {
+                serviceManager.unPublishService(serviceDescriptorId);
+                return new ResponseEntity<>(HttpStatus.ACCEPTED);
+            } catch (NotExistingEntityException e) {
+                log.error(e.toString());
+                return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
+            } catch (NotPublishedServiceException e) {
+                log.error(e.toString());
+                return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            }
+        }
+    }
+
+    @ApiOperation(value = "Get NSD from SDK Service Descriptor")
+    @ApiResponses(value = {
+        @ApiResponse(code = 202, message = "NSD content"),
+        @ApiResponse(code = 400, message = "SDK Service Descriptor not present in database")})
     @RequestMapping(value = "/{serviceDescriptorId}/nsd", method = RequestMethod.GET)
     public ResponseEntity<?> getDescriptorNsd(@PathVariable Long serviceDescriptorId) throws NotExistingEntityException {
-        log.info("Request GET descriptors descriptor " + serviceDescriptorId);
+        log.info("Request GET Nsd for descriptor with ID " + serviceDescriptorId);
         if (serviceDescriptorId == null) {
-            log.error("GET descriptor nsd request without parameter serviceDescriptorId");
-            return new ResponseEntity<String>("GET descriptor nsd request without parameter serviceDescriptorId", HttpStatus.NOT_FOUND);
+            log.error("GET descriptor Nsd request without parameter serviceDescriptorId");
+            return new ResponseEntity<String>("GET descriptor Nsd request without parameter serviceDescriptorId", HttpStatus.NOT_FOUND);
         } else {
             DescriptorTemplate descriptorTemplate = serviceManager.generateTemplate(serviceDescriptorId);
             return new ResponseEntity<>(descriptorTemplate, HttpStatus.OK);
         }
     }
-
-    @ApiOperation(value = "Unpublish Service from Public Catalogue")
-    @ApiResponses(value = {@ApiResponse(code = 202, message = "The service will be removed from the public catalogue"),
-        @ApiResponse(code = 404, message = "Entity to be unpublished not found"),
-        @ApiResponse(code = 400, message = "Request without parameter serviceId or not yet published service")})
-    @RequestMapping(value = "/{serviceDescriptorId}/unpublish", method = RequestMethod.POST)
-    public ResponseEntity<?> unPublishService(@PathVariable Long serviceDescriptorId) {
-        log.info("Request to unpublish the service " + serviceDescriptorId + " from the public catalogue");
-        if (serviceDescriptorId == null) {
-            log.error("Request without parameter serviceId");
-            return new ResponseEntity<String>("Request without parameter serviceId", HttpStatus.BAD_REQUEST);
-        } else {
-            try {
-                serviceManager.unPublishService(serviceDescriptorId);
-                return new ResponseEntity<>(HttpStatus.ACCEPTED);
-            } catch (NotExistingEntityException e1) {
-                log.error("Requested deletion of publication for an entity which doesn't exist");
-                return new ResponseEntity<String>("Requested deletion of publication for an entity which doesn't exist",
-                    HttpStatus.NOT_FOUND);
-            } catch (NotPublishedServiceException e2) {
-                log.error("Requested publication for an entity that has not been published yet");
-                return new ResponseEntity<String>("Requested publication for an entity that has not been published yet",
-                    HttpStatus.BAD_REQUEST);
-            }
-        }
-
-    }
-
 }

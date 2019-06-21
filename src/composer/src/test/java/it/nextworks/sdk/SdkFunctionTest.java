@@ -145,7 +145,7 @@ public class SdkFunctionTest {
         function.setVnfdId("aa333a44-6587-4940-b442-c029376bbb2e");
         //function.setVnfdVersion("v1.0");
         function.setOwnerId("NXW");
-        function.setVnfdProvider("NXW");
+        //function.setVnfdProvider("NXW");
         function.setGroupId("NXW");
         ConnectionPoint cp1 = ConnectionPointTest.makeNS1vPlateObject1();
 
@@ -190,7 +190,7 @@ public class SdkFunctionTest {
         function.setVnfdId("bd6a284e-e369-4d7d-a465-57ddc6e8c027");
         //function.setVnfdVersion("v5.0");
         function.setOwnerId("NXW");
-        function.setVnfdProvider("NXW");
+        //function.setVnfdProvider("NXW");
         function.setGroupId("NXW");
 
         ConnectionPoint cp1 = ConnectionPointTest.makeNS1FirewallObject1();
@@ -242,7 +242,7 @@ public class SdkFunctionTest {
         function.setVnfdId("a49ef787-aaba-4a06-a677-b30a2e883562");
         //function.setVnfdVersion("v6.0");
         function.setOwnerId("NXW");
-        function.setVnfdProvider("NXW");
+        //function.setVnfdProvider("NXW");
         function.setGroupId("NXW");
 
         ConnectionPoint cp1 = ConnectionPointTest.makeFirewallDemobject1();
@@ -283,7 +283,7 @@ public class SdkFunctionTest {
         function.setVnfdId("057289e2-7b8e-4280-8734-43b924f64b85");
         //function.setVnfdVersion("v1.0");
         function.setOwnerId("NXW");
-        function.setVnfdProvider("NXW");
+        //function.setVnfdProvider("NXW");
         function.setGroupId("NXW");
 
         ConnectionPoint cp1 = ConnectionPointTest.makeMiniwebDemobject1();
