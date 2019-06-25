@@ -217,7 +217,7 @@ public class FunctionController {
 
     @ApiOperation(value = "Publish SDK Function to Public Catalogue")
     @ApiResponses(value = {
-        @ApiResponse(code = 202, message = "Virtual Network Function descriptor created. The descriptor will be published to the public catalogue"),
+        @ApiResponse(code = 202, message = "Virtual Network Function descriptor created. The descriptor will be published to the Public Catalogue"),
         @ApiResponse(code = 404, message = "SDK Function not present in database"),
         @ApiResponse(code = 400, message = "Publish request without parameter functionId or SDK Function already published")})
     @RequestMapping(value = "/{functionId}/publish", method = RequestMethod.POST)
@@ -241,12 +241,12 @@ public class FunctionController {
 
     @ApiOperation(value = "Unpublish SDK Function from Public Catalogue")
     @ApiResponses(value = {
-        @ApiResponse(code = 202, message = "The SDK Function will be removed from the public catalogue"),
+        @ApiResponse(code = 202, message = "The SDK Function will be removed from the Public Catalogue"),
         @ApiResponse(code = 404, message = "SDK Function not present in database"),
         @ApiResponse(code = 400, message = "Publish request without parameter functionId or SDK Function not yet published")})
     @RequestMapping(value = "/{functionId}/unpublish", method = RequestMethod.POST)
     public ResponseEntity<?> unPublishFunction(@PathVariable Long functionId) {
-        log.info("Request to unpublish function with ID " + functionId + " from the public catalogue");
+        log.info("Request to unpublish function with ID " + functionId + " from the Public Catalogue");
         if (functionId == null) {
             log.error("Request without parameter functionId");
             return new ResponseEntity<String>("Request without parameter functionId", HttpStatus.BAD_REQUEST);
@@ -351,14 +351,19 @@ public class FunctionController {
         @ApiResponse(code = 202, message = "VNFD Content"),
         @ApiResponse(code = 400, message = "SDK function not present in databse")})
     @RequestMapping(value = "/{functionId}/vnfd", method = RequestMethod.GET)
-    public ResponseEntity<?> getVnfd(@PathVariable Long functionId) throws NotExistingEntityException {
+    public ResponseEntity<?> getVnfd(@PathVariable Long functionId) {
         log.info("Request GET Vnfd for function with ID " + functionId);
         if (functionId == null) {
             log.error("GET Vnfd request without parameter functionId");
             return new ResponseEntity<String>("GET Vnfd request without parameter functionId", HttpStatus.BAD_REQUEST);
         } else {
-            DescriptorTemplate descriptorTemplate = functionManager.generateTemplate(functionId);
-            return new ResponseEntity<>(descriptorTemplate, HttpStatus.OK);
+            try {
+                DescriptorTemplate descriptorTemplate = functionManager.generateTemplate(functionId);
+                return new ResponseEntity<>(descriptorTemplate, HttpStatus.OK);
+            }catch (NotExistingEntityException e) {
+                log.error(e.toString());
+                return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
+            }
         }
     }
 }

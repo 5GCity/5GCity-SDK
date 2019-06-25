@@ -64,10 +64,10 @@ public interface ServiceManagerProviderInterface {
         throws NotExistingEntityException, NotPermittedOperationException;
 
     String publishService(Long serviceId, List<BigDecimal> parameterValues)
-        throws NotExistingEntityException, MalformedElementException;
+        throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException;
 
     void publishService(Long serviceInstanceId)
-        throws NotExistingEntityException, AlreadyPublishedServiceException;
+        throws NotExistingEntityException, AlreadyPublishedServiceException, NotPermittedOperationException;
 
     DescriptorTemplate generateTemplate(Long serviceDescriptorId)
         throws NotExistingEntityException;

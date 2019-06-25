@@ -592,7 +592,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
     @Override
     public String publishService(Long serviceId, List<BigDecimal> parameterValues)
-        throws NotExistingEntityException, MalformedElementException {
+        throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException {
         log.info("Request for publication of service with ID " + serviceId);
         // Check if service exists
         Optional<SdkService> optService = serviceRepository.findById(serviceId);
@@ -609,6 +609,9 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             log.error("Malformed create-descriptor request: {}", e.getMessage());
             throw new MalformedElementException(e.getMessage(), e);
         }
+
+        //check if all subfunctions are COMMITTED, if not ask to commit them
+        checkFunctionStatus(descriptor.getSubDescriptors());
 
         descriptor.setStatus(SdkServiceStatus.CHANGING);
         serviceDescriptorRepository.saveAndFlush(descriptor);
@@ -708,7 +711,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
     @Override
     public void publishService(Long serviceDescriptorId)
-        throws NotExistingEntityException, AlreadyPublishedServiceException {
+        throws NotExistingEntityException, AlreadyPublishedServiceException, NotPermittedOperationException {
         Optional<SdkServiceDescriptor> optDescriptor = serviceDescriptorRepository.findById(serviceDescriptorId);
 
         SdkServiceDescriptor descriptor = optDescriptor.orElseThrow(() -> {
@@ -725,6 +728,9 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             serviceDescriptorRepository.saveAndFlush(descriptor);
             // After setting the status, no one can operate on this anymore (except us)
         }
+
+        //check if all subfunctions are COMMITTED, if not ask to commit them
+        checkFunctionStatus(descriptor.getSubDescriptors());
 
         DescriptorTemplate nsd = adapter.generateNetworkServiceDescriptor(descriptor);
 
@@ -989,6 +995,20 @@ public class ServiceManager implements ServiceManagerProviderInterface {
                 }
             }
         );
+    }
+
+    private void checkFunctionStatus(Set<SdkComponentInstance> subDescriptors) throws NotPermittedOperationException {
+        for(SdkComponentInstance subDescriptor : subDescriptors){
+            if(subDescriptor.getType().equals(SdkServiceComponentType.SDK_FUNCTION)){
+                SdkFunction function = ((SdkFunctionDescriptor)subDescriptor).getTemplate();
+                if(function.getStatus().equals(SdkFunctionStatus.SAVED)){
+                    log.error("Function with ID " + function.getId() + " not published to Public Catalogue. Please publish it before publishing the service");
+                    throw  new NotPermittedOperationException("Function with ID " + function.getId() + " not published to Public Catalogue. Please publish it before publishing the service");
+                }
+            }else{
+                checkFunctionStatus(((SdkServiceDescriptor)subDescriptor).getSubDescriptors());
+            }
+        }
     }
 }
 

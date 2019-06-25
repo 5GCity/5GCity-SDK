@@ -99,12 +99,13 @@ public class ServiceDescriptorsController {
 
     @ApiOperation(value = "Publish SDK Service to Public Catalogue" )
     @ApiResponses(value = {
-        @ApiResponse(code = 202, message = "Network Service descriptor created. The descriptor will be published to the public catalogue"),
+        @ApiResponse(code = 202, message = "Network Service descriptor created. The descriptor will be published to the Public Catalogue"),
         @ApiResponse(code = 404, message = "SDK Service Descriptor not present in database"),
+        @ApiResponse(code = 403, message = "Not all components are published to the Public Catalogue"),
         @ApiResponse(code = 400, message = "Publish request without parameter serviceDescriptorId or SDK Service already published")})
     @RequestMapping(value = "/{serviceDescriptorId}/publish", method = RequestMethod.POST)
     public ResponseEntity<?> publishService(@PathVariable Long serviceDescriptorId) {
-        log.info("Request to publish the service, using the descriptor with ID " + serviceDescriptorId + ", to the public catalogue");
+        log.info("Request to publish the service, using the descriptor with ID " + serviceDescriptorId + ", to the Public Catalogue");
         if (serviceDescriptorId == null) {
             log.error("Publishing request without parameter serviceDescriptorId");
             return new ResponseEntity<String>("Publishing request without parameter serviceDescriptorId", HttpStatus.BAD_REQUEST);
@@ -118,18 +119,21 @@ public class ServiceDescriptorsController {
             }catch (AlreadyPublishedServiceException e) {
                 log.error(e.toString());
                 return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            }catch(NotPermittedOperationException e){
+                log.error(e.toString());
+                return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
             }
         }
     }
 
     @ApiOperation(value = "Unpublish SDK Service from Public Catalogue")
     @ApiResponses(value = {
-        @ApiResponse(code = 202, message = "The SDK Service will be removed from the public catalogue"),
+        @ApiResponse(code = 202, message = "The SDK Service will be removed from the Public Catalogue"),
         @ApiResponse(code = 404, message = "SDK Service Descriptor not present in database"),
         @ApiResponse(code = 400, message = "Publish request without parameter serviceDescriptorId or SDK Service not yet published")})
     @RequestMapping(value = "/{serviceDescriptorId}/unpublish", method = RequestMethod.POST)
     public ResponseEntity<?> unPublishService(@PathVariable Long serviceDescriptorId) {
-        log.info("Request to unpublish the service, using the descriptor with ID" + serviceDescriptorId + ", from the public catalogue");
+        log.info("Request to unpublish the service, using the descriptor with ID" + serviceDescriptorId + ", from the Public Catalogue");
         if (serviceDescriptorId == null) {
             log.error("Request without parameter serviceDescriptorId");
             return new ResponseEntity<String>("Request without parameter serviceDescriptorId", HttpStatus.BAD_REQUEST);
@@ -152,14 +156,19 @@ public class ServiceDescriptorsController {
         @ApiResponse(code = 202, message = "NSD content"),
         @ApiResponse(code = 400, message = "SDK Service Descriptor not present in database")})
     @RequestMapping(value = "/{serviceDescriptorId}/nsd", method = RequestMethod.GET)
-    public ResponseEntity<?> getDescriptorNsd(@PathVariable Long serviceDescriptorId) throws NotExistingEntityException {
+    public ResponseEntity<?> getDescriptorNsd(@PathVariable Long serviceDescriptorId) {
         log.info("Request GET Nsd for descriptor with ID " + serviceDescriptorId);
         if (serviceDescriptorId == null) {
             log.error("GET descriptor Nsd request without parameter serviceDescriptorId");
             return new ResponseEntity<String>("GET descriptor Nsd request without parameter serviceDescriptorId", HttpStatus.NOT_FOUND);
         } else {
-            DescriptorTemplate descriptorTemplate = serviceManager.generateTemplate(serviceDescriptorId);
-            return new ResponseEntity<>(descriptorTemplate, HttpStatus.OK);
+            try {
+                DescriptorTemplate descriptorTemplate = serviceManager.generateTemplate(serviceDescriptorId);
+                return new ResponseEntity<>(descriptorTemplate, HttpStatus.OK);
+            } catch (NotExistingEntityException e) {
+                log.error(e.toString());
+                return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
+            }
         }
     }
 }

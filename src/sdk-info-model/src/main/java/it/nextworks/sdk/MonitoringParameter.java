@@ -70,6 +70,9 @@ public abstract class MonitoringParameter {
     @JsonIgnore
     public Long getId() { return id; }
 
+    @JsonIgnore
+    public void setId(Long id) { this.id = id; }
+
     @JsonProperty("name")
     public String getName() {
         return name;

@@ -210,11 +210,16 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
     @Override
     public DescriptorTemplate generateVirtualNetworkFunctionDescriptor(SdkFunction functionInstance){
         //TODO add cp and vlink requirements? how?
+        SubstitutionMappingsRequirements requirements = new SubstitutionMappingsRequirements(
+            null,
+            null
+        );
+
         SubstitutionMappings substitutionMappings = new SubstitutionMappings(
             null,
             "tosca.nodes.nfv.VNF",
             null,
-            null,
+            requirements,
             null
         );
 

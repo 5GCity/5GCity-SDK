@@ -2,6 +2,7 @@ package it.nextworks.sdk;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.nextworks.composer.ComposerApplication;
+import it.nextworks.composer.executor.FunctionManager;
 import it.nextworks.composer.executor.ServiceManager;
 import it.nextworks.composer.executor.repositories.SdkFunctionRepository;
 import it.nextworks.composer.executor.repositories.SdkServiceRepository;
@@ -45,6 +46,9 @@ public class SdkServiceTest {
 
     @Autowired
     private ServiceManager serviceManager;
+
+    @Autowired
+    private FunctionManager functionManager;
 
     public static SdkService setServiceId(SdkService service, Long id) {
         service.setId(id);
@@ -308,49 +312,6 @@ public class SdkServiceTest {
 
     @Test
     @Ignore // requires DB
-    public void testCityService() throws Exception {
-
-        SdkFunction firewall = SdkFunctionTest.makeNS1FirewallObject();
-
-        assertTrue(firewall.isValid());
-
-        functionRepository.saveAndFlush(firewall);
-
-        Long firewallId = firewall.getId();
-
-        SdkService service = makeTestObject(
-            firewallId,
-            Arrays.asList("param1"), // I.e. param1 == traffic
-            firewall.getConnectionPoint().stream().collect(Collectors.toMap(
-                ConnectionPoint::getName,
-                ConnectionPoint::getId
-            ))
-        );
-
-        assertTrue(service.isValid());
-
-        service.resolveComponents(Collections.singleton(firewall), Collections.emptySet());
-
-        serviceRepository.saveAndFlush(service);
-
-        Optional<SdkService> back = serviceRepository.findById(service.getId());
-
-        assertTrue(back.isPresent());
-
-        //SdkService service2 = back.get();
-        //assertEquals(service, service2);
-
-        File file = new File("/tmp/service.json");
-        ObjectMapper mapper = new ObjectMapper();
-        byte[] bytes = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(service);
-        Files.write(file.toPath(), bytes);
-        File fileF = new File("/tmp/function.json");
-        byte[] bytesF = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(firewall);
-        Files.write(fileF.toPath(), bytesF);
-    }
-
-    @Test
-    @Ignore // requires DB
     public void testDeleteMonitoringParameter() throws Exception {
 
         serviceManager.deleteMonitoringParameters(Long.valueOf(34), Long.valueOf(40));
@@ -388,6 +349,44 @@ public class SdkServiceTest {
         parameterValues.add(new BigDecimal(1000));
         serviceManager.publishService(Long.valueOf(10), parameterValues);
         //serviceManager.publishService(Long.valueOf(40));
+    }
+
+    @Test
+    @Ignore // requires DB
+    public void testCityService() throws Exception {
+
+        SdkFunction firewall = SdkFunctionTest.makeNS1FirewallObject();
+
+        assertTrue(firewall.isValid());
+
+        functionManager.createFunction(firewall);
+
+        Long firewallId = firewall.getId();
+
+        SdkService service = makeTestObject(
+            firewallId,
+            Arrays.asList("param1"), // I.e. param1 == traffic
+            firewall.getConnectionPoint().stream().collect(Collectors.toMap(
+                ConnectionPoint::getName,
+                ConnectionPoint::getId
+            ))
+        );
+
+        assertTrue(service.isValid());
+
+        serviceManager.createService(service);
+
+        Optional<SdkService> back = serviceRepository.findById(service.getId());
+
+        assertTrue(back.isPresent());
+
+        File file = new File("/tmp/service.json");
+        ObjectMapper mapper = new ObjectMapper();
+        byte[] bytes = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(service);
+        Files.write(file.toPath(), bytes);
+        File fileF = new File("/tmp/function.json");
+        byte[] bytesF = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(firewall);
+        Files.write(fileF.toPath(), bytesF);
     }
 }
 

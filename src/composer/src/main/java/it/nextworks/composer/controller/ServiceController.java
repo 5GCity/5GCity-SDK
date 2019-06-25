@@ -200,11 +200,13 @@ public class ServiceController {
 
     @ApiOperation(value = "Publish SDK Service to Public Catalogue")
     @ApiResponses(value = {
-        @ApiResponse(code = 202, message = "Network Service descriptor created. The descriptor will be published to the public catalogue"),
+        @ApiResponse(code = 202, message = "Network Service descriptor created. The descriptor will be published to the Public Catalogue"),
         @ApiResponse(code = 404, message = "SDK Service not present in database"),
+        @ApiResponse(code = 403, message = "Not all components are published to the Public Catalogue"),
         @ApiResponse(code = 400, message = "Publish request without parameter serviceId or provided parameters cannot be validated")})
     @RequestMapping(value = "/service/{serviceId}/publish", method = RequestMethod.POST)
-    public ResponseEntity<?> publishService(@PathVariable Long serviceId, List<BigDecimal> parameterValues) {
+    public ResponseEntity<?> publishService(@PathVariable Long serviceId, @RequestBody MakeDescriptorRequest makeDescriptorRequest) {
+        List<BigDecimal> parameterValues = makeDescriptorRequest.parameterValues;
         log.info("Request publication of a service with ID {}, parameters : {}.", serviceId, parameterValues);
         if (serviceId == null) {
             log.error("Publication request without parameter serviceId");
@@ -219,6 +221,9 @@ public class ServiceController {
         } catch (MalformedElementException e) {
             log.error(e.toString());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }catch(NotPermittedOperationException e){
+            log.error(e.toString());
+            return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
         }
     }
 

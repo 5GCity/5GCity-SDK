@@ -144,6 +144,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
                     log.info("Function with vnfdID " + dt.getMetadata().getDescriptorId() + " and version " + dt.getMetadata().getVersion() + " already present");
                     functionOptional.get().setEpoch(Instant.now().getEpochSecond());
                     functionOptional.get().setStatus(SdkFunctionStatus.COMMITTED);
+                    functionOptional.get().setVnfInfoId(vnfPkgInfo.getId().toString());
                     functionRepository.saveAndFlush(functionOptional.get());
                 }else {
                     log.info("Creating function with vnfdID " + dt.getMetadata().getDescriptorId() + " and version " + dt.getMetadata().getVersion());
@@ -708,7 +709,6 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
         try {
             //TODO change COMMITTED with PUBLISHED?
-            sdkFunction.setStatus(SdkFunctionStatus.COMMITTED);
             sdkFunction.setVnfdId(dt.getMetadata().getDescriptorId());
             sdkFunction.setVersion(dt.getMetadata().getVersion());
             sdkFunction.setDescription(dt.getDescription());
@@ -770,6 +770,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
                 Set<MonitoringParameter> monitoringParameters;
                 try{
                     monitoringParameters = objectMapper.readValue(new File(storagePath + csarInfo.getPackageFilename() + "/", monitoringParamFileName), new TypeReference<Set<MonitoringParameter>>(){});
+                    monitoringParameters.forEach(param -> param.setId(null));
                     sdkFunction.setMonitoringParameters(monitoringParameters);
                 } catch(EOFException | MismatchedInputException e) {
                     //empty file or format not correct
@@ -779,6 +780,11 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             }
 
             createFunction(sdkFunction);
+
+            sdkFunction.setStatus(SdkFunctionStatus.COMMITTED);
+            //package filename is the vnfPkgInfo ID
+            sdkFunction.setVnfInfoId(csarInfo.getPackageFilename());
+            functionRepository.saveAndFlush(sdkFunction);
         }catch(MalformedElementException | AlreadyExistingEntityException e){
             log.error(e.getMessage());
             throw new FailedOperationException(e.getMessage());
