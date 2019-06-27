@@ -31,7 +31,7 @@ import org.springframework.web.client.RestTemplate;
 
 //import static javafx.scene.input.KeyCode.T;
 
-@SpringBootApplication
+@SpringBootApplication(exclude = {org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class})
 @ComponentScan(basePackages = {"it.nextworks.composer", "it.nextworks.sdk"})
 @EntityScan(basePackages = {"it.nextworks.sdk", "it.nextworks.composer"})
 @EnableJpaRepositories("it.nextworks.composer.executor.repositories")

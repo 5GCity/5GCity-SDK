@@ -701,14 +701,15 @@ public class SdkService implements InstantiableCandidate {
                 && version != null && version.length() > 0
                 && license != null && license.isValid()
                 && validateComponents()
+                && validateComponentIndex()
                 && validateL3Connectivity()
                 && validateMonitoringParameters()
                 && validateAction()
                 && parameters != null
                 && validateLinks()
                 && validateExpressions()
-                && validateCps()
-                && validateComponentIndex();
+                && validateCps();
+
     }
 
     private boolean validateAction(){

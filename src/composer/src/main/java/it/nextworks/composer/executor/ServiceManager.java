@@ -179,7 +179,6 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
         checkAndResolveService(service);
 
-        final Set<Integer> componentIndexes = new HashSet<Integer>();
         for(SdkServiceComponent component : service.getComponents()){
             if (component.getId() != null) {
                 log.error("Component ID cannot be specified in service creation");
@@ -280,13 +279,13 @@ public class ServiceManager implements ServiceManagerProviderInterface {
                     throw new NotExistingEntityException("Component with ID " + component.getId() + " is not present in database");
                 }
                 if(subFunction.isPresent()){
-                    if ((subFunction.get().getOuterService() == null) || (subFunction.get().getOuterService().getId() != service.getId())) {
+                    if ((subFunction.get().getOuterService() == null) || (!subFunction.get().getOuterService().getId().equals(service.getId()))) {
                         log.error("Component with ID " + component.getId() + " does not belong to service with ID " + service.getId());
                         throw new NotPermittedOperationException("Component with ID " + component.getId() + " does not belong to service with ID " + service.getId());
                     }
                 }
                 if(subService.isPresent()){
-                    if ((subService.get().getOuterService() == null) || (subService.get().getOuterService().getId() != service.getId())) {
+                    if ((subService.get().getOuterService() == null) || (!subService.get().getOuterService().getId().equals(service.getId()))) {
                         log.error("Component with ID " + component.getId() + " does not belong to service with ID " + service.getId());
                         throw new NotPermittedOperationException("Component with ID " + component.getId() + " does not belong to service with ID " + service.getId());
                     }
@@ -304,8 +303,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
                     throw new NotExistingEntityException("Monitoring parameter with ID " + param.getId() + " is not present in database");
                 }
                 if ((mp.get().getSdkFunction() != null)
-                    || ((mp.get().getSdkServiceExt() != null) && (mp.get().getSdkServiceExt().getId() != service.getId()))
-                        || ((mp.get().getSdkServiceInt() != null) && (mp.get().getSdkServiceInt().getId() != service.getId()))
+                    || ((mp.get().getSdkServiceExt() != null) && (!mp.get().getSdkServiceExt().getId().equals(service.getId())))
+                        || ((mp.get().getSdkServiceInt() != null) && (!mp.get().getSdkServiceInt().getId().equals(service.getId())))
                 ){
                     log.error("Monitoring parameter with ID " + param.getId() + " does not belong to service with ID " + service.getId());
                     throw new NotPermittedOperationException("Monitoring parameter with ID " + param.getId() + " does not belong to service with ID " + service.getId());
@@ -319,7 +318,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
                     log.error("Connection point with ID " + param.getId() + " is not present in database");
                     throw new NotExistingEntityException("Connection point with ID " + param.getId() + " is not present in database");
                 }
-                if ((cp.get().getSdkService() == null) || (cp.get().getSdkService().getId() != service.getId())) {
+                if ((cp.get().getSdkService() == null) || (!cp.get().getSdkService().getId().equals(service.getId()))) {
                     log.error("Connection point with ID " + param.getId() + " does not belong to service with ID " + service.getId());
                     throw new NotPermittedOperationException("Connection point with ID " + param.getId() + " does not belong to service with ID " + service.getId());
                 }
@@ -332,7 +331,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
                     log.error("Link with ID " + link.getId() + " is not present in database");
                     throw new NotExistingEntityException("Link with ID " + link.getId() + " is not present in database");
                 }
-                if ((rp.get().getService() == null) || (rp.get().getService().getId() != service.getId())) {
+                if ((rp.get().getService() == null) || (!rp.get().getService().getId().equals(service.getId()))) {
                     log.error("Link with ID " + link.getId() + " does not belong to service with ID " + service.getId());
                     throw new NotPermittedOperationException("Link with ID " + link.getId() + " does not belong to service with ID " + service.getId());
                 }
@@ -345,7 +344,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
                     log.error("L3 connectivity with ID " + lc.getId() + " is not present in database");
                     throw new NotExistingEntityException("L3 connectivity with ID " + lc.getId() + " is not present in database");
                 }
-                if ((rp.get().getService() == null) || (rp.get().getService().getId() != service.getId())) {
+                if ((rp.get().getService() == null) || (!rp.get().getService().getId().equals(service.getId()))) {
                     log.error("L3 connectivity with ID " + lc.getId() + " does not belong to service with ID " + service.getId());
                     throw new NotPermittedOperationException("L3 connectivity with ID " + lc.getId() + " does not belong to service with ID " + service.getId());
                 }
@@ -358,7 +357,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
                     log.error("Service action with ID " + sa.getId() + " is not present in database");
                     throw new NotExistingEntityException("Service action with ID " + sa.getId() + " is not present in database");
                 }
-                if ((rp.get().getSdkService() == null) || (rp.get().getSdkService().getId() != service.getId())) {
+                if ((rp.get().getSdkService() == null) || (!rp.get().getSdkService().getId().equals(service.getId()))) {
                     log.error("Service action with ID " + sa.getId() + " does not belong to service with ID " + service.getId());
                     throw new NotPermittedOperationException("Service action with ID " + sa.getId() + " does not belong to service with ID " + service.getId());
                 }
@@ -371,7 +370,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
                     log.error("Service action rule with ID " + ar.getId() + " is not present in database");
                     throw new NotExistingEntityException("Service action rule with ID " + ar.getId() + " is not present in database");
                 }
-                if ((rp.get().getSdkService() == null) || (rp.get().getSdkService().getId() != service.getId())) {
+                if ((rp.get().getSdkService() == null) || (!rp.get().getSdkService().getId().equals(service.getId()))) {
                     log.error("Service action rule with ID " + ar.getId() + " does not belong to service with ID " + service.getId());
                     throw new NotPermittedOperationException("Service action rule with ID " + ar.getId() + " does not belong to service with ID " + service.getId());
                 }
@@ -450,8 +449,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
                     throw new NotExistingEntityException("Monitoring parameter with ID " + param.getId() + " is not present in database");
                 }
                 if ((mp.get().getSdkFunction() != null)
-                    || ((mp.get().getSdkServiceExt() != null) && (mp.get().getSdkServiceExt().getId() != serviceId))
-                    || ((mp.get().getSdkServiceInt() != null) && (mp.get().getSdkServiceInt().getId() != serviceId))
+                    || ((mp.get().getSdkServiceExt() != null) && (!mp.get().getSdkServiceExt().getId().equals(serviceId)))
+                    || ((mp.get().getSdkServiceInt() != null) && (!mp.get().getSdkServiceInt().getId().equals(serviceId)))
                 ){
                     log.error("Monitoring parameter with ID " + param.getId() + " does not belong to service with ID " + serviceId);
                     throw new NotPermittedOperationException("Monitoring parameter with ID " + param.getId() + " does not belong to service with ID " + serviceId);
@@ -520,8 +519,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         }
 
         if ((mp.get().getSdkFunction() != null)
-            || ((mp.get().getSdkServiceExt() != null) && (mp.get().getSdkServiceExt().getId() != serviceId))
-            || ((mp.get().getSdkServiceInt() != null) && (mp.get().getSdkServiceInt().getId() != serviceId))
+            || ((mp.get().getSdkServiceExt() != null) && (!mp.get().getSdkServiceExt().getId().equals(serviceId)))
+            || ((mp.get().getSdkServiceInt() != null) && (!mp.get().getSdkServiceInt().getId().equals(serviceId)))
         ){
             log.error("Monitoring parameter with ID " + monitoringParameterId + " does not belong to service with ID " + serviceId);
             throw new NotPermittedOperationException("Monitoring parameter with ID " + monitoringParameterId + " does not belong to service with ID " + serviceId);
@@ -874,26 +873,32 @@ public class ServiceManager implements ServiceManagerProviderInterface {
                     throw new NotExistingEntityException("Monitoring parameter with ID " + (((MonParamImported) mp).getImportedParameterId()) + " not present in database");
                 }
 
+                boolean componentFound = false;
                 Integer componentIndex = ((MonParamImported) mp).getComponentIndex();
                 for(SdkServiceComponent component : service.getComponents()){
                     if(component.getComponentIndex().equals(componentIndex)){
+                        componentFound = true;
                         if(target.get().getSdkFunction() != null){
-                            if (target.get().getSdkFunction().getId() != component.getComponentId()) {
-                                log.error("Monitoring parameter with ID " + target.get().getId() + " does not belong to component with ID " + component.getId());
-                                throw new MalformedElementException("Monitoring parameter with ID " + target.get().getId() + " does not belong to component with ID " + component.getId());
+                            if (!target.get().getSdkFunction().getId().equals(component.getComponentId())) {
+                                log.error("Monitoring parameter with ID " + target.get().getId() + " does not belong to component with componentIndex " + component.getComponentIndex());
+                                throw new MalformedElementException("Monitoring parameter with ID " + target.get().getId() + " does not belong to component with componentIndex " + component.getComponentIndex());
                             }
                         }else if(target.get().getSdkServiceExt() != null){
-                            if (target.get().getSdkServiceExt().getId() != component.getComponentId()) {
-                                log.error("Connection point with ID " + target.get().getId() + " does not belong to component with ID " + component.getId());
-                                throw new MalformedElementException("Monitoring parameter with ID " + target.get().getId() + " does not belong to component with ID " + component.getId());
+                            if (!target.get().getSdkServiceExt().getId().equals(component.getComponentId())) {
+                                log.error("Monitoring parameter with ID " + target.get().getId() + " does not belong to component with componentIndex " + component.getId());
+                                throw new MalformedElementException("Monitoring parameter with ID " + target.get().getId() + " does not belong to component with componentIndex " + component.getComponentIndex());
                             }
                         }else if(target.get().getSdkServiceInt() != null){
-                            if (target.get().getSdkServiceInt().getId() != component.getComponentId()) {
-                                log.error("Connection point with ID " + target.get().getId() + " does not belong to component with ID " + component.getId());
-                                throw new MalformedElementException("Monitoring parameter with ID " + target.get().getId() + " does not belong to component with ID " + component.getId());
+                            if (!target.get().getSdkServiceInt().getId().equals(component.getComponentId())) {
+                                log.error("Monitoring parameter with ID " + target.get().getId() + " does not belong to component with componentIndex " + component.getId());
+                                throw new MalformedElementException("Monitoring parameter with ID " + target.get().getId() + " does not belong to component with componentIndex " + component.getComponentIndex());
                             }
                         }
                     }
+                }
+                if(!componentFound){
+                    log.error("Component with componentIndex " + componentIndex + " not found");
+                    throw new MalformedElementException("Component with componentIndex " + componentIndex + " not found");
                 }
             }
         }
@@ -907,21 +912,27 @@ public class ServiceManager implements ServiceManagerProviderInterface {
                     throw new NotExistingEntityException("Connection point with ID " + cp.getInternalCpId() + " not present in database");
                 }
 
+                boolean componentFound = false;
                 Integer componentIndex = cp.getComponentIndex();
                 for(SdkServiceComponent component : service.getComponents()){
                     if(component.getComponentIndex().equals(componentIndex)){
+                        componentFound = true;
                         if(target.get().getSdkFunction() != null){
-                            if (target.get().getSdkFunction().getId() != component.getComponentId()) {
-                                log.error("Connection point with ID " + target.get().getId() + " does not belong to component with ID " + component.getId());
-                                throw new MalformedElementException("Connection point with ID " + target.get().getId() + " does not belong to component with ID " + component.getId());
+                            if (!target.get().getSdkFunction().getId().equals(component.getComponentId())) {
+                                log.error("Connection point with ID " + target.get().getId() + " does not belong to component with componentIndex " + component.getComponentIndex());
+                                throw new MalformedElementException("Connection point with ID " + target.get().getId() + " does not belong to component with componentIndex " + component.getComponentIndex());
                             }
                         }else if(target.get().getSdkService() != null){
-                            if (target.get().getSdkService().getId() != component.getComponentId()) {
-                                log.error("Connection point with ID " + target.get().getId() + " does not belong to component with ID " + component.getId());
-                                throw new MalformedElementException("Connection point with ID " + target.get().getId() + " does not belong to component with ID " + component.getId());
+                            if (!target.get().getSdkService().getId().equals(component.getComponentId())) {
+                                log.error("Connection point with ID " + target.get().getId() + " does not belong to component with componentIndex " + component.getComponentIndex());
+                                throw new MalformedElementException("Connection point with ID " + target.get().getId() + " does not belong to component with componentIndex " + component.getComponentIndex());
                             }
                         }
                     }
+                }
+                if(!componentFound){
+                    log.error("Component with componentIndex " + componentIndex + " not found");
+                    throw new MalformedElementException("Component with componentIndex " + componentIndex + " not found");
                 }
             }
         }

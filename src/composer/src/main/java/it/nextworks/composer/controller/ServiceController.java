@@ -15,10 +15,7 @@
  */
 package it.nextworks.composer.controller;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.*;
 import it.nextworks.composer.executor.ServiceManager;
 import it.nextworks.nfvmano.libs.common.exceptions.AlreadyExistingEntityException;
 import it.nextworks.nfvmano.libs.common.exceptions.NotPermittedOperationException;
@@ -30,6 +27,7 @@ import org.aspectj.weaver.ast.Not;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -45,7 +43,7 @@ import java.util.List;
 @RestController
 @CrossOrigin
 @RequestMapping("/sdk/services")
-@Api(value = "SDK Service NBI", description = "Operations on SDK Composer Module - SDK Service APIs")
+@Api(value = "SDK Service NBI", description = "Operations on SDK - SDK Service APIs")
 public class ServiceController {
 
     private static final Logger log = LoggerFactory.getLogger(ServiceController.class);
@@ -65,6 +63,7 @@ public class ServiceController {
     @ApiOperation(value = "Get the complete list of the SDK Services available in database", response = SdkService.class, responseContainer = "List")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "")})
     @RequestMapping(value = "/", method = RequestMethod.GET)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> getServices() {
         log.info("Request for get services");
         List<SdkService> response = serviceManager.getServices();
@@ -83,6 +82,7 @@ public class ServiceController {
         @ApiResponse(code = 404, message = "SdkService not found in database"),
         @ApiResponse(code = 200, message = "")})
     @RequestMapping(value = "/{serviceId}", method = RequestMethod.GET)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> getService(@PathVariable Long serviceId) {
         log.info("Request for get specific service with ID " + serviceId);
         if (serviceId == null) {
@@ -108,6 +108,7 @@ public class ServiceController {
         @ApiResponse(code = 400, message = "SDK Service already present in database or service cannot be validated"),
         @ApiResponse(code = 201, message = "SDK Service created")})
     @RequestMapping(value = "/", method = RequestMethod.POST)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> createService(@RequestBody SdkService request) {
         log.info("Request for creation of a new service");
 
@@ -128,6 +129,7 @@ public class ServiceController {
         @ApiResponse(code = 403, message = "SDK Service cannot be updated"),
         @ApiResponse(code = 204, message = "SDK Service updated")})
     @RequestMapping(value = "/", method = RequestMethod.PUT)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> updateService(@RequestBody SdkService request) {
         log.info("Request for update of a service");
 
@@ -154,6 +156,7 @@ public class ServiceController {
         @ApiResponse(code = 403, message = "SDK Service cannot be deleted"),
         @ApiResponse(code = 400, message = "Deletion request without parameter serviceId")})
     @RequestMapping(value = "/{serviceId}", method = RequestMethod.DELETE)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> deleteService(@PathVariable Long serviceId) {
         log.info("Request for deletion of a service with id: " + serviceId);
         if (serviceId == null) {
@@ -179,6 +182,7 @@ public class ServiceController {
         @ApiResponse(code = 404, message = "SDK Service not found"),
         @ApiResponse(code = 400, message = "Create descriptor request without serviceId or provided parameters cannot be validated")})
     @RequestMapping(value = "/{serviceId}/create_descriptor", method = RequestMethod.POST)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> createDescriptor(@PathVariable Long serviceId, @RequestBody MakeDescriptorRequest makeDescriptorRequest) {
         List<BigDecimal> parameterValues = makeDescriptorRequest.parameterValues;
         log.info("Request create descriptor of a service with ID {}, parameters : {}.", serviceId, parameterValues);
@@ -205,6 +209,7 @@ public class ServiceController {
         @ApiResponse(code = 403, message = "Not all components are published to the Public Catalogue"),
         @ApiResponse(code = 400, message = "Publish request without parameter serviceId or provided parameters cannot be validated")})
     @RequestMapping(value = "/service/{serviceId}/publish", method = RequestMethod.POST)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> publishService(@PathVariable Long serviceId, @RequestBody MakeDescriptorRequest makeDescriptorRequest) {
         List<BigDecimal> parameterValues = makeDescriptorRequest.parameterValues;
         log.info("Request publication of a service with ID {}, parameters : {}.", serviceId, parameterValues);
@@ -234,6 +239,7 @@ public class ServiceController {
         @ApiResponse(code = 403, message = "Monitoring Parameters cannot be updated"),
         @ApiResponse(code = 204, message = "Monitoring Parameters updated")})
     @RequestMapping(value = "/{serviceId}/monitoring_params", method = RequestMethod.PUT)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> updateMonitoringParametersForService(@PathVariable Long serviceId, @RequestBody MonitoringParameterWrapper monitoringParameters) {
         log.info("Request for update of a monitoringParameter list");
 
@@ -263,6 +269,7 @@ public class ServiceController {
         @ApiResponse(code = 404, message = "SDK Service or Monitoring Parameters not present in database"),
         @ApiResponse(code = 200, message = "OK")})
     @RequestMapping(value = "/{serviceId}/monitoring_params", method = RequestMethod.GET)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> getMonitoringParametersForService(@PathVariable Long serviceId) {
         log.info("Request for get list of monitoringParams available on a specific service with ID " + serviceId);
         if (serviceId == null) {
@@ -286,6 +293,7 @@ public class ServiceController {
         @ApiResponse(code = 403, message = "Monitoring Parameters cannot be deleted"),
         @ApiResponse(code = 400, message = "Deletion request without parameter serviceId or service cannot be validated")})
     @RequestMapping(value = "/{serviceId}/monitoring_params/{monitoringParameterId}", method = RequestMethod.DELETE)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> deleteMonitoringParametersForService(@PathVariable Long serviceId, @PathVariable Long monitoringParameterId) {
         log.info("Request for deletion of monitoring parameter from service identified by id: " + serviceId);
         if (serviceId == null) {

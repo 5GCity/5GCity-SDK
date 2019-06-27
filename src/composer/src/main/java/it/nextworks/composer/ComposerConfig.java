@@ -46,8 +46,8 @@ public class ComposerConfig extends WebMvcConfigurationSupport {
 
     private ApiInfo metaData() {
         return new ApiInfoBuilder()
-            .title("5GCity SDK Composer REST API ")
-            .description("ReST API for the 5GCity's SDK composer")
+            .title("5GCity SDK REST API ")
+            .description("REST API for the 5GCity's SDK")
             .version("0.8")
             .license("Apache License Version 2.0")
             .licenseUrl("https://www.apache.org/licenses/LICENSE-2.0\"")

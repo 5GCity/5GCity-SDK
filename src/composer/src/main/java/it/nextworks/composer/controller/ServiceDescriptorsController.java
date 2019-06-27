@@ -1,9 +1,6 @@
 package it.nextworks.composer.controller;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.*;
 import it.nextworks.composer.executor.interfaces.ServiceManagerProviderInterface;
 import it.nextworks.nfvmano.libs.common.exceptions.NotPermittedOperationException;
 import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
@@ -14,6 +11,7 @@ import it.nextworks.sdk.exceptions.NotPublishedServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -33,7 +31,7 @@ import java.util.List;
 @RestController
 @CrossOrigin
 @RequestMapping("/sdk/service_descriptor")
-@Api(value = "Sdk descriptor NBI", description = "Operations on SDK Composer Module - SDK Service Descriptor APIs")
+@Api(value = "Sdk descriptor NBI", description = "Operations on SDK - SDK Service Descriptor APIs")
 public class ServiceDescriptorsController {
 
     private static final Logger log = LoggerFactory.getLogger(ServiceDescriptorsController.class);
@@ -44,6 +42,7 @@ public class ServiceDescriptorsController {
     @ApiOperation(value = "Get all SDK Service Descriptors", response = SdkServiceDescriptor.class, responseContainer = "List")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "OK")})
     @RequestMapping(value = "/", method = RequestMethod.GET)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> getAllDescriptor() {
         log.info("Request GET all descriptor");
         List<SdkServiceDescriptor> allDescriptors = serviceManager.getAllDescriptors();
@@ -56,6 +55,7 @@ public class ServiceDescriptorsController {
         @ApiResponse(code = 404, message = "SDK Service Descriptor not present in database"),
         @ApiResponse(code = 200, message = "")})
     @RequestMapping(value = "/{serviceDescriptorId}", method = RequestMethod.GET)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> getDescriptor(@PathVariable Long serviceDescriptorId) {
         log.info("Request GET descriptor wit ID" + serviceDescriptorId);
         if (serviceDescriptorId == null) {
@@ -78,6 +78,7 @@ public class ServiceDescriptorsController {
         @ApiResponse(code = 403, message = "SDK Service Descriptor cannot be deleted"),
         @ApiResponse(code = 400, message = "Deletion request without parameter serviceDescriptorId")})
     @RequestMapping(value = "/{serviceDescriptorId}", method = RequestMethod.DELETE)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> deleteDescriptor(@PathVariable Long serviceDescriptorId) {
         log.info("Request DELETE descriptor with ID " + serviceDescriptorId);
         if (serviceDescriptorId == null) {
@@ -104,6 +105,7 @@ public class ServiceDescriptorsController {
         @ApiResponse(code = 403, message = "Not all components are published to the Public Catalogue"),
         @ApiResponse(code = 400, message = "Publish request without parameter serviceDescriptorId or SDK Service already published")})
     @RequestMapping(value = "/{serviceDescriptorId}/publish", method = RequestMethod.POST)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> publishService(@PathVariable Long serviceDescriptorId) {
         log.info("Request to publish the service, using the descriptor with ID " + serviceDescriptorId + ", to the Public Catalogue");
         if (serviceDescriptorId == null) {
@@ -132,6 +134,7 @@ public class ServiceDescriptorsController {
         @ApiResponse(code = 404, message = "SDK Service Descriptor not present in database"),
         @ApiResponse(code = 400, message = "Publish request without parameter serviceDescriptorId or SDK Service not yet published")})
     @RequestMapping(value = "/{serviceDescriptorId}/unpublish", method = RequestMethod.POST)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> unPublishService(@PathVariable Long serviceDescriptorId) {
         log.info("Request to unpublish the service, using the descriptor with ID" + serviceDescriptorId + ", from the Public Catalogue");
         if (serviceDescriptorId == null) {
@@ -156,6 +159,7 @@ public class ServiceDescriptorsController {
         @ApiResponse(code = 202, message = "NSD content"),
         @ApiResponse(code = 400, message = "SDK Service Descriptor not present in database")})
     @RequestMapping(value = "/{serviceDescriptorId}/nsd", method = RequestMethod.GET)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> getDescriptorNsd(@PathVariable Long serviceDescriptorId) {
         log.info("Request GET Nsd for descriptor with ID " + serviceDescriptorId);
         if (serviceDescriptorId == null) {

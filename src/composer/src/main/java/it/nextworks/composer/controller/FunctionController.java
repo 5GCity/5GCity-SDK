@@ -16,10 +16,7 @@
 package it.nextworks.composer.controller;
 
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.*;
 import it.nextworks.composer.executor.FunctionManager;
 import it.nextworks.nfvmano.libs.common.exceptions.AlreadyExistingEntityException;
 import it.nextworks.nfvmano.libs.common.exceptions.NotPermittedOperationException;
@@ -34,14 +31,11 @@ import org.hibernate.cfg.NotYetImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 
 import java.math.BigDecimal;
@@ -52,14 +46,13 @@ import java.util.List;
 @RestController
 @CrossOrigin
 @RequestMapping("/sdk/functions")
-@Api(value = "SDK Function Descriptor NBI", description = "Operations on SDK Composer & Editor Module - SDK Function APIs")
+@Api(value = "SDK Function Descriptor NBI", description = "Operations on SDK - SDK Function APIs")
 public class FunctionController {
 
     private static final Logger log = LoggerFactory.getLogger(FunctionController.class);
 
     @Autowired
     private FunctionManager functionManager;
-
 
     public FunctionController() {
 
@@ -73,8 +66,10 @@ public class FunctionController {
     @ApiOperation(value = "Get the complete list of the SDK Functions available in database", response = SdkFunction.class, responseContainer = "List")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "")})
     @RequestMapping(value = "/", method = RequestMethod.GET)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> getFunctions() {
         log.info("Request for getting functions");
+
         List<SdkFunction> response = new ArrayList<>();
         response = functionManager.getFunctions();
         return new ResponseEntity<List<SdkFunction>>(response, HttpStatus.OK);
@@ -90,6 +85,7 @@ public class FunctionController {
         @ApiResponse(code = 404, message = "SDK Function not found in database"),
         @ApiResponse(code = 200, message = "")})
     @RequestMapping(value = "/{functionId}", method = RequestMethod.GET)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> getFunction(@PathVariable Long functionId) {
         log.info("Receiving a request to get the function with ID: " + functionId);
         if (functionId == null) {
@@ -114,6 +110,7 @@ public class FunctionController {
         @ApiResponse(code = 400, message = "SDK Function already present in database or function cannot be validated"),
         @ApiResponse(code = 201, message = "SDK Function created")})
     @RequestMapping(value = "/", method = RequestMethod.POST)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> createFunction(@RequestBody SdkFunction request) {
         log.info("Request for creation of a new function");
         try {
@@ -133,6 +130,7 @@ public class FunctionController {
         @ApiResponse(code = 403, message = "SDK Function cannot be updated"),
         @ApiResponse(code = 204, message = "SDK Function updated")})
     @RequestMapping(value = "/", method = RequestMethod.PUT)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> updateFunction(@RequestBody SdkFunction request) {
         log.info("Request for update of a function");
 
@@ -159,6 +157,7 @@ public class FunctionController {
         @ApiResponse(code = 403, message = "SDK Function cannot be deleted"),
         @ApiResponse(code = 400, message = "Deletion request without parameter functionId")})
     @RequestMapping(value = "/{functionId}", method = RequestMethod.DELETE)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> deleteFunction(@PathVariable Long functionId) {
         log.info("Request for deletion of a function with id: " + functionId);
         if (functionId == null) {
@@ -184,6 +183,7 @@ public class FunctionController {
         @ApiResponse(code = 404, message = "Base function not found"),
         @ApiResponse(code = 400, message = "Null function or invalid parameters provided")})
     @RequestMapping(value = "/{functionId}/create_descriptor", method = RequestMethod.POST)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> createDescriptor(
         @PathVariable Long functionId,
         @RequestBody MakeDescriptorRequest makeDescriptorRequest
@@ -221,6 +221,7 @@ public class FunctionController {
         @ApiResponse(code = 404, message = "SDK Function not present in database"),
         @ApiResponse(code = 400, message = "Publish request without parameter functionId or SDK Function already published")})
     @RequestMapping(value = "/{functionId}/publish", method = RequestMethod.POST)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> publishFunction(@PathVariable Long functionId) {
         log.info("Request publication of a function with ID {}", functionId);
         if (functionId == null) {
@@ -245,6 +246,7 @@ public class FunctionController {
         @ApiResponse(code = 404, message = "SDK Function not present in database"),
         @ApiResponse(code = 400, message = "Publish request without parameter functionId or SDK Function not yet published")})
     @RequestMapping(value = "/{functionId}/unpublish", method = RequestMethod.POST)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> unPublishFunction(@PathVariable Long functionId) {
         log.info("Request to unpublish function with ID " + functionId + " from the Public Catalogue");
         if (functionId == null) {
@@ -271,6 +273,7 @@ public class FunctionController {
         @ApiResponse(code = 403, message = "Monitoring Parameters cannot be updated"),
         @ApiResponse(code = 204, message = "Monitoring Parameters updated")})
     @RequestMapping(value = "/{functionId}/monitoring_params", method = RequestMethod.PUT)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> updateMonitoringParametersForFunction(@PathVariable Long functionId, @RequestBody Set<MonitoringParameter> monitoringParameters) {
         log.info("Request for update of a monitoringParameter list");
         if (functionId == null) {
@@ -300,6 +303,7 @@ public class FunctionController {
         @ApiResponse(code = 404, message = "SDK Function or Monitoring Parameters not present in database"),
         @ApiResponse(code = 200, message = "OK")})
     @RequestMapping(value = "/{functionId}/monitoring_params", method = RequestMethod.GET)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> getMonitoringParametersForFunction(@PathVariable Long functionId) {
         log.info("Request for get list of monitoringParams available on a specific function with ID " + functionId);
         if (functionId == null) {
@@ -324,6 +328,7 @@ public class FunctionController {
         @ApiResponse(code = 403, message = "Monitoring Parameters cannot be deleted"),
         @ApiResponse(code = 400, message = "Deletion request without parameter functionId or function cannot be validated")})
     @RequestMapping(value = "/{functionId}/monitoring_params/{monitoringParameterId}", method = RequestMethod.DELETE)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> deleteMonitoringParametersForFunction(@PathVariable Long functionId, @PathVariable Long monitoringParameterId) {
         log.info("Request for deletion of monitoring parameter from SDK Function identified by id: " + functionId);
         if (functionId == null) {
@@ -351,6 +356,7 @@ public class FunctionController {
         @ApiResponse(code = 202, message = "VNFD Content"),
         @ApiResponse(code = 400, message = "SDK function not present in databse")})
     @RequestMapping(value = "/{functionId}/vnfd", method = RequestMethod.GET)
+    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> getVnfd(@PathVariable Long functionId) {
         log.info("Request GET Vnfd for function with ID " + functionId);
         if (functionId == null) {

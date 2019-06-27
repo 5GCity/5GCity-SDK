@@ -161,7 +161,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
         List<SdkFunction> sdkFunctions = functionRepository.findAll();
         for(SdkFunction sdkFunction : sdkFunctions){
-            if(sdkFunction.getEpoch() < startUpdate && sdkFunction.getStatus() == SdkFunctionStatus.COMMITTED){
+            if(sdkFunction.getEpoch() < startUpdate && sdkFunction.getStatus().equals(SdkFunctionStatus.COMMITTED)){
                 log.info("Function with VNFD Id " + sdkFunction.getVnfdId() + " and version " + sdkFunction.getVersion() + " no longer present in catalogue");
                 sdkFunction.setStatus(SdkFunctionStatus.SAVED);
                 functionRepository.saveAndFlush(sdkFunction);
@@ -281,7 +281,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
                     throw new NotExistingEntityException("Monitoring parameter with ID " + param.getId() + " is not present in database");
                 }
 
-                if ((mp.get().getSdkFunction() == null) || (mp.get().getSdkFunction().getId() != function.getId())) {
+                if ((mp.get().getSdkFunction() == null) || (!mp.get().getSdkFunction().getId().equals(function.getId()))) {
                     log.error("Monitoring parameter with ID " + param.getId() + " does not belong to function with ID " + function.getId());
                     throw new NotPermittedOperationException("Monitoring parameter with ID " + param.getId() + " does not belong to function with ID " + function.getId());
                 }
@@ -296,7 +296,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
                     throw new NotExistingEntityException("Connection point with ID " + param.getId() + " is not present in database");
                 }
 
-                if ((cp.get().getSdkFunction() == null) || (cp.get().getSdkFunction().getId() != function.getId())) {
+                if ((cp.get().getSdkFunction() == null) || (!cp.get().getSdkFunction().getId().equals(function.getId()))) {
                     log.error("Connection point with ID " + param.getId() + " does not belong to function with ID " + function.getId());
                     throw new NotPermittedOperationException("Connection point with ID " + param.getId() + " does not belong to function with ID " + function.getId());
                 }
@@ -311,7 +311,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
                     throw new NotExistingEntityException("Required port with ID " + param.getId() + " is not present in database");
                 }
 
-                if ((rp.get().getFunction() == null) || (rp.get().getFunction().getId() != function.getId())) {
+                if ((rp.get().getFunction() == null) || (!rp.get().getFunction().getId().equals(function.getId()))) {
                     log.error("Required port with ID " + param.getId() + " does not belong to function with ID " + function.getId());
                     throw new NotPermittedOperationException("Required port with ID " + param.getId() + " does not belong to function with ID " + function.getId());
                 }
@@ -425,7 +425,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
                     throw new NotExistingEntityException("Monitoring parameter with ID " + param.getId() + " is not present in database");
                 }
 
-                if ((mp.get().getSdkFunction() == null) || (mp.get().getSdkFunction().getId() != functionId)) {
+                if ((mp.get().getSdkFunction() == null) || (!mp.get().getSdkFunction().getId().equals(functionId))) {
                     log.error("Monitoring parameter with ID " + param.getId() + " does not belong to function with ID " + functionId);
                     throw new NotPermittedOperationException("Monitoring parameter with ID " + param.getId() + " does not belong to function with ID " + functionId);
                 }
@@ -484,7 +484,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             throw new NotExistingEntityException("Function with ID " + functionId + " is not present in database");
         }
 
-        if((mp.get().getSdkFunction() == null) || (mp.get().getSdkFunction().getId() != functionId)){
+        if((mp.get().getSdkFunction() == null) || (mp.get().getSdkFunction().getId().equals(functionId))){
             log.error("Monitoring parameter with ID " + monitoringParameterId + " does not belong to function with ID " + functionId);
             throw  new NotPermittedOperationException("Monitoring parameter with ID " + monitoringParameterId + " does not belong to function with ID " + functionId);
         }
@@ -551,7 +551,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         synchronized (this) { // To avoid multiple simultaneous calls
             if (!function.getStatus().equals(SdkFunctionStatus.SAVED)) {
                 log.error("Requested publication for an entity already has been published");
-                throw new AlreadyPublishedServiceException(String.format("Requested publication for an entity already has been published"));
+                throw new AlreadyPublishedServiceException("Requested publication for an entity already has been published");
             }
             function.setStatus(SdkFunctionStatus.CHANGING);
             functionRepository.saveAndFlush(function);
@@ -644,8 +644,8 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         function.setEpoch(Instant.now().getEpochSecond());
 
         //for the moment we consider single DF and IL, then we set static the expression
-        function.setFlavourExpression("static_df");
-        function.setInstantiationLevelExpression("static_il");
+        //function.setFlavourExpression("static_df");
+        //function.setInstantiationLevelExpression("static_il");
 
         function.setStatus(SdkFunctionStatus.SAVED);
     }
