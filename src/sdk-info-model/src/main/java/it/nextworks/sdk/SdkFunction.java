@@ -462,7 +462,6 @@ public class SdkFunction implements InstantiableCandidate {
         sb.append('=');
         sb.append(((this.vnfdId == null) ? "<null>" : this.vnfdId));
         sb.append(',');
-        sb.append(',');
         sb.append("flavourExpression");
         sb.append('=');
         sb.append(((this.flavourExpression == null) ? "<null>" : this.flavourExpression));
@@ -622,7 +621,6 @@ public class SdkFunction implements InstantiableCandidate {
             && instantiationLevelExpression != null
             && flavourExpression != null
             && validateExpressions()
-            //&& vnfdVersion != null
             && validateMonitoringParameters()
             && validateRequiredPorts()
             && swImageData.isValid()

@@ -50,12 +50,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.PostConstruct;
@@ -109,9 +111,8 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
     }
 
-    //@PostConstruct
-    @Scheduled(fixedDelay = 3600000/*, initialDelay = 3600000*/)//run every hour
-    public void getVnfdFromCatalogue() throws MalformattedElementException, FailedOperationException{
+    @Scheduled(fixedDelayString = "${catalogue.vnfPkg.polling.time.in.milliseconds}")
+    public void getVnfdFromCatalogue() throws FailedOperationException{
         log.info("Started retrieving VNFDs from Catalogue");
 
         String storagePath = "/tmp/fromCatalogue/";
@@ -134,7 +135,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             try {
                 log.info("Retrieving VNF Pkg with id " + vnfPkgInfo.getId().toString());
                 MultipartFile vnfPkg = cataloguePlugin.getVnfPkgContent(vnfPkgInfo.getId().toString(), null, storagePath);
-                csarInfo = archiveParser.archiveToMainDescriptor(vnfPkg);
+                csarInfo = ArchiveParser.archiveToMainDescriptor(vnfPkg);
                 csarInfo.setPackageFilename(vnfPkgInfo.getId().toString());
                 dt = csarInfo.getMst();
                 mf = archiveParser.getMFContent();
@@ -150,12 +151,12 @@ public class FunctionManager implements FunctionManagerProviderInterface {
                     log.info("Creating function with vnfdID " + dt.getMetadata().getDescriptorId() + " and version " + dt.getMetadata().getVersion());
                     createFunctionFromVnfd(csarInfo, mf, storagePath);
                 }
-            }catch (IOException | FailedOperationException e) {
+            }catch (IOException | FailedOperationException | RestClientException e) {
                 log.error("Error while parsing VNF Pkg : " + e.getMessage());
-                throw new MalformattedElementException("Error while parsing VNF Pkg : " + e.getMessage());
+                //throw new MalformattedElementException("Error while parsing VNF Pkg : " + e.getMessage());
             } catch (MalformattedElementException e) {
                 log.error("Error while parsing VNF Pkg, not aligned with CSAR format: " + e.getMessage());
-                throw new MalformattedElementException("Error while parsing VNF Pkg, not aligned with CSAR format : " + e.getMessage());
+                //throw new MalformattedElementException("Error while parsing VNF Pkg, not aligned with CSAR format : " + e.getMessage());
             }
         }
 
@@ -195,9 +196,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
     @Override
     public String createFunction(SdkFunction function)
         throws MalformedElementException, AlreadyExistingEntityException {
-
         log.info("Storing into database a new function");
-
         if(function.getId() != null){
             log.error("Function ID cannot be specified in function creation");
             throw new MalformedElementException("Function ID cannot be specified in function creation");

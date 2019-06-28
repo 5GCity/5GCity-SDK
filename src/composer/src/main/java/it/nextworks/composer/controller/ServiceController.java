@@ -61,7 +61,7 @@ public class ServiceController {
      * @return servicesList List<Service>
      */
     @ApiOperation(value = "Get the complete list of the SDK Services available in database", response = SdkService.class, responseContainer = "List")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "")})
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "OK")})
     @RequestMapping(value = "/", method = RequestMethod.GET)
     @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> getServices() {
@@ -80,7 +80,7 @@ public class ServiceController {
     @ApiResponses(value = {
         @ApiResponse(code = 400, message = "Query without parameter serviceId"),
         @ApiResponse(code = 404, message = "SdkService not found in database"),
-        @ApiResponse(code = 200, message = "")})
+        @ApiResponse(code = 200, message = "OK")})
     @RequestMapping(value = "/{serviceId}", method = RequestMethod.GET)
     @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> getService(@PathVariable Long serviceId) {
@@ -151,7 +151,7 @@ public class ServiceController {
 
     @ApiOperation(value = "Delete a SDK Service from database")
     @ApiResponses(value = {
-        @ApiResponse(code = 204, message = ""),
+        @ApiResponse(code = 204, message = "SDK Service deleted"),
         @ApiResponse(code = 404, message = "SDK Service not present in database"),
         @ApiResponse(code = 403, message = "SDK Service cannot be deleted"),
         @ApiResponse(code = 400, message = "Deletion request without parameter serviceId")})
@@ -178,7 +178,7 @@ public class ServiceController {
 
     @ApiOperation(value = "Create descriptor for SDK Service")
     @ApiResponses(value = {
-        @ApiResponse(code = 200, message = ""),
+        @ApiResponse(code = 201, message = "SDK Service Descriptor created"),
         @ApiResponse(code = 404, message = "SDK Service not found"),
         @ApiResponse(code = 400, message = "Create descriptor request without serviceId or provided parameters cannot be validated")})
     @RequestMapping(value = "/{serviceId}/create_descriptor", method = RequestMethod.POST)
@@ -192,7 +192,7 @@ public class ServiceController {
         }
         try {
             String descriptorId = serviceManager.createServiceDescriptor(serviceId, parameterValues);
-            return new ResponseEntity<>(descriptorId, HttpStatus.OK);
+            return new ResponseEntity<>(descriptorId, HttpStatus.CREATED);
         } catch (NotExistingEntityException e) {
             log.error(e.toString());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
@@ -288,9 +288,9 @@ public class ServiceController {
 
     @ApiOperation(value = "Delete monitoring param from SDK Service")
     @ApiResponses(value = {
-        @ApiResponse(code = 204, message = ""),
-        @ApiResponse(code = 404, message = "SDK Service or Monitoring Parameters not present in database"),
-        @ApiResponse(code = 403, message = "Monitoring Parameters cannot be deleted"),
+        @ApiResponse(code = 204, message = "Monitoring Parameter deleted"),
+        @ApiResponse(code = 404, message = "SDK Service or Monitoring Parameter not present in database"),
+        @ApiResponse(code = 403, message = "Monitoring Parameter cannot be deleted"),
         @ApiResponse(code = 400, message = "Deletion request without parameter serviceId or service cannot be validated")})
     @RequestMapping(value = "/{serviceId}/monitoring_params/{monitoringParameterId}", method = RequestMethod.DELETE)
     @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")

@@ -100,7 +100,7 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
             new ArrayList<>(),
             vnfdData.flavour,
             vnfdData.flavour,
-            new VnfProfile(vnfdData.instantiationLevel, 1, 1)
+            new VnfProfile(vnfdData.instantiationLevel, null, null)
         );
         VNFRequirements vnfRequirements = new VNFRequirements(
             new ArrayList<>(vnfdData.vLinks)
@@ -256,6 +256,7 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
 
     private VNFNode makeVnfNode(SdkFunction function){
 
+        //TODO generate descriptor with severl deployment flavours and instantiation levels
         ArrayList<String> vnfmInfo = new ArrayList<>();
         vnfmInfo.add("juju");
         VNFProperties vnfProperties = new VNFProperties(
@@ -273,9 +274,9 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
             null,
             null,
             new ArrayList<>(),
-            function.getFlavourExpression(),
-            function.getFlavourExpression(),
-            new VnfProfile(function.getInstantiationLevelExpression(), 1, 1)
+            "static_df",
+            "static_df",
+            new VnfProfile("static_il", null, null)
         );
 
         VNFInterfaces interfaces = null;

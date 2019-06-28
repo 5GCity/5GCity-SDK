@@ -64,7 +64,7 @@ public class FunctionController {
      * @return functionList List<Function>
      */
     @ApiOperation(value = "Get the complete list of the SDK Functions available in database", response = SdkFunction.class, responseContainer = "List")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "")})
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "OK")})
     @RequestMapping(value = "/", method = RequestMethod.GET)
     @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> getFunctions() {
@@ -83,7 +83,7 @@ public class FunctionController {
     @ApiResponses(value = {
         @ApiResponse(code = 400, message = "Query without parameter functionId"),
         @ApiResponse(code = 404, message = "SDK Function not found in database"),
-        @ApiResponse(code = 200, message = "")})
+        @ApiResponse(code = 200, message = "OK")})
     @RequestMapping(value = "/{functionId}", method = RequestMethod.GET)
     @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> getFunction(@PathVariable Long functionId) {
@@ -152,7 +152,7 @@ public class FunctionController {
 
     @ApiOperation(value = "Delete a SDK Function from database")
     @ApiResponses(value = {
-        @ApiResponse(code = 204, message = ""),
+        @ApiResponse(code = 204, message = "SDK Function deleted"),
         @ApiResponse(code = 404, message = "SDK Function not present in database"),
         @ApiResponse(code = 403, message = "SDK Function cannot be deleted"),
         @ApiResponse(code = 400, message = "Deletion request without parameter functionId")})
@@ -242,7 +242,7 @@ public class FunctionController {
 
     @ApiOperation(value = "Unpublish SDK Function from Public Catalogue")
     @ApiResponses(value = {
-        @ApiResponse(code = 202, message = "The SDK Function will be removed from the Public Catalogue"),
+        @ApiResponse(code = 202, message = "SDK Function will be removed from the Public Catalogue"),
         @ApiResponse(code = 404, message = "SDK Function not present in database"),
         @ApiResponse(code = 400, message = "Publish request without parameter functionId or SDK Function not yet published")})
     @RequestMapping(value = "/{functionId}/unpublish", method = RequestMethod.POST)
@@ -323,7 +323,7 @@ public class FunctionController {
 
     @ApiOperation(value = "Delete Monitoring Parameters from SDK Function")
     @ApiResponses(value = {
-        @ApiResponse(code = 204, message = ""),
+        @ApiResponse(code = 204, message = "Monitoring parameter deleted"),
         @ApiResponse(code = 404, message = "SDK Function or Monitoring Parameters not present in database"),
         @ApiResponse(code = 403, message = "Monitoring Parameters cannot be deleted"),
         @ApiResponse(code = 400, message = "Deletion request without parameter functionId or function cannot be validated")})
@@ -353,8 +353,8 @@ public class FunctionController {
 
     @ApiOperation(value = "Get Vnfd from SDK Function")
     @ApiResponses(value = {
-        @ApiResponse(code = 202, message = "VNFD Content"),
-        @ApiResponse(code = 400, message = "SDK function not present in databse")})
+        @ApiResponse(code = 200, message = "OK"),
+        @ApiResponse(code = 400, message = "SDK Function not present in databse")})
     @RequestMapping(value = "/{functionId}/vnfd", method = RequestMethod.GET)
     @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> getVnfd(@PathVariable Long functionId) {

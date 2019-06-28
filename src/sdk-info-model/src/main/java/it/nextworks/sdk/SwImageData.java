@@ -237,10 +237,10 @@ public class SwImageData {
 
         return (((this.imgName != null) && (this.imgName.length() != 0)) &&
                 ((this.imgVersion!= null) && (this.imgVersion.length() != 0)) &&
-                (this.minDisk > 0) &&
+                (this.minDisk >= 0) &&
                 (this.minRam > 0 ) &&
                 (this.minCpu > 0) &&
-                (this.size > 0) &&
+                (this.size >= 0) &&
                 validateContainerFormat()&&
                 validateDiskFormat());
 

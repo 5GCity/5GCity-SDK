@@ -729,7 +729,13 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         }
 
         //check if all subfunctions are COMMITTED, if not ask to commit them
-        checkFunctionStatus(descriptor.getSubDescriptors());
+        try {
+            checkFunctionStatus(descriptor.getSubDescriptors());
+        }catch (NotPermittedOperationException e){
+            descriptor.setStatus(SdkServiceStatus.SAVED);
+            serviceDescriptorRepository.saveAndFlush(descriptor);
+            throw  new NotPermittedOperationException(e.getMessage());
+        }
 
         DescriptorTemplate nsd = adapter.generateNetworkServiceDescriptor(descriptor);
 

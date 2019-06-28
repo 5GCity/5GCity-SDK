@@ -361,6 +361,12 @@ public class SdkServiceTest {
 
         functionManager.createFunction(firewall);
 
+        SdkFunction vPlate = SdkFunctionTest.makeNS1vPlateObject();
+
+	assertTrue(vPlate.isValid());
+
+	functionManager.createFunction(vPlate);
+
         Long firewallId = firewall.getId();
 
         SdkService service = makeTestObject(

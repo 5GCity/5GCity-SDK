@@ -53,7 +53,7 @@ public class ServiceDescriptorsController {
     @ApiResponses(value = {
         @ApiResponse(code = 400, message = "Query without parameter serviceDescriptorId"),
         @ApiResponse(code = 404, message = "SDK Service Descriptor not present in database"),
-        @ApiResponse(code = 200, message = "")})
+        @ApiResponse(code = 200, message = "OK")})
     @RequestMapping(value = "/{serviceDescriptorId}", method = RequestMethod.GET)
     @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> getDescriptor(@PathVariable Long serviceDescriptorId) {
@@ -73,7 +73,7 @@ public class ServiceDescriptorsController {
 
     @ApiOperation(value = "Delete SDK Service Descriptor from database")
     @ApiResponses(value = {
-        @ApiResponse(code = 204, message = ""),
+        @ApiResponse(code = 204, message = "SDK Service Descriptor deleted"),
         @ApiResponse(code = 404, message = "SDK Service Descriptor not present in database"),
         @ApiResponse(code = 403, message = "SDK Service Descriptor cannot be deleted"),
         @ApiResponse(code = 400, message = "Deletion request without parameter serviceDescriptorId")})
@@ -156,7 +156,7 @@ public class ServiceDescriptorsController {
 
     @ApiOperation(value = "Get NSD from SDK Service Descriptor")
     @ApiResponses(value = {
-        @ApiResponse(code = 202, message = "NSD content"),
+        @ApiResponse(code = 200, message = "OK"),
         @ApiResponse(code = 400, message = "SDK Service Descriptor not present in database")})
     @RequestMapping(value = "/{serviceDescriptorId}/nsd", method = RequestMethod.GET)
     @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
