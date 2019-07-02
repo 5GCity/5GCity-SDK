@@ -32,6 +32,7 @@ import it.nextworks.nfvmano.libs.common.exceptions.FailedOperationException;
 import it.nextworks.nfvmano.libs.common.exceptions.MalformattedElementException;
 import it.nextworks.nfvmano.libs.common.exceptions.NotPermittedOperationException;
 import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
+import it.nextworks.nfvmano.libs.descriptors.templates.VirtualLinkPair;
 import it.nextworks.nfvmano.libs.descriptors.vnfd.nodes.VDU.VDUComputeNode;
 import it.nextworks.nfvmano.libs.descriptors.vnfd.nodes.VDU.VDUVirtualBlockStorageNode;
 import it.nextworks.nfvmano.libs.descriptors.vnfd.nodes.VNF.VNFNode;
@@ -640,6 +641,11 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             }
         }
 
+        int i = 0;
+        for(ConnectionPoint cp : function.getConnectionPoint()){
+            cp.setInternalLink("link_" + ++i);
+        }
+
         function.setEpoch(Instant.now().getEpochSecond());
 
         //for the moment we consider single DF and IL, then we set static the expression
@@ -705,9 +711,8 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         DescriptorTemplate dt = csarInfo.getMst();
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-
+        //TODO check null pointer exception?
         try {
-            //TODO change COMMITTED with PUBLISHED?
             sdkFunction.setVnfdId(dt.getMetadata().getDescriptorId());
             sdkFunction.setVersion(dt.getMetadata().getVersion());
             sdkFunction.setDescription(dt.getDescription());
@@ -726,13 +731,21 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             //TODO parameters, requiredPort?
 
             Set<ConnectionPoint> connectionPoints = new HashSet<>();
+            List<VirtualLinkPair> virtualLinkPairs = dt.getTopologyTemplate().getSubstituitionMappings().getRequirements().getVirtualLink();
             Map<String, VnfExtCpNode> cpNodes = dt.getTopologyTemplate().getVnfExtCpNodes();
             for (Map.Entry<String, VnfExtCpNode> cpNode : cpNodes.entrySet()) {
                 ConnectionPoint cp = new ConnectionPoint();
                 cp.setName(cpNode.getKey());
                 cp.setType(ConnectionPointType.EXTERNAL);
+                for(VirtualLinkPair virtualLinkPair : virtualLinkPairs){
+                    if(virtualLinkPair.getCp().equals(cp.getName())){
+                        cp.setInternalLink(virtualLinkPair.getVl());
+                        break;
+                    }
+                }
                 connectionPoints.add(cp);
             }
+
             sdkFunction.setConnectionPoint(connectionPoints);
 
             //For the moment consider only one VDU

@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 @JsonPropertyOrder({
     "id",
     "status",
+    "serviceId",
     "nsInfoId",
     "componentType",
     "parameters",
@@ -170,6 +171,10 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
         }
     }
 
+    @JsonProperty("serviceId")
+    public Long getServiceId(){
+        return this.template.getId();
+    }
 
     private void validateComponents() {
         Set<Long> subServicesIds = subServices.stream()

@@ -65,6 +65,8 @@ public class ConnectionPoint {
 
     private String internalCpName;
 
+    private String internalLink;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @Fetch(FetchMode.SELECT)
     @Cascade(org.hibernate.annotations.CascadeType.ALL)
@@ -186,6 +188,16 @@ public class ConnectionPoint {
             && validInternal;
     }
 
+    @JsonIgnore
+    public String getInternalLink() {
+        return internalLink;
+    }
+
+    @JsonIgnore
+    public void setInternalLink(String internalLink) {
+        this.internalLink = internalLink;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -219,6 +231,9 @@ public class ConnectionPoint {
         sb.append('=');
         sb.append(((this.requiredPort == null) ? "<null>" : this.requiredPort));
         sb.append(',');
+        sb.append("internalLink");
+        sb.append('=');
+        sb.append(((this.internalLink == null) ? "<null>" : this.internalLink));
         if (sb.charAt((sb.length() - 1)) == ',') {
             sb.setCharAt((sb.length() - 1), ']');
         } else {
@@ -237,6 +252,7 @@ public class ConnectionPoint {
         result = ((result * 31) + ((this.internalCpName == null) ? 0 : this.internalCpName.hashCode()));
         result = ((result * 31) + ((this.internalCpId == null) ? 0 : this.internalCpId.hashCode()));
         result = ((result * 31) + ((this.requiredPort == null) ? 0 : this.requiredPort.hashCode()));
+        result = ((result * 31) + ((this.internalLink == null) ? 0 : this.internalLink.hashCode()));
         return result;
     }
 
@@ -255,6 +271,7 @@ public class ConnectionPoint {
             && ((this.componentIndex == rhs.componentIndex) || ((this.componentIndex != null) && this.componentIndex.equals(rhs.componentIndex)))
             && ((this.internalCpName == rhs.internalCpName) || ((this.internalCpName != null) && this.internalCpName.equals(rhs.internalCpName)))
             && ((this.internalCpId == rhs.internalCpId) || ((this.internalCpId != null) && this.internalCpId.equals(rhs.internalCpId)))
+            && ((this.internalLink == rhs.internalLink) || ((this.internalLink != null) && this.internalLink.equals(rhs.internalLink)))
             && ((this.requiredPort == rhs.requiredPort) || ((this.requiredPort != null) && this.requiredPort.equals(rhs.requiredPort))));
     }
 }

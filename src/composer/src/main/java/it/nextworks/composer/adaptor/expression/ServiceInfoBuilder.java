@@ -1,5 +1,6 @@
 package it.nextworks.composer.adaptor.expression;
 
+import it.nextworks.nfvmano.libs.descriptors.templates.VirtualLinkPair;
 import it.nextworks.sdk.ConnectionPoint;
 import it.nextworks.sdk.L3Connectivity;
 import it.nextworks.sdk.Link;
@@ -10,11 +11,7 @@ import it.nextworks.sdk.SdkService;
 import it.nextworks.sdk.SdkServiceDescriptor;
 import it.nextworks.sdk.enums.ConnectionPointType;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -144,6 +141,16 @@ class ServiceInfoBuilder {
             )
             .collect(Collectors.toSet());
         Long functionId = functions.get(functionInstanceId).getTemplate().getId();
+        Map<String, String> vLinksAssociation =  new HashMap<>();
+        for(ConnectionPoint cp : functions.get(functionInstanceId).getTemplate().getConnectionPoint()){
+            Set<AdapterLink> adapterLinks = function2Link.get(functionInstanceId);
+            if(adapterLinks != null) {
+                for (AdapterLink link : adapterLinks) {
+                    if (cp.getName().equals(link.function2CpName.get(functionId)))
+                        vLinksAssociation.put(cp.getInternalLink(), link.name);
+                }
+            }
+        }
         return new VnfdData(
             functionMetadata.get(functionInstanceId).name,
             functionMetadata.get(functionInstanceId).description,
@@ -155,6 +162,7 @@ class ServiceInfoBuilder {
             function2Link.getOrDefault(functionInstanceId, new HashSet<>()).stream()
                 .map(al -> al.name + '/' + al.function2CpName.get(functionId))
                 .collect(Collectors.toSet()),
+            vLinksAssociation,
             rules
         );
     }

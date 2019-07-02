@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -69,6 +70,62 @@ public class FunctionController {
     @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> getFunctions() {
         log.info("Request for getting functions");
+
+        /*
+        ApiImplicitParams implicitParam = this.getClass().getAnnotation(ApiImplicitParams.class);
+        implicitParam.value()[0].paramType();
+        implicitParam.value()[0].name();
+        implicitParam.value()[0].dataType();
+        implicitParam.value()[0].required();
+        String authorization = implicitParam.value()[0].value();
+        */
+
+        /*
+        if (authorization != null) {
+            log.debug("Received getVNFPkgsInfo request with TOKEN :" + authorization);
+
+            log.debug("Going to validate received TOKEN for getting user infos...");
+
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            log.debug("Authenticated user: " + authentication.getName()
+                + " | Role: " + authentication.getAuthorities().toString()
+                + " | Credentials: " + authentication.getCredentials().toString()
+                + " | Details: " + authentication.getDetails().toString()
+                + " | Principal: " + authentication.getPrincipal().toString());
+
+            if (authentication.getPrincipal() instanceof KeycloakPrincipal) {
+                KeycloakPrincipal<KeycloakSecurityContext> kp = (KeycloakPrincipal<KeycloakSecurityContext>) authentication.getPrincipal();
+                // retrieving username here
+                String username = kp.getKeycloakSecurityContext().getToken().getPreferredUsername();
+            }
+
+            try {
+                keycloakService.getUsers();
+            } catch (FailedOperationException e) {
+                e.printStackTrace();
+            }
+            UserRepresentation userRepresentation = keycloakService.buildUserRepresentation("test5gcatalogue", "5gcatalogue", "5gcatalogue");
+            try {
+                keycloakService.createUser(userRepresentation);
+            } catch (FailedOperationException e) {
+                e.printStackTrace();
+            } catch (AlreadyExistingEntityException e) {
+                e.printStackTrace();
+            } catch (MalformattedElementException e) {
+                e.printStackTrace();
+            }
+            List<UserRepresentation> userRepresentations = null;
+            try {
+                userRepresentations = keycloakService.getUsers();
+            } catch (FailedOperationException e) {
+                e.printStackTrace();
+            }
+            for (UserRepresentation userRepresentation1 : userRepresentations) {
+                if (userRepresentation1.getUsername().equalsIgnoreCase("test5gcatalogue")) {
+                    keycloakService.addUserToGroup(userRepresentation1.getId());
+                }
+            }
+            */
 
         List<SdkFunction> response = new ArrayList<>();
         response = functionManager.getFunctions();

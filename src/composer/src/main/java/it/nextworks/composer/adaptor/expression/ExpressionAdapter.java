@@ -102,9 +102,7 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
             vnfdData.flavour,
             new VnfProfile(vnfdData.instantiationLevel, null, null)
         );
-        VNFRequirements vnfRequirements = new VNFRequirements(
-            new ArrayList<>(vnfdData.vLinks)
-        );
+        VNFRequirements vnfRequirements = new VNFRequirements(vnfdData.vLinksAssociation);
         return new VNFNode(
             "tosca.nodes.nfv.VNF",
             null,  // name is ignored
@@ -209,10 +207,15 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
 
     @Override
     public DescriptorTemplate generateVirtualNetworkFunctionDescriptor(SdkFunction functionInstance){
-        //TODO add cp and vlink requirements? how?
+
+        List<VirtualLinkPair> virtualLinkPairs = new ArrayList<>();
+        for(ConnectionPoint cp : functionInstance.getConnectionPoint()){
+            VirtualLinkPair lp = new VirtualLinkPair(cp.getName(), cp.getInternalLink());
+            virtualLinkPairs.add(lp);
+        }
         SubstitutionMappingsRequirements requirements = new SubstitutionMappingsRequirements(
             null,
-            null
+            virtualLinkPairs
         );
 
         SubstitutionMappings substitutionMappings = new SubstitutionMappings(
