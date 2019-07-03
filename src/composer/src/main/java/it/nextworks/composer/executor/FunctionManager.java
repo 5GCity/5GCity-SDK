@@ -73,6 +73,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 @EnableScheduling
@@ -134,7 +135,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
         for(VnfPkgInfo vnfPkgInfo : vnfPackageInfoList){
             try {
-                log.info("Retrieving VNF Pkg with id " + vnfPkgInfo.getId().toString());
+                log.info("Retrieving VNF Pkg with ID " + vnfPkgInfo.getId().toString());
                 MultipartFile vnfPkg = cataloguePlugin.getVnfPkgContent(vnfPkgInfo.getId().toString(), null, storagePath);
                 csarInfo = ArchiveParser.archiveToMainDescriptor(vnfPkg);
                 csarInfo.setPackageFilename(vnfPkgInfo.getId().toString());
@@ -164,7 +165,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         List<SdkFunction> sdkFunctions = functionRepository.findAll();
         for(SdkFunction sdkFunction : sdkFunctions){
             if(sdkFunction.getEpoch() < startUpdate && sdkFunction.getStatus().equals(SdkFunctionStatus.COMMITTED)){
-                log.info("Function with VNFD Id " + sdkFunction.getVnfdId() + " and version " + sdkFunction.getVersion() + " no longer present in catalogue");
+                log.info("Function with vnfdID " + sdkFunction.getVnfdId() + " and version " + sdkFunction.getVersion() + " no longer present in catalogue");
                 sdkFunction.setStatus(SdkFunctionStatus.SAVED);
                 functionRepository.saveAndFlush(sdkFunction);
             }
@@ -179,8 +180,8 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         if (result.isPresent()) {
             return result.get();
         } else {
-            log.error("No function with ID " + id + " was found.");
-            throw new NotExistingEntityException("No function with ID " + id + " was found.");
+            log.error("No function with ID " + id + " was found");
+            throw new NotExistingEntityException("No function with ID " + id + " was found");
         }
     }
 
@@ -269,8 +270,9 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         //update not allowed if the function is used by a service
         List<SubFunction> subFunctions = subFunctionRepository.findByComponentId(function.getId());
         if(subFunctions.size() != 0){
-            log.error("Function with ID " + function.getId() + " used by a service");
-            throw  new NotPermittedOperationException("Function with ID " + function.getId() + " used by a service");
+            List<Long> serviceIds = subFunctions.stream().map(SubFunction::getOuterService).map(SdkService::getId).collect(Collectors.toList());
+            log.error("Function with ID " + function.getId() + " used by services with IDs " + serviceIds.toString());
+            throw  new NotPermittedOperationException("Function with ID " + function.getId() + " used by services with IDs " + serviceIds.toString());
         }
 
         for(MonitoringParameter param : function.getMonitoringParameters()) {
@@ -364,8 +366,9 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         //delete not allowed if the function is used by a service
         List<SubFunction> subFunctions = subFunctionRepository.findByComponentId(functionId);
         if(subFunctions.size() != 0){
-            log.error("Function with ID " + functionId + " used by a service");
-            throw  new NotPermittedOperationException("Function with ID " + functionId + " used by a service");
+            List<Long> serviceIds = subFunctions.stream().map(SubFunction::getOuterService).map(SdkService::getId).collect(Collectors.toList());
+            log.error("Function with ID " + functionId + " used by services with IDs " + serviceIds.toString());
+            throw  new NotPermittedOperationException("Function with ID " + functionId + " used by services with IDs " + serviceIds.toString());
         }
 
         functionRepository.delete(s);
@@ -438,17 +441,18 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             throw new NotExistingEntityException("Function with ID " + functionId + " is not present in database");
         }
 
-        //update not allowed if the function is used by a service
-        List<SubFunction> subFunctions = subFunctionRepository.findByComponentId(functionId);
-        if(subFunctions.size() != 0){
-            log.error("Function with ID " + functionId + " used by a service");
-            throw  new NotPermittedOperationException("Function with ID " + functionId + " used by a service");
-        }
-
         //update not allowed if the function is published to catalogue
         if(function.get().getStatus().equals(SdkFunctionStatus.COMMITTED)){
             log.error("Function with ID " + functionId + " published to the catalogue. Please unpublish it before updating");
             throw  new NotPermittedOperationException("Function with ID " + functionId + " published to the catalogue. Please unpublish it before updating");
+        }
+
+        //update not allowed if the function is used by a service
+        List<SubFunction> subFunctions = subFunctionRepository.findByComponentId(functionId);
+        if(subFunctions.size() != 0){
+            List<Long> serviceIds = subFunctions.stream().map(SubFunction::getOuterService).map(SdkService::getId).collect(Collectors.toList());
+            log.error("Function with ID " + functionId + " used by services with IDs " + serviceIds.toString());
+            throw  new NotPermittedOperationException("Function with ID " + functionId + " used by services with IDs " + serviceIds.toString());
         }
 
         for(MonitoringParameter mp : function.get().getMonitoringParameters()){
@@ -489,17 +493,18 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             throw  new NotPermittedOperationException("Monitoring parameter with ID " + monitoringParameterId + " does not belong to function with ID " + functionId);
         }
 
-        //delete not allowed if the function is used by a service
-        List<SubFunction> subFunctions = subFunctionRepository.findByComponentId(functionId);
-        if(subFunctions.size() != 0){
-            log.error("Function with ID " + functionId + " used by a service");
-            throw  new NotPermittedOperationException("Function with ID " + functionId + " used by a service");
-        }
-
         //delete not allowed if the function is published to catalogue
         if(function.get().getStatus().equals(SdkFunctionStatus.COMMITTED)){
             log.error("Function with ID " + functionId + " published to the catalogue. Please unpublish it before deleting");
             throw  new NotPermittedOperationException("Function with ID " + functionId + " published to the catalogue. Please unpublish it before deleting");
+        }
+
+        //delete not allowed if the function is used by a service
+        List<SubFunction> subFunctions = subFunctionRepository.findByComponentId(functionId);
+        if(subFunctions.size() != 0){
+            List<Long> serviceIds = subFunctions.stream().map(SubFunction::getOuterService).map(SdkService::getId).collect(Collectors.toList());
+            log.error("Function with ID " + functionId + " used by services with IDs " + serviceIds.toString());
+            throw  new NotPermittedOperationException("Function with ID " + functionId + " used by services with IDs " + serviceIds.toString());
         }
 
         Set<MonitoringParameter> monitoringParameters = new HashSet<>();
@@ -631,13 +636,12 @@ public class FunctionManager implements FunctionManagerProviderInterface {
     }
 
     private void checkAndResolveFunction(SdkFunction function) throws AlreadyExistingEntityException {
-
         //In case of new function, check if a function with the same vnfdId and version is present
         if(function.getId() == null) {
             Optional<SdkFunction> functionOptional = functionRepository.findByVnfdIdAndVersion(function.getVnfdId(), function.getVersion());
             if (functionOptional.isPresent()) {
-                log.error("Function with vnfdID " + function.getVnfdId() + " and version " + function.getVersion() + " is already present");
-                throw new AlreadyExistingEntityException("Function with vnfdID " + function.getVnfdId() + " and version " + function.getVersion() + " is already present");
+                log.error("Function with vnfdID " + function.getVnfdId() + " and version " + function.getVersion() + " is already present with ID " + functionOptional.get().getId());
+                throw new AlreadyExistingEntityException("Function with vnfdID " + function.getVnfdId() + " and version " + function.getVersion() + " is already present with ID " + functionOptional.get().getId());
             }
         }
 

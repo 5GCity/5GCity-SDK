@@ -49,6 +49,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
+import javax.management.Descriptor;
 import javax.swing.*;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -259,15 +260,17 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         //update not allowed if the service has at least one descriptor
         List<SdkServiceDescriptor> descriptors = serviceDescriptorRepository.findByTemplateId(service.getId());
         if(descriptors.size() != 0){
-            log.error("Service with ID " + service.getId() + " has at least one descriptor. Please delete it before updating");
-            throw  new NotPermittedOperationException("Service with ID " + service.getId() + " has at least one descriptor. Please delete it before updating");
+            List<Long> descriptorIds = descriptors.stream().map(SdkServiceDescriptor::getId).collect(Collectors.toList());
+            log.error("Service with ID " + service.getId() + " has descriptors with IDs " + descriptorIds.toString() + ". Please delete them before updating");
+            throw  new NotPermittedOperationException("Service with ID " + service.getId() + " has descriptors with IDs " + descriptorIds.toString() + ". Please delete them before updating");
         }
 
         //update not allowed if the service is used by other services
         List<SubService> subServices = subServiceRepository.findByComponentId(service.getId());
         if(subServices.size() != 0){
-            log.error("Service with ID " + service.getId() + " used by a service");
-            throw  new NotPermittedOperationException("Service with ID " + service.getId() + " used by a service");
+            List<Long> serviceIds = subServices.stream().map(SubService::getOuterService).map(SdkService::getId).collect(Collectors.toList());
+            log.error("Service with ID " + service.getId() + " used by services with IDs " + serviceIds.toString());
+            throw  new NotPermittedOperationException("Service with ID " + service.getId() + " used by services with IDs " + serviceIds.toString());
         }
 
         for(SdkServiceComponent component : service.getComponents()){
@@ -416,15 +419,17 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         //delete not allowed if the service has at least one descriptor
         List<SdkServiceDescriptor> descriptors = serviceDescriptorRepository.findByTemplateId(serviceId);
         if(descriptors.size() != 0){
-            log.error("Service with ID " + serviceId + " has at least one descriptor. Please delete it before deleting");
-            throw  new NotPermittedOperationException("Service with ID " + serviceId + " has at least one descriptor. Please delete it before deleting");
+            List<Long> descriptorIds = descriptors.stream().map(SdkServiceDescriptor::getId).collect(Collectors.toList());
+            log.error("Service with ID " + serviceId + " has descriptors with IDs " + descriptorIds.toString() + ". Please delete them before updating");
+            throw  new NotPermittedOperationException("Service with ID " + serviceId + " has descriptors with IDs " + descriptorIds.toString() + ". Please delete them before updating");
         }
 
         //delete not allowed if the service is used by other services
         List<SubService> subServices = subServiceRepository.findByComponentId(serviceId);
         if(subServices.size() != 0){
-            log.error("Service with ID " + serviceId + " used by a service");
-            throw  new NotPermittedOperationException("Service with ID " + serviceId + " used by a service");
+            List<Long> serviceIds = subServices.stream().map(SubService::getOuterService).map(SdkService::getId).collect(Collectors.toList());
+            log.error("Service with ID " + serviceId + " used by services with IDs " + serviceIds.toString());
+            throw  new NotPermittedOperationException("Service with ID " + serviceId + " used by services with IDs " + serviceIds.toString());
         }
 
         serviceRepository.delete(s);
@@ -467,15 +472,17 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         //update not allowed if the service has at least one descriptor
         List<SdkServiceDescriptor> descriptors = serviceDescriptorRepository.findByTemplateId(serviceId);
         if(descriptors.size() != 0){
-            log.error("Service with ID " + serviceId + " has at least one descriptor. Please delete it before updating");
-            throw  new NotPermittedOperationException("Service with ID " + serviceId + " has at least one descriptor. Please delete it before updating");
+            List<Long> descriptorIds = descriptors.stream().map(SdkServiceDescriptor::getId).collect(Collectors.toList());
+            log.error("Service with ID " + serviceId + " has descriptors with IDs " + descriptorIds.toString() + ". Please delete them before updating");
+            throw  new NotPermittedOperationException("Service with ID " + serviceId + " has descriptors with IDs " + descriptorIds.toString() + ". Please delete them before updating");
         }
 
         //update not allowed if the service is used by other services
         List<SubService> subServices = subServiceRepository.findByComponentId(serviceId);
         if(subServices.size() != 0){
-            log.error("Service with ID " + serviceId + " used by a service");
-            throw  new NotPermittedOperationException("Service with ID " + serviceId + " used by a service");
+            List<Long> serviceIds = subServices.stream().map(SubService::getOuterService).map(SdkService::getId).collect(Collectors.toList());
+            log.error("Service with ID " + serviceId + " used by services with IDs " + serviceIds.toString());
+            throw  new NotPermittedOperationException("Service with ID " + serviceId + " used by services with IDs " + serviceIds.toString());
         }
 
         for(MonitoringParameter mp : service.get().getExtMonitoringParameters()){
@@ -529,15 +536,17 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         //delete not allowed if the service has at least one descriptor
         List<SdkServiceDescriptor> descriptors = serviceDescriptorRepository.findByTemplateId(serviceId);
         if(descriptors.size() != 0){
-            log.error("Service with ID " + serviceId + " has at least one descriptor. Please delete it before deleting");
-            throw  new NotPermittedOperationException("Service with ID " + serviceId + " has at least one descriptor. Please delete it before deleting");
+            List<Long> descriptorIds = descriptors.stream().map(SdkServiceDescriptor::getId).collect(Collectors.toList());
+            log.error("Service with ID " + serviceId + " has descriptors with IDs " + descriptorIds.toString() + ". Please delete them before updating");
+            throw  new NotPermittedOperationException("Service with ID " + serviceId + " has descriptors with IDs " + descriptorIds.toString() + ". Please delete them before updating");
         }
 
         //delete not allowed if the service is used by other services
         List<SubService> subServices = subServiceRepository.findByComponentId(serviceId);
         if(subServices.size() != 0){
-            log.error("Service with ID " + serviceId + " used by a service");
-            throw  new NotPermittedOperationException("Service with ID " + serviceId + " used by a service");
+            List<Long> serviceIds = subServices.stream().map(SubService::getOuterService).map(SdkService::getId).collect(Collectors.toList());
+            log.error("Service with ID " + serviceId + " used by services with IDs " + serviceIds.toString());
+            throw  new NotPermittedOperationException("Service with ID " + serviceId + " used by services with IDs " + serviceIds.toString());
         }
 
         Set<MonitoringParameter> extMonitoringParameters = new HashSet<>();
@@ -584,9 +593,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             log.error("Service with ID " + serviceId + " is not present in database");
             throw new NotExistingEntityException("Service with ID " + serviceId + " is not present in database");
         }
-        MonitoringParameterWrapper params = new MonitoringParameterWrapper(service.get().getExtMonitoringParameters(), service.get().getIntMonitoringParameters());
-
-        return params;
+        return new MonitoringParameterWrapper(service.get().getExtMonitoringParameters(), service.get().getIntMonitoringParameters());
     }
 
     @Override
@@ -830,8 +837,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         if(service.getId() == null) {
             Optional<SdkService> serviceOptional = serviceRepository.findByNameAndVersion(service.getName(), service.getVersion());
             if (serviceOptional.isPresent()) {
-                log.error("Service with name " + service.getName() + " and version " + service.getVersion() + " is already present");
-                throw new AlreadyExistingEntityException("Service with name " + service.getName() + " and version " + service.getVersion() + " is already present");
+                log.error("Service with name " + service.getName() + " and version " + service.getVersion() + " is already present with ID " + serviceOptional.get().getId());
+                throw new AlreadyExistingEntityException("Service with name " + service.getName() + " and version " + service.getVersion() + " is already present with ID " + serviceOptional.get().getId());
             }
         }
         log.debug("Checking functions availability");

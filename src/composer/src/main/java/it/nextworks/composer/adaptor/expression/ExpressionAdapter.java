@@ -38,15 +38,22 @@ import java.util.stream.Collectors;
 @Service
 public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
 
-    private static LinkBitrateRequirements DEFAULT_MAX_BITRATE_REQ = new LinkBitrateRequirements(
-        1000000,
-        100000
-    );
+    /* Network Service Descriptor */
 
-    private static LinkBitrateRequirements DEFAULT_MIN_BITRATE_REQ = new LinkBitrateRequirements(
-        100000,
-        10000
-    );
+    private static LinkBitrateRequirements DEFAULT_MAX_BITRATE_REQ = new LinkBitrateRequirements(1000000, 100000);
+
+    private static LinkBitrateRequirements DEFAULT_MIN_BITRATE_REQ = new LinkBitrateRequirements(100000, 10000);
+
+    @Override
+    public SdkServiceDescriptor createServiceDescriptor(SdkService service, List<BigDecimal> parameterValues) {
+        return service.makeDescriptor(parameterValues);
+    }
+
+    @Override
+    public DescriptorTemplate generateNetworkServiceDescriptor(SdkServiceDescriptor serviceInstance) {
+        ServiceInformation info = consumeService(serviceInstance).build();
+        return makeNSD(info);
+    }
 
     private ServiceInfoBuilder consumeComponent(SdkComponentInstance instance) {
         if (instance instanceof SdkFunctionDescriptor) {
@@ -54,10 +61,7 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
         } else if (instance instanceof SdkServiceDescriptor) {
             return consumeService((SdkServiceDescriptor) instance);
         } else {
-            throw new IllegalArgumentException(String.format(
-                "Unknown component type %s",
-                instance.getClass().getSimpleName()
-            ));
+            throw new IllegalArgumentException(String.format("Unknown component type %s", instance.getClass().getSimpleName()));
         }
     }
 
@@ -162,7 +166,7 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
     private DescriptorTemplate makeNSD(ServiceInformation info) {
         LinkedHashMap<String, Node> nodeTemplates = new LinkedHashMap<>(
             info.getVnfdData().stream().collect(Collectors.toMap(
-                data -> data.name,
+                data -> String.format("%s_%s_%s",data.name, data.vnfdVersion, data.vendor),
                 this::makeVnfd
             ))
         );
@@ -194,16 +198,7 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
         );
     }
 
-    @Override
-    public SdkServiceDescriptor createServiceDescriptor(SdkService service, List<BigDecimal> parameterValues) {
-        return service.makeDescriptor(parameterValues);
-    }
-
-    @Override
-    public DescriptorTemplate generateNetworkServiceDescriptor(SdkServiceDescriptor serviceInstance) {
-        ServiceInformation info = consumeService(serviceInstance).build();
-        return makeNSD(info);
-    }
+    /* Virtual Network Function Descriptor */
 
     @Override
     public DescriptorTemplate generateVirtualNetworkFunctionDescriptor(SdkFunction functionInstance){
