@@ -1,0 +1,43 @@
+{
+    "status": "SAVED",
+    "ownerId": "NXW",
+    "name": "vPlate-server",
+    "description": "VNF descriptor: vPlate-server. Generated with 5GCity SDK",
+    "vendor": "NXW",
+    "version": "1.0",
+    "vnfdId": "aa333a44-6587-4940-b442-c029376bbb2e",
+    "visibility": "PUBLIC",
+    "flavourExpression": "static_df",
+    "instantiationLevelExpression": "static_il",
+    "connectionPoints": [
+      {
+        "name": "eth0",
+        "cpType": "EXTERNAL",
+        "requiredPort": []
+      }
+    ],
+    "monitoringParameters": [
+      {
+        "metricName": "CPU_UTILIZATION",
+        "metricType": "SYSTEM",
+        "parameterType": "FUNCTION",
+        "name": "cpu_utilization"
+      }
+    ],
+    "groupId": "NXW",
+    "accessLevel": 4,
+    "swImageData": {
+      "imgName": "cirros",
+      "imgVersion": "1.0",
+      "checksum": "123456789abcdef",
+      "containerFormat": "BARE",
+      "diskFormat": "QCOW2",
+      "minDisk": 20,
+      "minRam": 4196,
+      "minCpu": 3,
+      "size": 2
+    },
+    "minInstancesCount": 1,
+    "maxInstancesCount": 2,
+    "requiredPorts": []
+  }

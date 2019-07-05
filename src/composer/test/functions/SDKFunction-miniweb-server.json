@@ -1,0 +1,59 @@
+{
+    "status": "SAVED",
+    "ownerId": "NXW",
+    "name": "miniweb-server",
+    "description": "Miniweb Server",
+    "vendor": "NXW",
+    "version": "v1.0",
+    "parameters": [
+      "isVideo",
+      "size"
+    ],
+    "vnfdId": "057289e2-7b8e-4280-8734-43b924f64b85",
+    "visibility": "PRIVATE",
+    "flavourExpression": "IF(isVideo != 0, video_flv_srv, standard_flv_srv)",
+    "instantiationLevelExpression": "IF(size <= 1, small_il, IF(size <= 10, medium_il, big_il))",
+    "metadata": {
+    },
+    "connectionPoints": [
+      {
+        "name": "cp-eth0",
+        "cpType": "EXTERNAL",
+        "requiredPort": [
+          80,
+          443
+        ]
+      }
+    ],
+    "monitoringParameters": [
+      {
+        "metricName": "CPU_UTILIZATION",
+        "metricType": "SYSTEM",
+        "parameterType": "FUNCTION",
+        "name": "cpu_utilization"
+      },
+      {
+        "transform": "MAX_OVER_TIME",
+        "argumentList": [],
+        "targetParameterName": "cpu_utilization",
+        "parameterType": "TRANSFORMED",
+        "name": "max_cpu_utilization"
+      }
+    ],
+    "groupId": "NXW",
+    "accessLevel": 2,
+    "swImageData": {
+      "imgName": "cirros",
+      "imgVersion": "2.0",
+      "checksum": "123456789abcdef",
+      "containerFormat": "bare",
+      "diskFormat": "qcow2",
+      "minDisk": 20,
+      "minRam": 2048,
+      "minCpu": 1,
+      "size": 2
+    },
+    "minInstancesCount": 3,
+    "maxInstancesCount": 5,
+    "requiredPorts": []
+}
