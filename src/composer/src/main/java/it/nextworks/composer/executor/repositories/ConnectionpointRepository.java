@@ -16,6 +16,7 @@
 package it.nextworks.composer.executor.repositories;
 
 import it.nextworks.sdk.ConnectionPoint;
+import it.nextworks.sdk.MonitoringParameter;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
@@ -25,5 +26,5 @@ public interface ConnectionpointRepository extends JpaRepository<ConnectionPoint
 
     Optional<ConnectionPoint> findById(Integer id);
 
-
+    Optional<ConnectionPoint> findByIdAndSdkServiceId(Long id, Long serviceId);
 }

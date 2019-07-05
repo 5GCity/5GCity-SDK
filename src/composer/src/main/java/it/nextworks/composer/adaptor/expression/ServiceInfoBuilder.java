@@ -1,21 +1,17 @@
 package it.nextworks.composer.adaptor.expression;
 
+import it.nextworks.nfvmano.libs.descriptors.templates.VirtualLinkPair;
 import it.nextworks.sdk.ConnectionPoint;
 import it.nextworks.sdk.L3Connectivity;
 import it.nextworks.sdk.Link;
 import it.nextworks.sdk.MonitoringParameter;
-import it.nextworks.sdk.ScalingAspect;
 import it.nextworks.sdk.SdkFunction;
 import it.nextworks.sdk.SdkFunctionDescriptor;
 import it.nextworks.sdk.SdkService;
 import it.nextworks.sdk.SdkServiceDescriptor;
 import it.nextworks.sdk.enums.ConnectionPointType;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -49,7 +45,7 @@ class ServiceInfoBuilder {
 
     private Set<MonitoringParameter> monitoringParameters = new HashSet<>();
 
-    private Set<ScalingAspect> scalingAspects = new HashSet<>();
+    //private Set<ScalingAspect> scalingAspects = new HashSet<>();
 
     // Used only at last -> not to be merged
     private Set<AdapterLink> adapterLinks = new HashSet<>();
@@ -67,7 +63,7 @@ class ServiceInfoBuilder {
         SdkFunction template = function.getTemplate();
         functions.put(id, function);
         func2vnfd.put(id, template.getVnfdId());
-        func2vnfdVersion.put(id, template.getVnfdVersion());
+        func2vnfdVersion.put(id, template.getVersion());
         func2flavour.put(id, function.getFlavour());
         func2level.put(id, function.getLevel());
         monitoringParameters.addAll(template.getMonitoringParameters());
@@ -98,7 +94,7 @@ class ServiceInfoBuilder {
         service2Cp.putAll(other.service2Cp);
         cpsById.putAll(other.cpsById);
         monitoringParameters.addAll(other.monitoringParameters);
-        scalingAspects.addAll(other.scalingAspects);
+        //scalingAspects.addAll(other.scalingAspects);
         return this;
     }
 
@@ -108,8 +104,7 @@ class ServiceInfoBuilder {
         addLinks(id, template.getLink());
         addCps(id, template.getConnectionPoint());
         addRule(id, template.getL3Connectivity());
-        scalingAspects.addAll(template.getScalingAspect());
-        monitoringParameters.addAll(template.getMonitoringParameters());
+        monitoringParameters.addAll(template.getExtMonitoringParameters());
 
         serviceMetadata.setName(template.getName())
             .setVersion(template.getVersion())
@@ -146,6 +141,16 @@ class ServiceInfoBuilder {
             )
             .collect(Collectors.toSet());
         Long functionId = functions.get(functionInstanceId).getTemplate().getId();
+        Map<String, String> vLinksAssociation =  new HashMap<>();
+        for(ConnectionPoint cp : functions.get(functionInstanceId).getTemplate().getConnectionPoint()){
+            Set<AdapterLink> adapterLinks = function2Link.get(functionInstanceId);
+            if(adapterLinks != null) {
+                for (AdapterLink link : adapterLinks) {
+                    if (cp.getName().equals(link.function2CpName.get(functionId)))
+                        vLinksAssociation.put(cp.getInternalLink(), link.name);
+                }
+            }
+        }
         return new VnfdData(
             functionMetadata.get(functionInstanceId).name,
             functionMetadata.get(functionInstanceId).description,
@@ -157,6 +162,7 @@ class ServiceInfoBuilder {
             function2Link.getOrDefault(functionInstanceId, new HashSet<>()).stream()
                 .map(al -> al.name + '/' + al.function2CpName.get(functionId))
                 .collect(Collectors.toSet()),
+            vLinksAssociation,
             rules
         );
     }

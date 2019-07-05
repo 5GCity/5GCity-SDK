@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import it.nextworks.sdk.enums.SdkServiceComponentType;
 import it.nextworks.sdk.enums.SdkServiceStatus;
+import it.nextworks.sdk.enums.Visibility;
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -14,17 +15,7 @@ import org.hibernate.annotations.LazyCollectionOption;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import javax.persistence.CascadeType;
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.OrderColumn;
-import javax.persistence.PrePersist;
+import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
@@ -44,9 +35,11 @@ import java.util.stream.Collectors;
 @JsonPropertyOrder({
     "id",
     "status",
-    "component_type",
+    "serviceId",
+    "nsInfoId",
+    "componentType",
     "parameters",
-    "sub_descriptor"
+    "subDescriptor"
 })
 @Entity
 public class SdkServiceDescriptor extends SdkComponentInstance {
@@ -57,24 +50,27 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
 
     private SdkServiceStatus status;
 
+    private String nsInfoId;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @Fetch(FetchMode.SELECT)
     @Cascade(org.hibernate.annotations.CascadeType.ALL)
     @OrderColumn
     private List<BigDecimal> parameterValues;
 
-    @OneToMany(mappedBy = "outerService", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "outerService", cascade = CascadeType.ALL, orphanRemoval = true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<SdkFunctionDescriptor> subFunctions = new HashSet<>();
 
-    @OneToMany(mappedBy = "outerService", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "outerService", cascade = CascadeType.ALL, orphanRemoval = true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<SdkServiceDescriptor> subServices = new HashSet<>();
 
     @ManyToOne
     private SdkService template;
+
 
     private SdkServiceDescriptor() {
         super();
@@ -100,7 +96,7 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
     }
 
     @Override
-    @JsonProperty("component_type")
+    @JsonProperty("componentType")
     public SdkServiceComponentType getType() {
         return SdkServiceComponentType.SDK_SERVICE;
     }
@@ -113,6 +109,16 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
     @JsonProperty("id")
     void setId(Long id) {
         this.id = id;
+    }
+
+    @JsonIgnore
+    public String getNsInfoId() {
+        return nsInfoId;
+    }
+
+    @JsonIgnore
+    public void setNsInfoId(String nsInfoId) {
+        this.nsInfoId = nsInfoId;
     }
 
     @JsonIgnore
@@ -130,14 +136,14 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
         this.status = status;
     }
 
-    @JsonProperty("sub_descriptor")
+    @JsonProperty("subDescriptor")
     public Set<SdkComponentInstance> getSubDescriptors() {
         Set<SdkComponentInstance> output = new HashSet<>(subFunctions);
         output.addAll(subServices);
         return output;
     }
 
-    @JsonProperty("sub_instance")
+    @JsonProperty("subDescriptor")
     public void setSubDescriptors(Set<SdkComponentInstance> components) {
         Map<SdkServiceComponentType, List<SdkComponentInstance>> byType =
             components.stream().collect(Collectors.groupingBy(SdkComponentInstance::getType));
@@ -155,6 +161,19 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
             .map(SdkServiceDescriptor.class::cast)
             .collect(Collectors.toSet());
         validateComponents();
+
+        for (SdkFunctionDescriptor subFunction : subFunctions) {
+            subFunction.setOuterService(this);
+        }
+
+        for (SdkServiceDescriptor subService : subServices) {
+            subService.setOuterService(this);
+        }
+    }
+
+    @JsonProperty("serviceId")
+    public Long getServiceId(){
+        return this.template.getId();
     }
 
     private void validateComponents() {
@@ -259,15 +278,5 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
     @JsonIgnore
     public Integer getFreeParametersNumber() {
         return 0;
-    }
-
-    @PrePersist
-    private void prePersist() {
-        for (SdkFunctionDescriptor subFunction : subFunctions) {
-            subFunction.setOuterService(this);
-        }
-        for (SdkServiceDescriptor subService : subServices) {
-            subService.setOuterService(this);
-        }
     }
 }

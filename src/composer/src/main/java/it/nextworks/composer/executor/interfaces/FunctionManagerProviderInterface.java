@@ -15,10 +15,21 @@
  */
 package it.nextworks.composer.executor.interfaces;
 
+import it.nextworks.nfvmano.libs.common.exceptions.AlreadyExistingEntityException;
+import it.nextworks.nfvmano.libs.common.exceptions.NotPermittedOperationException;
+import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
 import it.nextworks.sdk.SdkFunction;
+import it.nextworks.sdk.MonitoringParameter;
+import it.nextworks.sdk.exceptions.AlreadyPublishedServiceException;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
+import it.nextworks.sdk.exceptions.MalformedElementException;
+import it.nextworks.sdk.exceptions.NotPublishedServiceException;
+import org.hibernate.cfg.NotYetImplementedException;
+import org.omg.CosNaming.NamingContextPackage.AlreadyBound;
 
 import java.util.List;
+import java.util.Set;
+import java.math.BigDecimal;
 
 public interface FunctionManagerProviderInterface {
 
@@ -36,7 +47,42 @@ public interface FunctionManagerProviderInterface {
      */
     List<SdkFunction> getFunctions();
 
-    String createFunction(SdkFunction function);
+    //String createFunction(SdkFunction function);
 
-    String createFunction();
+    //String createFunction();
+
+    String createFunction(SdkFunction function)
+        throws MalformedElementException, AlreadyExistingEntityException;
+
+    String updateFunction(SdkFunction function)
+        throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException;
+
+    SdkFunction getFunctionById(Long id)
+        throws NotExistingEntityException;
+
+    void deleteFunction(Long functionId)
+        throws NotExistingEntityException, NotPermittedOperationException;
+
+    /*
+    String createFunctionDescriptor(Long functionId, List<BigDecimal> parameterValues)
+        throws NotExistingEntityException, MalformedElementException, NotYetImplementedException;
+    */
+
+    void publishFunction(Long functionId)
+        throws NotExistingEntityException, AlreadyPublishedServiceException;
+
+    void unPublishFunction(Long functionDescriptorId)
+        throws NotExistingEntityException, NotPublishedServiceException;
+
+    void updateMonitoringParameters(Long functionId, Set<MonitoringParameter> monitoringParameters)
+        throws NotExistingEntityException, NotPermittedOperationException, MalformedElementException;
+
+    void deleteMonitoringParameters(Long functionId, Long monitoringParameterId)
+        throws NotExistingEntityException, NotPermittedOperationException, MalformedElementException;
+
+    Set<MonitoringParameter> getMonitoringParameters(Long functionId)
+        throws NotExistingEntityException;
+
+    DescriptorTemplate generateTemplate(Long functionId)
+        throws NotExistingEntityException;
 }

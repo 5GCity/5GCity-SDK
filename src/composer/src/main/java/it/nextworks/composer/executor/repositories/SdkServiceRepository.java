@@ -25,4 +25,5 @@ public interface SdkServiceRepository extends JpaRepository<SdkService, Long> {
 
     Optional<SdkService> findById(Long id);
 
+    Optional<SdkService> findByNameAndVersion(String name, String version);
 }

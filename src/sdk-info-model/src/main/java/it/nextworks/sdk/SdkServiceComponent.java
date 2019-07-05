@@ -13,19 +13,7 @@ import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
-import javax.persistence.ElementCollection;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.OrderColumn;
-import javax.persistence.PostLoad;
-import javax.persistence.PostPersist;
-import javax.persistence.PostUpdate;
-import javax.persistence.PrePersist;
-import javax.persistence.Transient;
+import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -41,14 +29,15 @@ import java.util.Objects;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "id",
-    "component_id",
-    "component_type",
-    "mapping_expression"
+    "componentId",
+    "componentType",
+    "mappingExpressions",
+    "componentIndex"
 })
 @JsonTypeInfo(
     use = JsonTypeInfo.Id.NAME,
     include = JsonTypeInfo.As.EXISTING_PROPERTY,
-    property = "component_type")
+    property = "componentType")
 @JsonSubTypes({
     @Type(value = SubFunction.class, name = "SDK_FUNCTION"),
     @Type(value = SubService.class, name = "SDK_SERVICE")
@@ -60,14 +49,15 @@ abstract public class SdkServiceComponent<T extends InstantiableCandidate> {
     @GeneratedValue(strategy = GenerationType.AUTO)
     protected Long id;
 
-    @Transient
     protected Long componentId;
 
     @Transient
     protected SdkServiceComponentType type;
 
+    protected Integer componentIndex;
+
     @ManyToOne
-    protected T component;
+    protected T sdkComponent;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @Fetch(FetchMode.SELECT)
@@ -97,32 +87,42 @@ abstract public class SdkServiceComponent<T extends InstantiableCandidate> {
         this.outerService = outerService;
     }
 
-    @JsonProperty("component_id")
+    @JsonProperty("componentId")
     public Long getComponentId() {
         return componentId;
     }
 
-    @JsonProperty("component_id")
+    @JsonProperty("componentId")
     public void setComponentId(Long componentId) {
         this.componentId = componentId;
     }
 
-    @JsonProperty("component_type")
+    @JsonProperty("componentType")
     public SdkServiceComponentType getType() {
         return type;
     }
 
-    @JsonProperty("component_type")
+    @JsonProperty("componentType")
     public void setType(SdkServiceComponentType type) {
         this.type = type;
     }
 
+    @JsonProperty("componentIndex")
+    public Integer getComponentIndex() {
+        return componentIndex;
+    }
+
+    @JsonProperty("componentIndex")
+    public void setComponentIndex(Integer componentIndex) {
+        this.componentIndex = componentIndex;
+    }
+
     @JsonIgnore
     public T getComponent() {
-        if (component == null) {
+        if (sdkComponent == null) {
             throw new IllegalStateException("Component not yet set, resolve the component first");
         }
-        return component;
+        return sdkComponent;
     }
 
     @JsonIgnore
@@ -150,10 +150,10 @@ abstract public class SdkServiceComponent<T extends InstantiableCandidate> {
                 componentId
             ));
         }
-        this.component = component;
+        this.sdkComponent = component;
     }
 
-    @JsonProperty("mapping_expression")
+    @JsonProperty("mappingExpressions")
     public List<String> getMappingExpression() {
         return mappingExpression;
     }
@@ -161,13 +161,14 @@ abstract public class SdkServiceComponent<T extends InstantiableCandidate> {
     @JsonIgnore
     public boolean isValid() {
         return componentId != null
+            && componentIndex != null
             && mappingExpression != null
             && validateExpressions();
     }
 
     @JsonIgnore
     public boolean isResolved() {
-        return component != null;
+        return sdkComponent != null;
     }
 
     private boolean validateExpressions() {
@@ -203,9 +204,9 @@ abstract public class SdkServiceComponent<T extends InstantiableCandidate> {
             .append('[');
         sb.append("component");
         sb.append('=');
-        sb.append(((this.component == null) ? "<null>" : this.component));
+        sb.append(((this.sdkComponent == null) ? "<null>" : this.sdkComponent));
         sb.append(',');
-        sb.append("mappingExpression");
+        sb.append("mappingExpressions");
         sb.append('=');
         sb.append(((this.mappingExpression == null) ? "<null>" : this.mappingExpression));
         sb.append(',');
@@ -259,14 +260,5 @@ abstract public class SdkServiceComponent<T extends InstantiableCandidate> {
         if (!isResolved()) {
             throw new IllegalStateException("Cannot persist, component is not resolved");
         }
-    }
-
-    @PostLoad
-    @PostPersist
-    @PostUpdate
-    private void fixPersistence() {
-        mappingExpression = new ArrayList<>(mappingExpression);
-        componentId = component.getId();
-        type = component.getType();
     }
 }

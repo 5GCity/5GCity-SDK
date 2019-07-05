@@ -2,3 +2,4 @@ mvnw
 .idea
 *.iml
 target
+.settings

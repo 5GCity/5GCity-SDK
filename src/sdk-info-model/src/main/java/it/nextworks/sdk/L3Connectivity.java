@@ -4,22 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import org.hibernate.annotations.Cascade;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.*;
 
-import javax.persistence.ElementCollection;
+import javax.persistence.*;
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.PostLoad;
-import javax.persistence.PostPersist;
-import javax.persistence.PostUpdate;
-import javax.persistence.PrePersist;
-import javax.persistence.Transient;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -44,6 +33,7 @@ public class L3Connectivity {
     @ElementCollection(fetch = FetchType.EAGER)
     @Fetch(FetchMode.SELECT)
     @Cascade(org.hibernate.annotations.CascadeType.ALL)
+    @OrderColumn
     private Set<L3ConnectivityRule> l3Rules = new HashSet<>();
 
     @ManyToOne
@@ -59,9 +49,14 @@ public class L3Connectivity {
         this.service = service;
     }
 
-    @JsonIgnore
+    @JsonProperty("id")
     public Long getId() {
         return id;
+    }
+
+    @JsonProperty("id")
+    public void setId(Long id) {
+        this.id = id;
     }
 
     @JsonProperty("connectionPointId")
@@ -81,7 +76,7 @@ public class L3Connectivity {
 
     @JsonProperty("l3Rules")
     public void setL3Rules(Set<L3ConnectivityRule> l3Rules) {
-        this.l3Rules = l3Rules;
+       this.l3Rules = l3Rules;
     }
 
     @JsonIgnore
@@ -100,6 +95,8 @@ public class L3Connectivity {
             ));
         }
         this.connectionPoint = connectionPoint;
+
+        //connectionPoint.setL3Connectivity(this);
     }
 
     @JsonIgnore
@@ -148,27 +145,5 @@ public class L3Connectivity {
         L3Connectivity rhs = ((L3Connectivity) other);
         return (((this.l3Rules == rhs.l3Rules) || ((this.l3Rules != null) && this.l3Rules.equals(rhs.l3Rules)))
             && ((this.connectionPointName == rhs.connectionPointName) || ((this.connectionPointName != null) && this.connectionPointName.equals(rhs.connectionPointName))));
-    }
-
-    private boolean isResolved() {
-        return connectionPoint != null;
-    }
-
-    @PrePersist
-    private void prePersist() {
-        if (!isResolved()) {
-            throw new IllegalStateException(String.format(
-                "Cannot persist: l3 connectivity %s not resolved",
-                getId()
-            ));
-        }
-        connectionPoint.setL3Connectivity(this);
-    }
-
-    @PostLoad
-    @PostPersist
-    @PostUpdate
-    private void fixPersistence() {
-        l3Rules = new HashSet<>(l3Rules);
     }
 }

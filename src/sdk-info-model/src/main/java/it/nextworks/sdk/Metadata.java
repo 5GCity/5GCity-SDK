@@ -26,7 +26,7 @@ public class Metadata {
     @Column(name = "metadata_key")
     private String key;
 
-    @Column(name = "metadata_value")
+    @Column(name = "metadata_value", length = 10000)
     private String value;
 
     @ManyToOne
@@ -58,6 +58,9 @@ public class Metadata {
     public String getValue() {
         return value;
     }
+
+    @JsonIgnore
+    public Long getId() { return id; }
 
     @JsonIgnore
     public SdkFunction getFunction() {

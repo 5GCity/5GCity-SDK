@@ -25,5 +25,7 @@ public interface MonitoringParameterRepository extends JpaRepository<MonitoringP
 
     Optional<MonitoringParameter> findById(Long id);
 
+    Optional<MonitoringParameter> findByIdAndSdkServiceExtId(Long id, Long serviceId);
 
+    Optional<MonitoringParameter> findByIdAndSdkServiceIntId(Long id, Long serviceId);
 }

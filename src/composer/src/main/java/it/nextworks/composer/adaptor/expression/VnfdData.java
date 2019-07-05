@@ -1,7 +1,10 @@
 package it.nextworks.composer.adaptor.expression;
 
+import it.nextworks.nfvmano.libs.descriptors.templates.VirtualLinkPair;
 import it.nextworks.sdk.L3Connectivity;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -18,7 +21,9 @@ public class VnfdData {
     public final String flavour;
     public final String instantiationLevel;
     public final Set<String> vLinks;
+    public final Map<String, String> vLinksAssociation;
     public final Set<L3Connectivity> rules;
+
 
     public VnfdData(
         String name,
@@ -29,6 +34,7 @@ public class VnfdData {
         String flavour,
         String instantiationLevel,
         Set<String> vLinks,
+        Map<String, String> vLinksAssociation,
         Set<L3Connectivity> rules
     ) {
         this.name = name;
@@ -39,6 +45,7 @@ public class VnfdData {
         this.flavour = flavour;
         this.instantiationLevel = instantiationLevel;
         this.vLinks = vLinks;
+        this.vLinksAssociation = vLinksAssociation;
         this.rules = rules;
     }
 }

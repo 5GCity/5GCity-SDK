@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import it.nextworks.sdk.enums.Visibility;
 import it.nextworks.sdk.enums.ConnectionPointType;
 import it.nextworks.sdk.enums.SdkServiceComponentType;
 import org.hibernate.annotations.Cascade;
@@ -14,21 +15,7 @@ import org.hibernate.annotations.LazyCollectionOption;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import javax.persistence.CascadeType;
-import javax.persistence.ElementCollection;
-import javax.persistence.Embedded;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.OrderColumn;
-import javax.persistence.PostLoad;
-import javax.persistence.PostPersist;
-import javax.persistence.PostUpdate;
-import javax.persistence.PrePersist;
-import javax.persistence.Transient;
+import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,19 +37,22 @@ import java.util.stream.Stream;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "id",
+    "ownerId",
     "name",
     "version",
     "designer",
-    "parameter",
+    "parameters",
     "license",
     "link",
-    "component",
+    "components",
     "metadata",
-    "connection_point",
-    "l3_connectivity",
-    "monitoring_parameter",
-    "scaling_aspect"
-
+    "connectionPoints",
+    "l3Connectivity",
+    "extMonitoringParameters",
+    "intMonitoringParameters",
+    "visibility",
+    "groupId",
+    "accessLevel"
 })
 @Entity
 public class SdkService implements InstantiableCandidate {
@@ -73,7 +63,7 @@ public class SdkService implements InstantiableCandidate {
 
     private String name;
 
-    private String version;
+    private String version = "1.0";
 
     private String designer;
 
@@ -83,12 +73,12 @@ public class SdkService implements InstantiableCandidate {
     @OrderColumn
     private List<String> parameters = new ArrayList<>();
 
-    @OneToMany(mappedBy = "outerService", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "outerService", cascade = CascadeType.ALL, orphanRemoval=true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<SubFunction> subFunctions = new HashSet<>();
 
-    @OneToMany(mappedBy = "outerService", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "outerService", cascade = CascadeType.ALL, orphanRemoval=true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<SubService> subServices = new HashSet<>();
@@ -96,35 +86,53 @@ public class SdkService implements InstantiableCandidate {
     @Embedded
     private License license;
 
-    @OneToMany(mappedBy = "service", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "service", cascade = CascadeType.ALL, orphanRemoval=true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<Link> link = new HashSet<>();
 
-    @OneToMany(mappedBy = "service", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "service", cascade = CascadeType.ALL, orphanRemoval=true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<L3Connectivity> l3Connectivity = new HashSet<>();
 
-    @OneToMany(mappedBy = "service", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "service", cascade = CascadeType.ALL, orphanRemoval=true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<Metadata> metadata = new HashSet<>();
 
-    @OneToMany(mappedBy = "service", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "sdkServiceExt", cascade = CascadeType.ALL, orphanRemoval=true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
-    private Set<MonitoringParameter> monitoringParameters = new HashSet<>();
+    private Set<MonitoringParameter> extMonitoringParameters = new HashSet<>();
 
-    @OneToMany(mappedBy = "service", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "sdkServiceInt", cascade = CascadeType.ALL, orphanRemoval=true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
-    private Set<ScalingAspect> scalingAspect = new HashSet<>();
+    private Set<MonitoringParameter> intMonitoringParameters = new HashSet<>();
 
-    @OneToMany(mappedBy = "sdkService", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "sdkService", cascade = CascadeType.ALL, orphanRemoval=true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<ConnectionPoint> connectionPoint = new HashSet<>();
+
+    @OneToMany(mappedBy = "sdkService", cascade = CascadeType.ALL, orphanRemoval=true)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @LazyCollection(LazyCollectionOption.FALSE)
+    private Set<ServiceAction> actions = new HashSet<>();
+
+    @OneToMany(mappedBy = "sdkService", cascade = CascadeType.ALL, orphanRemoval=true)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @LazyCollection(LazyCollectionOption.FALSE)
+    private Set<ServiceActionRule> actionRules = new HashSet<>();
+
+    private String ownerId;
+
+    private String groupId;
+
+    private Visibility visibility = Visibility.fromValue("PRIVATE");
+
+    private Integer accessLevel = 4;
 
     @Override
     public SdkServiceDescriptor makeDescriptor(List<BigDecimal> parameterValues) {
@@ -150,14 +158,57 @@ public class SdkService implements InstantiableCandidate {
         );
     }
 
-    @JsonProperty("connection_point")
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonProperty("actions")
+    public Set<ServiceAction> getActions() {
+        return actions;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonProperty("actions")
+    public void setActions(Set<ServiceAction> actions) {
+        //this.actions = actions;
+        this.actions.clear();
+        this.actions.addAll(actions);
+
+        for (ServiceAction sa : this.actions) {
+            sa.setSdkService(this);
+        }
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonProperty("actionRules")
+    public Set<ServiceActionRule> getActionRules() {
+        return actionRules;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonProperty("actionRules")
+    public void setActionRules(Set<ServiceActionRule> actionRules) {
+
+        this.actionRules.clear();
+        this.actionRules.addAll(actionRules);
+
+        for (ServiceActionRule sa : this.actionRules) {
+            sa.setSdkService(this);
+        }
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonProperty("connectionPoints")
     public Set<ConnectionPoint> getConnectionPoint() {
         return connectionPoint;
     }
 
-    @JsonProperty("connection_point")
+    @JsonProperty("connectionPoints")
     public void setConnectionPoint(Set<ConnectionPoint> connectionPoint) {
-        this.connectionPoint = connectionPoint;
+
+        this.connectionPoint.clear();
+        this.connectionPoint.addAll(connectionPoint);
+
+        for (ConnectionPoint cp : this.connectionPoint) {
+            cp.setSdkService(this);
+        }
     }
 
     @JsonIgnore
@@ -176,13 +227,14 @@ public class SdkService implements InstantiableCandidate {
         return Stream.concat(servicesCp, funcCp).collect(Collectors.toSet());
     }
 
-    @JsonProperty("parameter")
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonProperty("parameters")
     @Override
     public List<String> getParameters() {
         return parameters;
     }
 
-    @JsonProperty("parameter")
+    @JsonProperty("parameters")
     public void setParameters(List<String> parameters) {
         this.parameters = parameters;
     }
@@ -203,6 +255,7 @@ public class SdkService implements InstantiableCandidate {
         this.designer = designer;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("component")
     public Set<SdkServiceComponent> getComponents() {
         Set<SdkServiceComponent> output = new HashSet<>(subFunctions);
@@ -221,16 +274,25 @@ public class SdkService implements InstantiableCandidate {
                 byType.keySet()
             ));
         }
-        subFunctions = byType.getOrDefault(SdkServiceComponentType.SDK_FUNCTION, Collections.emptyList()).stream()
+        subFunctions.clear();
+        subServices.clear();
+        subFunctions.addAll(byType.getOrDefault(SdkServiceComponentType.SDK_FUNCTION, Collections.emptyList()).stream()
             .map(SubFunction.class::cast)
-            .collect(Collectors.toSet());
-        subServices = byType.getOrDefault(SdkServiceComponentType.SDK_SERVICE, Collections.emptyList()).stream()
+            .collect(Collectors.toSet()));
+        subServices.addAll(byType.getOrDefault(SdkServiceComponentType.SDK_SERVICE, Collections.emptyList()).stream()
             .map(SubService.class::cast)
-            .collect(Collectors.toSet());
+            .collect(Collectors.toSet()));
         if (!validateComponents()) {
             throw new IllegalArgumentException(
                 "Invalid components provided. Make sure all are valid and pointing to saved entities."
             );
+        }
+
+        for (SubFunction subFunction : this.subFunctions) {
+            subFunction.setOuterService(this);
+        }
+        for (SubService subService : this.subServices) {
+            subService.setOuterService(this);
         }
     }
 
@@ -238,6 +300,11 @@ public class SdkService implements InstantiableCandidate {
     @Override
     public Long getId() {
         return id;
+    }
+
+    @JsonProperty("id")
+    public void setServiceId(String serviceId) {
+        this.id = Long.valueOf(serviceId);
     }
 
     void setId(Long id) {
@@ -254,6 +321,7 @@ public class SdkService implements InstantiableCandidate {
         this.license = license;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("link")
     public Set<Link> getLink() {
         return link;
@@ -261,17 +329,28 @@ public class SdkService implements InstantiableCandidate {
 
     @JsonProperty("link")
     public void setLink(Set<Link> link) {
-        this.link = link;
+        this.link.clear();
+        this.link.addAll(link);
+
+        for (Link l : this.link) {
+            l.setService(this);
+        }
     }
 
-    @JsonProperty("l3_connectivity")
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonProperty("l3Connectivity")
     public Set<L3Connectivity> getL3Connectivity() {
         return l3Connectivity;
     }
 
-    @JsonProperty("l3_connectivity")
+    @JsonProperty("l3Connectivity")
     public void setL3Connectivity(Set<L3Connectivity> l3Connectivity) {
-        this.l3Connectivity = l3Connectivity;
+        this.l3Connectivity.clear();
+        this.l3Connectivity.addAll(l3Connectivity);
+
+        for (L3Connectivity l3c : this.l3Connectivity) {
+            l3c.setService(this);
+        }
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -283,21 +362,59 @@ public class SdkService implements InstantiableCandidate {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("metadata")
     public void setMetadata(Map<String, String> metadata) {
-        this.metadata = metadata.entrySet().stream()
+        this.metadata.clear();
+        this.metadata.addAll(metadata.entrySet().stream()
             .map(e -> new Metadata(e.getKey(), e.getValue(), this))
-            .collect(Collectors.toSet());
+            .collect(Collectors.toSet()));
+
+        for (Metadata metadatum : this.metadata) {
+            metadatum.setService(this);
+        }
+    }
+
+    @JsonIgnore
+    public Set<Metadata> getMetadata2() {
+        return metadata;
+    }
+
+    @JsonIgnore
+    public void setMetadata2(Set<Metadata> metadata) {
+        this.metadata = metadata;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    @JsonProperty("monitoring_parameter")
-    public Set<MonitoringParameter> getMonitoringParameters() {
-        return monitoringParameters;
+    @JsonProperty("extMonitoringParameters")
+    public Set<MonitoringParameter> getExtMonitoringParameters() {
+        return extMonitoringParameters;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    @JsonProperty("monitoring_parameter")
-    public void setMonitoringParameters(Set<MonitoringParameter> monitoringParameters) {
-        this.monitoringParameters = monitoringParameters;
+    @JsonProperty("extMonitoringParameters")
+    public void setExtMonitoringParameters(Set<MonitoringParameter> extMonitoringParameters) {
+        this.extMonitoringParameters.clear();
+        this.extMonitoringParameters.addAll(extMonitoringParameters);
+
+        for (MonitoringParameter mp : this.extMonitoringParameters) {
+            mp.setSdkServiceExt(this);
+        }
+
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonProperty("intMonitoringParameters")
+    public Set<MonitoringParameter> getIntMonitoringParameters() {
+        return intMonitoringParameters;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonProperty("intMonitoringParameters")
+    public void setIntMonitoringParameters(Set<MonitoringParameter> intMonitoringParameters) {
+        this.intMonitoringParameters.clear();
+        this.intMonitoringParameters.addAll(intMonitoringParameters);
+
+        for (MonitoringParameter mp : this.intMonitoringParameters) {
+            mp.setSdkServiceInt(this);
+        }
     }
 
     @JsonProperty("name")
@@ -310,18 +427,6 @@ public class SdkService implements InstantiableCandidate {
         this.name = name;
     }
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    @JsonProperty("scaling_aspect")
-    public Set<ScalingAspect> getScalingAspect() {
-        return scalingAspect;
-    }
-
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    @JsonProperty("scaling_aspect")
-    public void setScalingAspect(Set<ScalingAspect> scalingAspect) {
-        this.scalingAspect = scalingAspect;
-    }
-
     @JsonProperty("version")
     public String getVersion() {
         return version;
@@ -330,6 +435,46 @@ public class SdkService implements InstantiableCandidate {
     @JsonProperty("version")
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    @JsonProperty("ownerId")
+    public String getOwnerId() {
+        return ownerId;
+    }
+
+    @JsonProperty("ownerId")
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
+    }
+
+    @JsonProperty("visibility")
+    public Visibility getVisibility() {
+        return visibility;
+    }
+
+    @JsonProperty("visibility")
+    public void setVisibility(Visibility visibility) {
+        this.visibility = visibility;
+    }
+
+    @JsonProperty("groupId")
+    public String getGroupId() {
+        return groupId;
+    }
+
+    @JsonProperty("groupId")
+    public void setGroupId(String groupId) {
+        this.groupId = groupId;
+    }
+
+    @JsonProperty("accessLevel")
+    public Integer getAccessLevel() {
+        return accessLevel;
+    }
+
+    @JsonProperty("accessLevel")
+    public void setAccessLevel(Integer accessLevel) {
+        this.accessLevel = accessLevel;
     }
 
     @Override
@@ -375,6 +520,9 @@ public class SdkService implements InstantiableCandidate {
                 Function.identity()
             ));
             l3c.setConnectionPoint(byName.get(l3c.getConnectionPointName()));
+        }
+        for (Link l : link) {
+            l.setConnectionPoints(connectionPoint);
         }
     }
 
@@ -474,6 +622,23 @@ public class SdkService implements InstantiableCandidate {
         Set<String> takenCps = new HashSet<>();
         for (Link l : link) {
             Set<String> linkCps = new HashSet<>(l.getConnectionPointNames());
+            Set<Integer> componentIndexes = new HashSet<>();
+            for(ConnectionPoint cp : thisCps){
+                //check if the link is connected to multiple Internal Cps of the same component
+                if(cp.getType() == ConnectionPointType.INTERNAL && linkCps.contains(cp.getName())){
+                    if(!componentIndexes.add(cp.getComponentIndex())) {
+                        throw new IllegalStateException(String.format(
+                            "Invalid link %s, connected to multiple Connection Points of the same component", l.getId()));
+                    }
+                }
+                //check uf the link is connected to multiple External Cps
+                if(cp.getType() == ConnectionPointType.EXTERNAL && linkCps.contains(cp.getName())){
+                    if(!componentIndexes.add(-1)){
+                        throw new IllegalStateException(String.format(
+                            "Invalid link %s, connected to multiple External Connection Points", l.getId()));
+                    }
+                }
+            }
             if (!availableCpIds.containsAll(linkCps)) {
                 // some cp is missing
                 linkCps.removeAll(availableCpIds);
@@ -501,19 +666,11 @@ public class SdkService implements InstantiableCandidate {
 
     private boolean validateCps() {
         return connectionPoint != null
-            &&
-            connectionPoint.stream().allMatch(
-                cp -> cp.isValid() && (
-                    // internal => internalCpId != null
-                    !(cp.getType() == ConnectionPointType.INTERNAL) || cp.getInternalCpId() != null
-                )
-            )
+            && connectionPoint.stream().allMatch(cp -> cp.isValid() && (!(cp.getType() == ConnectionPointType.INTERNAL) || cp.getInternalCpId() != null))
             && connectionPoint.stream()
-            .map(ConnectionPoint::getName)
-            .distinct()
-            .count()
-            ==
-            connectionPoint.size();  // I.e. cp names are unique in the service
+                            .map(ConnectionPoint::getName)
+                            .distinct()
+                            .count() == connectionPoint.size();  // I.e. cp names are unique in the service
     }
 
     private boolean validateL3Connectivity() {
@@ -522,24 +679,86 @@ public class SdkService implements InstantiableCandidate {
         // TODO check the connection point names match
     }
 
+    private boolean validateComponentIndex(){
+        boolean validComponent = true;
+        final Set<Integer> componentIndexes = new HashSet<Integer>();
+        for(SdkServiceComponent component : this.getComponents())
+        if (!componentIndexes.add(component.getComponentIndex())) {
+            validComponent = false;
+            break;
+        }
+
+        return validComponent;
+    }
+
     @JsonIgnore
     @Override
     public boolean isValid() {
-        return name != null
-            && designer != null && designer.length() > 0
-            && version != null && version.length() > 0
-            && license != null && license.isValid()
-            && validateComponents()
-            && validateL3Connectivity()
-            && metadata != null
-            && monitoringParameters != null
-            && monitoringParameters.stream().allMatch(MonitoringParameter::isValid)
-            && scalingAspect != null
-            && scalingAspect.stream().allMatch(ScalingAspect::isValid)
-            && parameters != null
-            && validateLinks()
-            && validateExpressions()
-            && validateCps();
+        return  name != null
+                && ownerId != null
+                && groupId != null
+                && designer != null && designer.length() > 0
+                && version != null && version.length() > 0
+                && license != null && license.isValid()
+                && validateComponents()
+                && validateComponentIndex()
+                && validateL3Connectivity()
+                && validateMonitoringParameters()
+                && validateAction()
+                && parameters != null
+                && validateLinks()
+                && validateExpressions()
+                && validateCps();
+
+    }
+
+    private boolean validateAction(){
+        boolean validActions = true;
+        final Set<String> actionNames = new HashSet<String>();
+        for(ServiceAction ac : actions){
+            if(!ac.isValid() || !actionNames.add(ac.getName()))
+                validActions = false;
+                break;
+        }
+
+        if(actionRules != null) {
+            for(ServiceActionRule ar : actionRules){
+                if(!ar.isValid() || !actionNames.containsAll(ar.getActionsId())){
+                    validActions = false;
+                    break;
+                }
+                for(RuleCondition rc : ar.getConditions()){
+                    validActions = validActions && (intMonitoringParameters.stream().map(MonitoringParameter::getName).collect(Collectors.toSet()).contains(rc.getParameterId())
+                    || extMonitoringParameters.stream().map(MonitoringParameter::getName).collect(Collectors.toSet()).contains(rc.getParameterId()));
+                }
+            }
+        }
+
+        return validActions;
+    }
+
+    private boolean validateMonitoringParameters(){
+        boolean validParameter = true;
+        final Set<String> parametersName = new HashSet<String>();
+        Set<MonitoringParameter> monitoringParameters = new HashSet<>();
+        monitoringParameters.addAll(extMonitoringParameters);
+        monitoringParameters.addAll(intMonitoringParameters);
+        for(MonitoringParameter mp : monitoringParameters){
+            if(!mp.isValid() || !parametersName.add(mp.getName())) {
+                validParameter = false;
+                break;
+            }
+            if(mp instanceof MonParamTransformed){
+                validParameter = validParameter && (monitoringParameters.stream().map(MonitoringParameter::getName).collect(Collectors.toSet()).contains(((MonParamTransformed) mp).getTargetParameterId()));
+            }
+            if(mp instanceof MonParamAggregated){
+                for(String s : ((MonParamAggregated) mp).getParametersId()){
+                    validParameter = validParameter && (monitoringParameters.stream().map(MonitoringParameter::getName).collect(Collectors.toSet()).contains(s));
+                }
+            }
+        }
+
+        return validParameter;
     }
 
     private void appendContents(StringBuilder sb) {
@@ -564,6 +783,26 @@ public class SdkService implements InstantiableCandidate {
         sb.append(((this.id == null) ? "<null>" : this.id));
         sb.append(',');
         sb.append("\n    ");
+        sb.append("ownerId");
+        sb.append('=');
+        sb.append(((this.ownerId == null) ? "<null>" : this.ownerId));
+        sb.append(',');
+        sb.append("\n    ");
+        sb.append("groupId");
+        sb.append('=');
+        sb.append(((this.groupId == null) ? "<null>" : this.groupId));
+        sb.append(',');
+        sb.append("\n    ");
+        sb.append("visibility");
+        sb.append('=');
+        sb.append(((this.visibility == null) ? "<null>" : this.visibility));
+        sb.append(',');
+        sb.append("\n    ");
+        sb.append("accessLevel");
+        sb.append('=');
+        sb.append(((this.accessLevel == null) ? "<null>" : this.accessLevel));
+        sb.append(',');
+        sb.append("\n    ");
         sb.append("license");
         sb.append('=');
         sb.append(((this.license == null) ? "<null>" : this.license));
@@ -584,23 +823,31 @@ public class SdkService implements InstantiableCandidate {
         sb.append(((this.metadata == null) ? "<null>" : this.metadata));
         sb.append(',');
         sb.append("\n    ");
-        sb.append("monitoringParameters");
+        sb.append("extMonitoringParameters");
         sb.append('=');
-        sb.append(((this.monitoringParameters == null) ? "<null>" : this.monitoringParameters));
+        sb.append(((this.extMonitoringParameters == null) ? "<null>" : this.extMonitoringParameters));
+        sb.append(',');
+        sb.append("\n    ");
+        sb.append("intMonitoringParameters");
+        sb.append('=');
+        sb.append(((this.intMonitoringParameters == null) ? "<null>" : this.intMonitoringParameters));
         sb.append(',');
         sb.append("\n    ");
         sb.append("name");
         sb.append('=');
         sb.append(((this.name == null) ? "<null>" : this.name));
         sb.append(',');
-        sb.append("scalingAspect");
-        sb.append('=');
-        sb.append(((this.scalingAspect == null) ? "<null>" : this.scalingAspect));
-        sb.append(',');
-        sb.append("\n    ");
         sb.append("version");
         sb.append('=');
         sb.append(((this.version == null) ? "<null>" : this.version));
+        sb.append(',');
+        sb.append("actions");
+        sb.append('=');
+        sb.append(((this.actions == null) ? "<null>" : this.actions));
+        sb.append(',');
+        sb.append("version");
+        sb.append('=');
+        sb.append(((this.actionRules == null) ? "<null>" : this.actionRules));
         sb.append(',');
     }
 
@@ -629,15 +876,21 @@ public class SdkService implements InstantiableCandidate {
         result = ((result * 31) + ((this.subServices == null) ? 0 : this.subServices.hashCode()));
         result = ((result * 31) + ((this.metadata == null) ? 0 : this.metadata.hashCode()));
         result = ((result * 31) + ((this.l3Connectivity == null) ? 0 : this.l3Connectivity.hashCode()));
-        result = ((result * 31) + ((this.scalingAspect == null) ? 0 : this.scalingAspect.hashCode()));
         result = ((result * 31) + ((this.link == null) ? 0 : this.link.hashCode()));
         result = ((result * 31) + ((this.designer == null) ? 0 : this.designer.hashCode()));
         result = ((result * 31) + ((this.version == null) ? 0 : this.version.hashCode()));
         result = ((result * 31) + ((this.license == null) ? 0 : this.license.hashCode()));
-        result = ((result * 31) + ((this.monitoringParameters == null) ? 0 : this.monitoringParameters.hashCode()));
+        result = ((result * 31) + ((this.extMonitoringParameters == null) ? 0 : this.extMonitoringParameters.hashCode()));
+        result = ((result * 31) + ((this.intMonitoringParameters == null) ? 0 : this.intMonitoringParameters.hashCode()));
         result = ((result * 31) + ((this.name == null) ? 0 : this.name.hashCode()));
         result = ((result * 31) + ((this.id == null) ? 0 : this.id.hashCode()));
         result = ((result * 31) + ((this.parameters == null) ? 0 : this.parameters.hashCode()));
+        result = ((result * 31) + ((this.ownerId == null) ? 0 : this.ownerId.hashCode()));
+        result = ((result * 31) + ((this.visibility == null) ? 0 : this.visibility.hashCode()));
+        result = ((result * 31) + ((this.groupId == null) ? 0 : this.groupId.hashCode()));
+        result = ((result * 31) + ((this.accessLevel == null) ? 0 : this.accessLevel.hashCode()));
+        result = ((result * 31) + ((this.actions == null) ? 0 : this.actions.hashCode()));
+        result = ((result * 31) + ((this.actionRules == null) ? 0 : this.actionRules.hashCode()));
         return result;
     }
 
@@ -650,19 +903,25 @@ public class SdkService implements InstantiableCandidate {
             return false;
         }
         SdkService rhs = ((SdkService) other);
-        return (((((((((((((this.subFunctions == rhs.subFunctions) || ((this.subFunctions != null) && this.subFunctions.equals(rhs.subFunctions)))
+        return ((((((((((((((((((((this.subFunctions == rhs.subFunctions) || ((this.subFunctions != null) && this.subFunctions.equals(rhs.subFunctions)))
             && ((this.subServices == rhs.subServices) || ((this.subServices != null) && this.subServices.equals(rhs.subServices))))
             && ((this.metadata == rhs.metadata) || ((this.metadata != null) && this.metadata.equals(rhs.metadata))))
             && ((this.l3Connectivity == rhs.l3Connectivity) || ((this.l3Connectivity != null) && this.l3Connectivity.equals(rhs.l3Connectivity))))
-            && ((this.scalingAspect == rhs.scalingAspect) || ((this.scalingAspect != null) && this.scalingAspect.equals(rhs.scalingAspect))))
             && ((this.link == rhs.link) || ((this.link != null) && this.link.equals(rhs.link))))
             && ((this.designer == rhs.designer) || ((this.designer != null) && this.designer.equals(rhs.designer))))
             && ((this.version == rhs.version) || ((this.version != null) && this.version.equals(rhs.version))))
             && ((this.license == rhs.license) || ((this.license != null) && this.license.equals(rhs.license))))
-            && ((this.monitoringParameters == rhs.monitoringParameters) || ((this.monitoringParameters != null) && this.monitoringParameters.equals(rhs.monitoringParameters))))
+            && ((this.extMonitoringParameters == rhs.extMonitoringParameters) || ((this.extMonitoringParameters != null) && this.extMonitoringParameters.equals(rhs.extMonitoringParameters))))
+            && ((this.intMonitoringParameters == rhs.intMonitoringParameters) || ((this.intMonitoringParameters != null) && this.intMonitoringParameters.equals(rhs.intMonitoringParameters))))
             && ((this.name == rhs.name) || ((this.name != null) && this.name.equals(rhs.name))))
             && ((this.id == rhs.id) || ((this.id != null) && this.id.equals(rhs.id))))
-            && ((this.parameters == rhs.parameters) || ((this.parameters != null) && this.parameters.equals(rhs.parameters)));
+            && ((this.ownerId == rhs.ownerId) || ((this.ownerId != null) && this.ownerId.equals(rhs.ownerId))))
+            && ((this.visibility == rhs.visibility) || ((this.visibility != null) && this.visibility.equals(rhs.visibility))))
+            && ((this.groupId == rhs.groupId) || ((this.groupId != null) && this.groupId.equals(rhs.groupId))))
+            && ((this.accessLevel == rhs.accessLevel) || ((this.accessLevel != null) && this.accessLevel.equals(rhs.accessLevel))))
+            && ((this.actions == rhs.actions) || ((this.actions != null) && this.actions.equals(rhs.actions))))
+            && ((this.actionRules == rhs.actionRules) || ((this.actionRules != null) && this.actionRules.equals(rhs.actionRules))))
+            && ((this.parameters == rhs.parameters) || ((this.parameters != null) && this.parameters.equals(rhs.parameters))));
     }
 
     @JsonIgnore
@@ -675,89 +934,22 @@ public class SdkService implements InstantiableCandidate {
         if (!isResolved()) {
             throw new IllegalStateException("Cannot persist service: not resolved");
         }
-        for (ConnectionPoint cp : connectionPoint) {
-            cp.setSdkService(this);
-        }
-        for (Link l : link) {
-            l.setService(this);
-            l.setConnectionPoints(connectionPoint);
-        }
-        for (L3Connectivity l3c : l3Connectivity) {
-            l3c.setService(this);
-        }
-        for (MonitoringParameter mp : monitoringParameters) {
-            mp.setService(this);
-        }
-        for (ScalingAspect sa : scalingAspect) {
-            sa.setService(this);
-        }
-        for (SubFunction subFunction : subFunctions) {
-            subFunction.setOuterService(this);
-        }
-        for (SubService subService : subServices) {
-            subService.setOuterService(this);
-        }
-        for (Metadata metadatum : metadata) {
-            metadatum.setService(this);
-        }
     }
 
     @PostLoad
-    private void fixLoad() {
-        // Cleanup persistence artifacts and weird collection implementations
-        Map<String, ConnectionPoint> byName = getConnectionPoint().stream().collect(Collectors.toMap(
-            ConnectionPoint::getName,
-            Function.identity()
-        ));
-        parameters = new ArrayList<>(parameters);
-        connectionPoint = new HashSet<>(connectionPoint);
-        link = new HashSet<>(link);
-        for (Link l : link) {
-            l.setConnectionPoints(connectionPoint);
-        }
-        l3Connectivity = new HashSet<>(l3Connectivity);
-        for (L3Connectivity c : l3Connectivity) {
-            c.setConnectionPoint(byName.get(c.getConnectionPointName()));
-        }
-        monitoringParameters = new HashSet<>(monitoringParameters);
-        scalingAspect = new HashSet<>(scalingAspect);
-        subFunctions = new HashSet<>(subFunctions);
-        subServices = new HashSet<>(subServices);
-        metadata = new HashSet<>(metadata);
-        for (ConnectionPoint cp : connectionPoint) {
-            if (cp.getType().equals(ConnectionPointType.EXTERNAL) && (cp.getInternalCpName() != null)) {
-                cp.setInternalCpId(byName.get(cp.getInternalCpName()).getId());
-            }
-        }
-    }
+    private void postLoad() {
 
-    @PostPersist
-    @PostUpdate
-    private void fixPersistence() {
-        // Cleanup persistence artifacts and weird collection implementations
+        for (Link l : link) {
+            l.setConnectionPoints(connectionPoint);
+        }
+
         Map<String, ConnectionPoint> byName = getConnectionPoint().stream().collect(Collectors.toMap(
             ConnectionPoint::getName,
             Function.identity()
         ));
-        parameters = new ArrayList<>(parameters);
-        connectionPoint = new HashSet<>(connectionPoint);
-        link = new HashSet<>(link);
-        for (Link l : link) {
-            l.setConnectionPoints(connectionPoint);
-        }
-        l3Connectivity = new HashSet<>(l3Connectivity);
-        for (L3Connectivity c : l3Connectivity) {
-            c.setConnectionPoint(byName.get(c.getConnectionPointName()));
-        }
-        monitoringParameters = new HashSet<>(monitoringParameters);
-        scalingAspect = new HashSet<>(scalingAspect);
-        subFunctions = new HashSet<>(subFunctions);
-        subServices = new HashSet<>(subServices);
-        metadata = new HashSet<>(metadata);
-        for (ConnectionPoint cp : connectionPoint) {
-            if (cp.getType().equals(ConnectionPointType.EXTERNAL) && (cp.getInternalCpName() != null)) {
-                cp.setInternalCpId(byName.get(cp.getInternalCpName()).getId());
-            }
+
+        for (L3Connectivity l3c : l3Connectivity) {
+            l3c.setConnectionPoint(byName.get(l3c.getConnectionPointName()));
         }
     }
 }
