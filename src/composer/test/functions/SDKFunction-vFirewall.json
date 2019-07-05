@@ -1,0 +1,61 @@
+ {
+    "status": "SAVED",
+    "ownerId": "NXW",
+    "name": "vFirewall-v5",
+    "description": "VNF descriptor: vFirewall-v5. Generated with 5GCity SDK",
+    "vendor": "NXW",
+    "version": "5.0",
+    "vnfdId": "bd6a284e-e369-4d7d-a465-57ddc6e8c027",
+    "visibility": "PRIVATE",
+    "flavourExpression": "static_df",
+    "instantiationLevelExpression": "static_il",
+    "metadata": {
+      "cloud-init": "#!/bin/vbash\nsource /opt/vyatta/etc/functions/script-template\nconfigure\nset interfaces ethernet eth1  address 192.168.200.1/24\ncommit\nexit"
+    },
+    "connectionPoints": [
+      {
+        "name": "eth1",
+        "cpType": "EXTERNAL",
+        "requiredPort": []
+      },
+      {
+        "name": "eth2",
+        "cpType": "EXTERNAL",
+        "requiredPort": []
+      },
+      {
+        "name": "eth0",
+        "cpType": "EXTERNAL",
+        "requiredPort": []
+      },
+      {
+        "name": "eth3",
+        "cpType": "EXTERNAL",
+        "requiredPort": []
+      }
+    ],
+    "monitoringParameters": [
+      {
+        "metricName": "CPU_UTILIZATION",
+        "metricType": "SYSTEM",
+        "parameterType": "FUNCTION",
+        "name": "cpu_utilization"
+      }
+    ],
+    "groupId": "NXw",
+    "accessLevel": 4,
+    "swImageData": {
+      "imgName": "cirros",
+      "imgVersion": "1.0",
+      "checksum": "123456789abcdef",
+      "containerFormat": "BARE",
+      "diskFormat": "QCOW2",
+      "minDisk": 5,
+      "minRam": 1024,
+      "minCpu": 1,
+      "size": 2
+    },
+    "minInstancesCount": 1,
+    "maxInstancesCount": 2,
+    "requiredPorts": []
+  }
