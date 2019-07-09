@@ -116,9 +116,12 @@ public class ServiceController {
             serviceManager.createService(request);
             log.debug("Service entity created");
             return new ResponseEntity<>(request.getId(), HttpStatus.CREATED);
-        } catch (MalformedElementException | AlreadyExistingEntityException | NotExistingEntityException e) {
+        } catch (AlreadyExistingEntityException | NotExistingEntityException e) {
             log.error(e.toString());
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }catch (MalformedElementException e){
+            log.error(e.toString());
+            return new ResponseEntity<String>("Malformed SdkService - " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -142,7 +145,7 @@ public class ServiceController {
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (MalformedElementException e) {
             log.error(e.toString());
-            return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<String>("Malformed SdkService - " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }catch (NotPermittedOperationException e){
             log.error(e.toString());
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
@@ -256,7 +259,7 @@ public class ServiceController {
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (MalformedElementException e) {
             log.error(e.toString());
-            return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<String>("Malformed SdkService - " + e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch(NotPermittedOperationException e){
             log.error(e.toString());
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
@@ -311,7 +314,7 @@ public class ServiceController {
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
         } catch (MalformedElementException e) {
             log.error(e.toString());
-            return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<String>("Malformed SdkService - " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 }

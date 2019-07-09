@@ -22,8 +22,7 @@ import org.springframework.test.context.web.WebAppConfiguration;
 import java.time.Instant;
 import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Created by Marco Capitani on 04/12/18.
@@ -341,7 +340,7 @@ public class SdkFunctionTest {
 
     @Test
     @Ignore // requires DB
-    public void testCityService() {
+    public void testCityService() throws Exception{
 
         SdkFunction ns1Firewall = makeNS1FirewallObject();
 
@@ -351,15 +350,10 @@ public class SdkFunctionTest {
 
         SdkFunction vPlate = makeNS1vPlateObject();
 
-        assertTrue(ns1Firewall.isValid());
-        assertTrue(ns2Firewall.isValid());
-        assertTrue(minicache.isValid());
-        assertTrue(vPlate.isValid());
-
-        functionRepository.saveAndFlush(ns1Firewall);
-        functionRepository.saveAndFlush(vPlate);
-        functionRepository.saveAndFlush(ns2Firewall);
-        functionRepository.saveAndFlush(minicache);
+        functionManager.createFunction(ns1Firewall);
+        functionManager.createFunction(ns2Firewall);
+        functionManager.createFunction(minicache);
+        functionManager.createFunction(vPlate);
 
         Optional<SdkFunction> mwb = functionRepository.findById(minicache.getId());
         Optional<SdkFunction> vwb = functionRepository.findById(vPlate.getId());

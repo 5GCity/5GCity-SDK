@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import it.nextworks.sdk.enums.Visibility;
 import it.nextworks.sdk.enums.ConnectionPointType;
 import it.nextworks.sdk.enums.SdkServiceComponentType;
+import it.nextworks.sdk.exceptions.MalformedElementException;
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -483,12 +484,10 @@ public class SdkService implements InstantiableCandidate {
         return SdkServiceComponentType.SDK_SERVICE;
     }
 
-    public void resolveComponents(Set<SdkFunction> functions, Set<SdkService> services) {
-        if (!isValid()) {
-            throw new IllegalStateException(
-                "Cannot resolve components: service is not valid"
-            );
-        }
+    public void resolveComponents(Set<SdkFunction> functions, Set<SdkService> services) throws MalformedElementException{
+
+        this.isValid();
+
         Map<Long, SdkFunction> functionMap = functions.stream()
             .collect(Collectors.toMap(SdkFunction::getId, Function.identity()));
         for (SubFunction subFunction : subFunctions) {
@@ -600,7 +599,7 @@ public class SdkService implements InstantiableCandidate {
                 }
             default:
                 throw new IllegalStateException(String.format(
-                    "unknown cp type %s on cp %s",
+                    "Unknown cp type %s on cp %s",
                     cp.getType(),
                     cpName
                 ));
@@ -621,6 +620,8 @@ public class SdkService implements InstantiableCandidate {
         // Check correspondence between links and cps
         Set<String> takenCps = new HashSet<>();
         for (Link l : link) {
+            if(!l.isValid())
+                return false;
             Set<String> linkCps = new HashSet<>(l.getConnectionPointNames());
             Set<Integer> componentIndexes = new HashSet<>();
             for(ConnectionPoint cp : thisCps){
@@ -652,8 +653,7 @@ public class SdkService implements InstantiableCandidate {
                     // some are unknown
                     linkCps.removeAll(takenCps);
                     throw new IllegalStateException(String.format(
-                        "Invalid links, CPs '%s' are not available for linking " +
-                            "(unknown? part of an int-to-ext bridge?)",
+                        "Invalid links, CPs '%s' are not available for linking",
                         linkCps
                     ));
                 }
@@ -693,7 +693,39 @@ public class SdkService implements InstantiableCandidate {
 
     @JsonIgnore
     @Override
-    public boolean isValid() {
+    public void isValid() throws MalformedElementException{
+        if(name == null || name.length() == 0)
+            throw new MalformedElementException("Please provide valid name");
+        if(ownerId == null || ownerId.length() == 0)
+            throw new MalformedElementException("Please provide valid ownerId");
+        if(groupId == null || groupId.length() == 0)
+            throw new MalformedElementException("Please provide valid groupId");
+        if(designer == null || designer.length() == 0)
+            throw new MalformedElementException("Please provide valid designer");
+        if(version == null || version.length() == 0)
+            throw new MalformedElementException("Please provide valid version");
+        if(license == null || !license.isValid())
+            throw new MalformedElementException("Please provide valid license");
+        if(!validateL3Connectivity())
+            throw new MalformedElementException("Please provide valid l3 connectivity");
+        if(!validateMonitoringParameters())
+            throw new MalformedElementException("Please provide valid monitoring parameters");
+        if(!validateAction())
+            throw new MalformedElementException("Please provide valid actions and action rules");
+        if(!validateCps())
+            throw new MalformedElementException("Please provide valid connection points");
+        if(!validateExpressions())
+            throw new MalformedElementException("Please provide valid parameters");
+        if(!validateComponents() || !validateComponentIndex())
+            throw new MalformedElementException("Please provide valid components");
+        try{
+            if(!validateLinks())
+                throw new MalformedElementException("Please provide valid links");
+        }catch(IllegalStateException e){
+            throw new MalformedElementException(e.getMessage());
+        }
+
+        /*
         return  name != null
                 && ownerId != null
                 && groupId != null
@@ -709,7 +741,7 @@ public class SdkService implements InstantiableCandidate {
                 && validateLinks()
                 && validateExpressions()
                 && validateCps();
-
+         */
     }
 
     private boolean validateAction(){

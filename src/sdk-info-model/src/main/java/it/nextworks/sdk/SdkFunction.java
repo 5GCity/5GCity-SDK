@@ -8,6 +8,7 @@ import it.nextworks.sdk.enums.SdkFunctionStatus;
 import it.nextworks.sdk.enums.Visibility;
 import it.nextworks.sdk.enums.SdkServiceComponentType;
 import it.nextworks.sdk.evalex.ExtendedExpression;
+import it.nextworks.sdk.exceptions.MalformedElementException;
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -126,7 +127,7 @@ public class SdkFunction implements InstantiableCandidate {
 
     private Integer minInstancesCount = 1;
 
-    private Integer maxInstancesCount;
+    private Integer maxInstancesCount = 1;
 
     @JsonProperty("status")
     public SdkFunctionStatus getStatus() {
@@ -609,7 +610,37 @@ public class SdkFunction implements InstantiableCandidate {
 
     @JsonIgnore
     @Override
-    public boolean isValid() {
+    public void isValid() throws MalformedElementException {
+        if(name == null || name.length() == 0)
+            throw new MalformedElementException("Please provide valid name");
+        if(ownerId == null || ownerId.length() == 0)
+            throw new MalformedElementException("Please provide valid ownerId");
+        if(groupId == null || groupId.length() == 0)
+            throw new MalformedElementException("Please provide valid groupId");
+        if(version == null || version.length() == 0)
+            throw new MalformedElementException("Please provide valid version");
+        if(vendor == null || vendor.length() == 0)
+            throw new MalformedElementException("Please provide valid vendor");
+        if(vnfdId == null || vnfdId.length() == 0 || !checkVnfdIdFormat())
+            throw new MalformedElementException("Please provide valid UUID as vnfdId");
+        if(minInstancesCount == null || minInstancesCount < 1)
+            throw new MalformedElementException("Please provide valid minInstancesCount (at least 1)");
+        if(maxInstancesCount == null || maxInstancesCount < minInstancesCount)
+            throw new MalformedElementException("Please provide valid maxInstancesCount (>= minInstancesCount)");
+        if(!validateCps())
+            throw new MalformedElementException("Please provide valid connection points");
+        if(!validateExpressions())
+            throw new MalformedElementException("Please provide valid expressions");
+        if(!validateMonitoringParameters())
+            throw new MalformedElementException("Please provide valid monitoring parameters");
+        if(!validateRequiredPorts())
+            throw new MalformedElementException("Please provide valid required ports");
+        if(swImageData == null)
+            throw new MalformedElementException("Please provide valid swImageData");
+        else
+            swImageData.isValid();
+
+        /*
         return name != null && name.length() > 0
             && ownerId != null
             && groupId != null
@@ -626,6 +657,8 @@ public class SdkFunction implements InstantiableCandidate {
             && swImageData.isValid()
             && minInstancesCount > 0
             && maxInstancesCount > 0 && maxInstancesCount >= minInstancesCount;
+
+         */
     }
 
     private boolean checkVnfdIdFormat(){

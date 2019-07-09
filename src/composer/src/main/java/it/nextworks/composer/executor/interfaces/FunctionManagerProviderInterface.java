@@ -72,7 +72,7 @@ public interface FunctionManagerProviderInterface {
         throws NotExistingEntityException, AlreadyPublishedServiceException;
 
     void unPublishFunction(Long functionDescriptorId)
-        throws NotExistingEntityException, NotPublishedServiceException;
+        throws NotExistingEntityException, NotPublishedServiceException, NotPermittedOperationException;
 
     void updateMonitoringParameters(Long functionId, Set<MonitoringParameter> monitoringParameters)
         throws NotExistingEntityException, NotPermittedOperationException, MalformedElementException;

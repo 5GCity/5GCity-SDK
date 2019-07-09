@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import it.nextworks.sdk.exceptions.MalformedElementException;
 
 import javax.persistence.Embeddable;
 
@@ -233,8 +234,24 @@ public class SwImageData {
      }
 
     @JsonIgnore
-    public boolean isValid() {
-
+    public void isValid() throws MalformedElementException{
+        if(imgName == null || imgName.length() == 0)
+            throw new MalformedElementException("Please provide valid image name");
+        if(imgVersion == null || imgVersion.length() == 0)
+            throw new MalformedElementException("Please provide valid image version");
+        if(this.minDisk < 0)
+            throw new MalformedElementException("Please provide valid image disk size in GB (>0)");
+        if(this.minRam < 0)
+            throw new MalformedElementException("Please provide valid image memory size in MB (>0)");
+        if(this.minCpu < 0)
+            throw new MalformedElementException("Please provide valid image cpu number (>0)");
+        if(this.size < 0)
+            throw new MalformedElementException("Please provide valid image size in GB (>0)");
+        if(!validateContainerFormat())
+            throw new MalformedElementException("Please provide valid image container format (aki, ami, ari, bare, docker, ova, ovf)");
+        if(!validateDiskFormat())
+            throw new MalformedElementException("Please provide valid image disk format (aki, ami, ari, iso, qcow2, raw, vdi, vhd, vhdx, vmdk)");
+        /*
         return (((this.imgName != null) && (this.imgName.length() != 0)) &&
                 ((this.imgVersion!= null) && (this.imgVersion.length() != 0)) &&
                 (this.minDisk >= 0) &&
@@ -243,6 +260,8 @@ public class SwImageData {
                 (this.size >= 0) &&
                 validateContainerFormat()&&
                 validateDiskFormat());
+
+         */
 
     }
 

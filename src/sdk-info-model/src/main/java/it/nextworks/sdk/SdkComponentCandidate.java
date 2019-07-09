@@ -1,6 +1,7 @@
 package it.nextworks.sdk;
 
 import it.nextworks.sdk.enums.SdkServiceComponentType;
+import it.nextworks.sdk.exceptions.MalformedElementException;
 
 import java.util.List;
 import java.util.Map;
@@ -16,7 +17,7 @@ public interface SdkComponentCandidate {
 
     List<String> getParameters();
 
-    boolean isValid();
+    void isValid() throws MalformedElementException;
 
     Long getId();
 

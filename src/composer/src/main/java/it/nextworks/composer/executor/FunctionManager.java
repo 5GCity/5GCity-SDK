@@ -88,6 +88,9 @@ public class FunctionManager implements FunctionManagerProviderInterface {
     private SdkSubFunctionRepository subFunctionRepository;
 
     @Autowired
+    private SdkServiceDescriptorRepository descriptorRepository;
+
+    @Autowired
     private MonitoringParameterRepository monitoringParameterRepository;
 
     @Autowired
@@ -204,10 +207,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             throw new MalformedElementException("Function ID cannot be specified in function creation");
         }
 
-        if (!function.isValid()) {
-            log.error("Malformed SdkFunction");
-            throw new MalformedElementException("Malformed SdkFunction");
-        }
+        function.isValid();
         log.debug("Function is valid");
 
         checkAndResolveFunction(function);
@@ -247,10 +247,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             throw new MalformedElementException("Function ID needs to be specified");
         }
 
-        if (!function.isValid()) {
-            log.error("Malformed SdkFunction");
-            throw new MalformedElementException("Malformed SdkFunction");
-        }
+        function.isValid();
         log.debug("Function is valid");
 
         //Check if Function exists
@@ -462,10 +459,8 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         log.debug("Updating list of monitoring parameters on function with ID " + functionId);
         function.get().setMonitoringParameters(monitoringParameters);
 
-        if (!function.get().isValid()) {
-            log.error("Malformed SdkFunction");
-            throw new MalformedElementException("Malformed SdkFunction");
-        }
+        function.get().isValid();
+
         log.debug("Updating list of monitoring parameters on database");
         functionRepository.saveAndFlush(function.get());
     }
@@ -520,10 +515,8 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
         function.get().setMonitoringParameters(monitoringParameters);
 
-        if (!function.get().isValid()) {
-            log.error("Malformed SdkFunction");
-            throw new MalformedElementException("Malformed SdkFunction");
-        }
+        function.get().isValid();
+
         functionRepository.saveAndFlush(function.get());
         log.debug("Monitoring parameter has been deleted.");
     }
@@ -587,13 +580,26 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
     @Override
     public void unPublishFunction(Long functionId)
-        throws NotExistingEntityException, NotPublishedServiceException {
+        throws NotExistingEntityException, NotPublishedServiceException, NotPermittedOperationException {
         log.info("Requested deletion of the publication of the function with ID {}", functionId);
         Optional<SdkFunction> optFunction = functionRepository.findById(functionId);
         SdkFunction function = optFunction.orElseThrow(() -> {
             log.error("The Function with ID {} is not present in database", functionId);
             return new NotExistingEntityException(String.format("Function with ID %s is not present in database", functionId));
         });
+
+        //unpublish not allowed if the function is used by a commited service
+        List<SubFunction> subFunctions = subFunctionRepository.findByComponentId(functionId);
+        for(SubFunction subFunction : subFunctions){
+            Long serviceId = subFunction.getOuterService().getId();
+            List<SdkServiceDescriptor> descriptors = descriptorRepository.findByTemplateId(serviceId);
+            for(SdkServiceDescriptor descriptor : descriptors){
+                if(descriptor.getStatus().equals(SdkServiceStatus.COMMITTED)){
+                    log.error("Function with ID " + functionId + " used by a published service with ID " + serviceId);
+                    throw  new NotPermittedOperationException("Function with ID " + functionId + " used by a published service with ID " + serviceId);
+                }
+            }
+        }
 
         synchronized (this) { // To avoid multiple simultaneous calls
             // Check if is already published

@@ -353,19 +353,21 @@ public class SdkServiceTest {
 
     @Test
     @Ignore // requires DB
+    public void testGetNSD() throws Exception {
+        serviceManager.generateTemplate(Long.valueOf(62));
+    }
+
+    @Test
+    @Ignore // requires DB
     public void testCityService() throws Exception {
 
         SdkFunction firewall = SdkFunctionTest.makeNS1FirewallObject();
-
-        assertTrue(firewall.isValid());
 
         functionManager.createFunction(firewall);
 
         SdkFunction vPlate = SdkFunctionTest.makeNS1vPlateObject();
 
-	assertTrue(vPlate.isValid());
-
-	functionManager.createFunction(vPlate);
+	    functionManager.createFunction(vPlate);
 
         Long firewallId = firewall.getId();
 
@@ -377,8 +379,6 @@ public class SdkServiceTest {
                 ConnectionPoint::getId
             ))
         );
-
-        assertTrue(service.isValid());
 
         serviceManager.createService(service);
 

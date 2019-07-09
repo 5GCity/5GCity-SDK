@@ -174,9 +174,12 @@ public class FunctionController {
             functionManager.createFunction(request);
             log.debug("Function entity created");
             return new ResponseEntity<>(request.getId(), HttpStatus.CREATED);
-        } catch (MalformedElementException | AlreadyExistingEntityException e) {
+        } catch (AlreadyExistingEntityException e) {
             log.error(e.toString());
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }catch(MalformedElementException e){
+            log.error(e.toString());
+            return new ResponseEntity<String>("Malformed SdkFunction - " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -200,7 +203,7 @@ public class FunctionController {
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (MalformedElementException e) {
             log.error(e.toString());
-            return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<String>("Malformed SdkFunction - " + e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (NotPermittedOperationException e){
                 log.error(e.toString());
                 return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
@@ -301,7 +304,8 @@ public class FunctionController {
     @ApiResponses(value = {
         @ApiResponse(code = 202, message = "SDK Function will be removed from the Public Catalogue"),
         @ApiResponse(code = 404, message = "SDK Function not present in database"),
-        @ApiResponse(code = 400, message = "Publish request without parameter functionId or SDK Function not yet published")})
+        @ApiResponse(code = 403, message = "SDK Function cannot be unpublished"),
+        @ApiResponse(code = 400, message = "Unpublish request without parameter functionId or SDK Function not yet published")})
     @RequestMapping(value = "/{functionId}/unpublish", method = RequestMethod.POST)
     @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
     public ResponseEntity<?> unPublishFunction(@PathVariable Long functionId) {
@@ -319,6 +323,9 @@ public class FunctionController {
             } catch (NotPublishedServiceException e) {
                 log.error(e.toString());
                 return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            }catch (NotPermittedOperationException e) {
+                log.error(e.toString());
+                return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
             }
         }
     }
@@ -346,7 +353,7 @@ public class FunctionController {
                 return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
             } catch (MalformedElementException e) {
                 log.error(e.toString());
-                return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<String>("Malformed SdkFunction - " + e.getMessage(), HttpStatus.BAD_REQUEST);
             } catch(NotPermittedOperationException e){
                 log.error(e.toString());
                 return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
@@ -403,7 +410,7 @@ public class FunctionController {
                 return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
             } catch (MalformedElementException e) {
                 log.error(e.toString());
-                return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<String>("Malformed SdkFunction - " + e.getMessage(), HttpStatus.BAD_REQUEST);
             }
         }
     }

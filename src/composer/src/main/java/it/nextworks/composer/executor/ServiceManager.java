@@ -172,10 +172,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             log.error("Service ID cannot be specified in service creation");
             throw new MalformedElementException("Service ID cannot be specified in service creation");
         }
-        if (!service.isValid()) {
-            log.error("Malformed SdkService");
-            throw new MalformedElementException("Malformed SdkService");
-        }
+
+        service.isValid();
         log.debug("Service is valid");
 
         checkAndResolveService(service);
@@ -243,10 +241,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             throw new MalformedElementException("Service ID needs to be specified");
         }
 
-		if (!service.isValid()) {
-			log.error("Service id " + service.getId() + " is malformed");
-			throw new MalformedElementException("Service id " + service.getId() + " is malformed");
-		}
+        service.isValid();
 		log.debug("Service is valid");
 
 		// Check if service exists
@@ -500,10 +495,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             //exception cannot be raised in this case
         }
 
-        if (!service.get().isValid()) {
-            log.error("Malformed SdkService");
-            throw new MalformedElementException("Malformed SdkService");
-        }
+        service.get().isValid();
+
         log.debug("Updating list of monitoring parameters on database");
         serviceRepository.saveAndFlush(service.get());
     }
@@ -576,10 +569,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             //exception cannot be raised in this case
         }
 
-        if (!service.get().isValid()) {
-            log.error("Malformed SdkService");
-            throw new MalformedElementException("Malformed SdkService");
-        }
+        service.get().isValid();
 
         serviceRepository.saveAndFlush(service.get());
         log.debug("Monitoring parameter has been deleted.");
@@ -851,7 +841,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         // Check if the functions are available
         if (!availableFIds.containsAll(requiredFIds)) {
             requiredFIds.removeAll(availableFIds);
-            throw new MalformedElementException(String.format("Malformed service: functions %s are not available", requiredFIds));
+            throw new MalformedElementException(String.format("Functions %s are not available", requiredFIds));
         }
         log.debug("Checking sub-services availability");
         List<SdkService> availableS = this.getServices();
@@ -862,16 +852,15 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         // Check if the services are available
         if (!availableSIds.containsAll(requiredSIds)) {
             requiredSIds.removeAll(availableSIds);
-            throw new MalformedElementException(String.format("Malformed service: functions %s are not available", requiredSIds));
+            throw new MalformedElementException(String.format("Functions %s are not available", requiredSIds));
         }
         validateImportedMonitoringParameter(service);
         validateInternalConnectionPoint(service);
         log.debug("Resolving service components");
         try {
             service.resolveComponents(new HashSet<>(availableF), new HashSet<>(availableS));
-        } catch (Exception e) {
-            throw new MalformedElementException(
-                String.format("Error while resolving service: %s", e.getMessage()), e);
+        } catch (IllegalArgumentException e) {
+            throw new MalformedElementException(e.getMessage());
         }
     }
 

@@ -1,6 +1,7 @@
 package it.nextworks.composer.executor.repositories;
 
 import it.nextworks.sdk.SdkServiceDescriptor;
+import it.nextworks.sdk.SubFunction;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
