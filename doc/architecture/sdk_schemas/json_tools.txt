@@ -1,0 +1,17 @@
+(1)
+Validate json
+https://jsonlint.com/
+
+(2)
+Generate Json schema
+https://jsonschema.net/
+https://easy-json-schema.github.io/
+
+(3)
+validate json over schema
+https://www.jsonschemavalidator.net/
+
+
+(4)
+Draw infomode according to the json.schema
+https://navneethg.github.io/jsonschemaviewer/

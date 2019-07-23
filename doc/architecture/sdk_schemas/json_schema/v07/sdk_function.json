@@ -1,0 +1,101 @@
+{
+  "title": "SdkFunction",
+  "type": "object",
+  "required": [
+    "ownerId",
+    "name",
+    "version",
+    "vendor",
+    "connectionPoints",
+    "parameters",
+    "vnfdId",
+    "vnfdVersion",
+    "vnfdProvider",
+    "flavourExpression",
+    "instantiationLevelExpression"
+  ],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "format": "int64"
+    },
+    "ownerId": {
+      "type": "string",
+      "description": "ID of the user owning this function"
+    },
+    "name": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "vendor": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "connectionPoints": {
+      "type": "array",
+      "items": {
+        "$ref": "connection_points/external_connection_point.json"
+      }
+    },
+    "parameters": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "vnfdId": {
+      "type": "string"
+    },
+    "vnfdVersion": {
+      "type": "string"
+    },
+    "vnfdProvider": {
+      "type": "string"
+    },
+    "flavourExpression": {
+      "type": "string"
+    },
+    "instantiationLevelExpression": {
+      "type": "string"
+    },
+    "availability": {
+      "type": "string",
+      "enum": ["PUBLIC", "PRIVATE"]
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "monitoringParameters": {
+      "type": "array",
+      "items": {
+        "$ref": "function_monitoring_parameter.json"
+      }
+    },
+    "requiredPorts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "connectionPointId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "ports": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        }
+      }
+    }
+  }
+}

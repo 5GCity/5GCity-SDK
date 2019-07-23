@@ -1,0 +1,1557 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "description": "ReST API for the 5G-City's SDK composer",
+    "version": "0.6",
+    "title": "5g-City SDK Composer REST API ",
+    "contact": {
+      "name": "Nextworks S.r.l.",
+      "url": "http://www.nextworks.it",
+      "email": "info@nextworks.it"
+    },
+    "license": {
+      "name": "Apache License Version 2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0\""
+    }
+  },
+  "tags": [
+    {
+      "name": "descriptors-controller",
+      "description": "Operations on Composer Module - Sdk service descriptor APIs"
+    },
+    {
+      "name": "function-rest-controller",
+      "description": "Operations on Composer Module - SdkFunction APIs"
+    },
+    {
+      "name": "service-rest-controller",
+      "description": "Operations on Composer Module - SdkService APIs"
+    }
+  ],
+  "paths": {
+    "/sdk/composer/functions": {
+      "get": {
+        "tags": [
+          "function-rest-controller"
+        ],
+        "summary": "Get the complete list of the SdkFunctions available in database",
+        "operationId": "getFunctionsUsingGET",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SdkFunction"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sdk/composer/functions/{functionId}": {
+      "get": {
+        "tags": [
+          "function-rest-controller"
+        ],
+        "summary": "Search a SdkFunction with an UUID",
+        "operationId": "getFunctionUsingGET",
+        "parameters": [
+          {
+            "name": "functionId",
+            "in": "path",
+            "description": "functionId",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SdkFunction"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Query without parameter functionId"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "SdkFunction not found on database"
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sdk/composer/service-descriptor/": {
+      "get": {
+        "tags": [
+          "descriptors-controller"
+        ],
+        "summary": "Get all Sdk Service descriptor",
+        "operationId": "getAllDescriptorUsingGET",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sdk/composer/service-descriptor/{serviceDescriptorId}": {
+      "get": {
+        "tags": [
+          "descriptors-controller"
+        ],
+        "summary": "Get Sdk Service descriptor",
+        "operationId": "getDescriptorUsingGET",
+        "parameters": [
+          {
+            "name": "serviceDescriptorId",
+            "in": "path",
+            "description": "serviceDescriptorId",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Entity not found"
+          }
+        },
+        "deprecated": false
+      },
+      "delete": {
+        "tags": [
+          "descriptors-controller"
+        ],
+        "summary": "Delete Sdk Service descriptor",
+        "operationId": "deleteDescriptorUsingDELETE",
+        "parameters": [
+          {
+            "name": "serviceDescriptorId",
+            "in": "path",
+            "description": "serviceDescriptorId",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Entity not found"
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sdk/composer/service-descriptor/{serviceDescriptorId}/nsd": {
+      "get": {
+        "tags": [
+          "descriptors-controller"
+        ],
+        "summary": "Get NSD from descriptor the response",
+        "operationId": "getDescriptorNsdUsingGET",
+        "parameters": [
+          {
+            "name": "serviceDescriptorId",
+            "in": "path",
+            "description": "serviceDescriptorId",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "The service will be published to the public catalogue",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Publication request without parameter serviceId or already published service"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Entity to be published not found"
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sdk/composer/service-descriptor/{serviceDescriptorId}/publish": {
+      "post": {
+        "tags": [
+          "descriptors-controller"
+        ],
+        "summary": "Publish Service to Public Catalogue",
+        "operationId": "publishServiceUsingPOST",
+        "parameters": [
+          {
+            "name": "serviceDescriptorId",
+            "in": "path",
+            "description": "serviceDescriptorId",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "The service will be published to the public catalogue",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Publication request without parameter serviceId or already published service"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Entity to be published not found"
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sdk/composer/service-descriptor/{serviceDescriptorId}/unpublish": {
+      "post": {
+        "tags": [
+          "descriptors-controller"
+        ],
+        "summary": "Unpublish Service from Public Catalogue",
+        "operationId": "unPublishServiceUsingPOST",
+        "parameters": [
+          {
+            "name": "serviceDescriptorId",
+            "in": "path",
+            "description": "serviceDescriptorId",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "The service will be removed from the public catalogue",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request without parameter serviceId or not yet published service"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Entity to be unpublished not found"
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sdk/composer/service/{serviceId}/publish": {
+      "post": {
+        "tags": [
+          "service-rest-controller"
+        ],
+        "summary": "Publish Service to Public Catalogue",
+        "operationId": "publishServiceUsingPOST_1",
+        "parameters": [
+          {
+            "name": "parameterValues",
+            "in": "query",
+            "description": "parameterValues",
+            "required": false,
+            "explode": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          },
+          {
+            "name": "serviceId",
+            "in": "path",
+            "description": "serviceId",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Descriptor created with returned id. The descriptor will be published to the public catalogue",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Null service or invalid parameters provided"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Service to be published not found"
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sdk/composer/services": {
+      "get": {
+        "tags": [
+          "service-rest-controller"
+        ],
+        "summary": "Get the complete list of the SdkServices available in database",
+        "operationId": "getServicesUsingGET",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SdkService"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        },
+        "deprecated": false
+      },
+      "post": {
+        "tags": [
+          "service-rest-controller"
+        ],
+        "summary": "Create a new Service",
+        "operationId": "createServiceUsingPOST",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/SdkService"
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Service Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Service already present in db or service cannot be validated"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        },
+        "deprecated": false
+      },
+      "put": {
+        "tags": [
+          "service-rest-controller"
+        ],
+        "summary": "Modify an existing Service",
+        "operationId": "updateServiceUsingPUT",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/SdkService"
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "204": {
+            "description": "Service Updated",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Service not present in db or service cannot be validated"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sdk/composer/services/{serviceId}": {
+      "get": {
+        "tags": [
+          "service-rest-controller"
+        ],
+        "summary": "Search a SdkService with an UUID",
+        "operationId": "getServiceUsingGET",
+        "parameters": [
+          {
+            "name": "serviceId",
+            "in": "path",
+            "description": "serviceId",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SdkService"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Query without parameter serviceId"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "SdkService not found on database"
+          }
+        },
+        "deprecated": false
+      },
+      "delete": {
+        "tags": [
+          "service-rest-controller"
+        ],
+        "summary": "Delete Service From database",
+        "operationId": "deleteServiceUsingDELETE",
+        "parameters": [
+          {
+            "name": "serviceId",
+            "in": "path",
+            "description": "serviceId",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Deletion request without parameter serviceId"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Entity to be deleted not found"
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sdk/composer/services/{serviceId}/create-descriptor": {
+      "post": {
+        "tags": [
+          "service-rest-controller"
+        ],
+        "summary": "Create descriptor from Service",
+        "operationId": "createDescriptorUsingPOST",
+        "parameters": [
+          {
+            "name": "serviceId",
+            "in": "path",
+            "description": "serviceId",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MakeDescriptorRequest"
+              }
+            }
+          },
+          "description": "makeDescriptorRequest",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Null service or invalid parameters provided"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Base service not found"
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sdk/composer/services/{serviceId}/monitoringparams": {
+      "get": {
+        "tags": [
+          "service-rest-controller"
+        ],
+        "summary": "Get the list of  Monitoring Parameters for a given SdkService identified by UUID",
+        "operationId": "getMonitoringParametersForServiceUsingGET",
+        "parameters": [
+          {
+            "name": "serviceId",
+            "in": "path",
+            "description": "serviceId",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MonitoringParameter"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Query without parameter serviceId"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "SdkService not found on database"
+          }
+        },
+        "deprecated": false
+      },
+      "put": {
+        "tags": [
+          "service-rest-controller"
+        ],
+        "summary": "Modify an existing list of monitoring parameters related to a given SdkService",
+        "operationId": "updateMonitoringParametersForServiceUsingPUT",
+        "parameters": [
+          {
+            "name": "serviceId",
+            "in": "path",
+            "description": "serviceId",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MonitoringParameter"
+                }
+              }
+            }
+          },
+          "description": "monitoringParameters",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "204": {
+            "description": "Monitoring Param list Updated",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Service not present in db or request cannot be validated"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sdk/composer/services/{serviceId}/monitoringparams/{monitoringParameterId}": {
+      "delete": {
+        "tags": [
+          "service-rest-controller"
+        ],
+        "summary": "Delete monitoring param from SdkService",
+        "operationId": "deleteMonitoringParametersForServiceUsingDELETE",
+        "parameters": [
+          {
+            "name": "monitoringParameterId",
+            "in": "path",
+            "description": "monitoringParameterId",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "serviceId",
+            "in": "path",
+            "description": "serviceId",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Deletion request without parameter serviceId"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Entity to be deleted not found"
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sdk/composer/services/{serviceId}/scalingaspects": {
+      "get": {
+        "tags": [
+          "service-rest-controller"
+        ],
+        "summary": "Get the list of  ScalingAspects for a given SdkService identified by UUID",
+        "operationId": "getScalingAspectsForServiceUsingGET",
+        "parameters": [
+          {
+            "name": "serviceId",
+            "in": "path",
+            "description": "serviceId",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ScalingAspect"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Query without parameter serviceId"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "SdkService not found on database"
+          }
+        },
+        "deprecated": false
+      },
+      "put": {
+        "tags": [
+          "service-rest-controller"
+        ],
+        "summary": "Modify an existing list of scaling aspects",
+        "operationId": "updateScalingAspectsUsingPUT",
+        "parameters": [
+          {
+            "name": "serviceId",
+            "in": "path",
+            "description": "serviceId",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ScalingAspect"
+                }
+              }
+            }
+          },
+          "description": "scalingAspects",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "204": {
+            "description": "ScalingAspects Updated",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Service not present in db or request cannot be validated"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/sdk/composer/services/{serviceId}/scalingaspects/{scalingAspectId}": {
+      "delete": {
+        "tags": [
+          "service-rest-controller"
+        ],
+        "summary": "Delete ScalingAspect from SdkService",
+        "operationId": "deleteScalingAspectsUsingDELETE",
+        "parameters": [
+          {
+            "name": "scalingAspectId",
+            "in": "path",
+            "description": "scalingAspectId",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "serviceId",
+            "in": "path",
+            "description": "serviceId",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Deletion request without parameter serviceId"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Entity to be deleted not found"
+          }
+        },
+        "deprecated": false
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "//10.10.7.51:8081/"
+    }
+  ],
+  "components": {
+    "requestBodies": {
+      "SdkService": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SdkService"
+            }
+          }
+        },
+        "description": "request",
+        "required": true
+      }
+    },
+    "schemas": {
+      "ConnectionPoint": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "internal_cp_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "internal_cp_name": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "required_port": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "INTERNAL",
+              "EXTERNAL"
+            ]
+          }
+        },
+        "title": "ConnectionPoint"
+      },
+      "L3Connectivity": {
+        "type": "object",
+        "properties": {
+          "connectionPointId": {
+            "type": "string"
+          },
+          "l3Rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/L3ConnectivityRule"
+            }
+          }
+        },
+        "title": "L3Connectivity"
+      },
+      "L3ConnectivityRule": {
+        "type": "object",
+        "properties": {
+          "dst_ip": {
+            "type": "string"
+          },
+          "dst_port": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "protocol": {
+            "type": "string",
+            "enum": [
+              "UDP",
+              "TCP",
+              "ICMP"
+            ]
+          },
+          "src_ip": {
+            "type": "string"
+          },
+          "src_port": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "title": "L3ConnectivityRule"
+      },
+      "License": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "PRIVATE",
+              "PUBLIC"
+            ]
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "title": "License"
+      },
+      "Link": {
+        "type": "object",
+        "properties": {
+          "connection_point_names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "title": "Link"
+      },
+      "MakeDescriptorRequest": {
+        "type": "object",
+        "properties": {
+          "parameterValues": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "title": "MakeDescriptorRequest"
+      },
+      "MonitoringParameter": {
+        "type": "object",
+        "properties": {
+          "direction": {
+            "type": "string",
+            "enum": [
+              "GREATER_THAN",
+              "LOWER_THAN"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "enum": [
+              "AVERAGE_MEMORY_UTILIZATION"
+            ]
+          },
+          "threshold": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "title": "MonitoringParameter"
+      },
+      "ScalingAspect": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "SCALE_UP",
+              "SCALE_DOWN",
+              "SCALE_IN",
+              "SCALE_OUT"
+            ]
+          },
+          "monitoring_parameter": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MonitoringParameter"
+            }
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "title": "ScalingAspect"
+      },
+      "SdkFunction": {
+        "type": "object",
+        "properties": {
+          "connection_point": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConnectionPoint"
+            }
+          },
+          "description": {
+            "type": "string"
+          },
+          "flavour_expression": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instantiation_level_expression": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "monitoring_parameter": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MonitoringParameter"
+            }
+          },
+          "name": {
+            "type": "string"
+          },
+          "parameter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "vendor": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "vnfdId": {
+            "type": "string"
+          },
+          "vnfd_version": {
+            "type": "string"
+          }
+        },
+        "title": "SdkFunction"
+      },
+      "SdkService": {
+        "type": "object",
+        "properties": {
+          "component": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SdkServiceComponent"
+            }
+          },
+          "connection_point": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConnectionPoint"
+            }
+          },
+          "designer": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "l3_connectivity": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/L3Connectivity"
+            }
+          },
+          "license": {
+            "$ref": "#/components/schemas/License"
+          },
+          "link": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "monitoring_parameter": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MonitoringParameter"
+            }
+          },
+          "name": {
+            "type": "string"
+          },
+          "parameter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "scaling_aspect": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScalingAspect"
+            }
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "title": "SdkService"
+      },
+      "SdkServiceComponent": {
+        "type": "object",
+        "properties": {
+          "component_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "component_type": {
+            "type": "string",
+            "enum": [
+              "SDK_FUNCTION",
+              "SDK_SERVICE"
+            ]
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "mapping_expression": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "title": "SdkServiceComponent"
+      },
+      "SubFunction": {
+        "title": "SubFunction",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SdkServiceComponent"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "component_id": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "component_type": {
+                "type": "string",
+                "enum": [
+                  "SDK_FUNCTION",
+                  "SDK_SERVICE"
+                ]
+              },
+              "id": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "mapping_expression": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "title": "SubFunction"
+          }
+        ]
+      },
+      "SubService": {
+        "title": "SubService",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SdkServiceComponent"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "component_id": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "component_type": {
+                "type": "string",
+                "enum": [
+                  "SDK_FUNCTION",
+                  "SDK_SERVICE"
+                ]
+              },
+              "id": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "mapping_expression": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "title": "SubService"
+          }
+        ]
+      }
+    }
+  }
+}

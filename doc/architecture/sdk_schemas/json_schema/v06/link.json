@@ -1,0 +1,28 @@
+{
+  "type": "object",
+  "properties": {
+    "connection_point_ids": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "format": "int64"
+      }
+    },
+    "id": {
+      "type": "integer",
+      "format": "int64"
+    },
+    "name": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "INTERNAL",
+        "EXTERNAL"
+      ]
+    }
+  },
+  "title": "Link",
+  "$schema": "http://json-schema.org/schema#"
+}

@@ -1,0 +1,13 @@
+{
+  "title": "SdkService",
+  "required": ["parameters"],
+  "allOf": [{ "$ref": "./sdk_service_base.json" }],
+  "properties": {
+    "parameters": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "title": "MonitoringParameter",
+  "oneOf": [
+    {
+      "$ref": "monitoring_parameters/aggregated_mon_param.json"
+    },
+    {
+      "$ref": "monitoring_parameters/imported_mon_param.json"
+    },
+    {
+      "$ref": "monitoring_parameters/transformed_mon_param.json"
+    }
+  ],
+  "discriminator": {
+    "propertyName": "parameterType"
+  }
+}

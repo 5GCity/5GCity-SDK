@@ -1,0 +1,24 @@
+{
+  "title": "AggregatedMonitoringParameter",
+  "allOf": [
+    {
+      "$ref": "./monitoring_parameter_base.json"
+    },
+    {
+      "type": "object",
+      "required": ["aggregatorFunc", "parametersId"],
+      "properties": {
+        "aggregatorFunc": {
+          "type": "string",
+          "enum": ["sum", "avg", "min", "max", "stdev"]
+        },
+        "parametersId": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  ]
+}

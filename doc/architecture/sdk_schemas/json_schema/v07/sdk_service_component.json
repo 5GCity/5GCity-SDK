@@ -1,0 +1,27 @@
+{
+  "title": "SdkServiceComponent",
+  "type": "object",
+  "required": ["index", "componentId", "componentType", "mappingExpressions"],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Server-generated"
+    },
+    "index": {
+      "type": "integer"
+    },
+    "componentId": {
+      "type": "integer"
+    },
+    "componentType": {
+      "type": "string",
+      "enum": ["SDK_FUNCTION", "SDK_SERVICE"]
+    },
+    "mappingExpressions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

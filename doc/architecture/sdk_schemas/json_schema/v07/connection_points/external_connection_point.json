@@ -1,0 +1,15 @@
+{
+  "title": "ExternalConnectionPoint",
+  "required": ["cpType"],
+  "allOf": [
+    {
+      "$ref": "base_connection_point.json"
+    }
+  ],
+  "properties": {
+    "cpType": {
+      "type": "string",
+      "enum": ["EXTERNAL"]
+    }
+  }
+}

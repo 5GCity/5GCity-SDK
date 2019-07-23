@@ -1,0 +1,75 @@
+{
+  "type": "object",
+  "properties": {
+    "connection_point": {
+      "type": "array",
+      "items": {
+        "$ref": "connection_point.json"
+      }
+    },
+    "description": {
+      "type": "string"
+    },
+    "parameters": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "vnfdId": {
+      "type": "string"
+    },
+    "flavourExpression": {
+      "type": "string"
+    },
+    "instantiationLevelExpression": {
+      "type": "string"
+    },
+    "id": {
+      "type": "integer",
+      "format": "int64"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "monitoringParameters": {
+      "type": "array",
+      "items": {
+        "$ref": "monitoring_parameter.json"
+      }
+    },
+    "requiredPorts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "connectionPointId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "ports": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        }
+      }
+    },
+    "name": {
+      "type": "string"
+    },
+    "vendor": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    }
+  },
+  "title": "SDKFunction",
+  "$schema": "http://json-schema.org/schema#"
+}

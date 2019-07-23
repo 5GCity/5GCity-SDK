@@ -1,0 +1,14 @@
+{
+  "allOf": [{"$ref": "sdk_service_base.json"}],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "SAVED",
+        "COMMITTED"
+      ]
+    }
+  },
+  "title": "SDKService",
+  "$schema": "http://json-schema.org/schema#"
+}

@@ -1,0 +1,71 @@
+{
+  "type": "object",
+  "properties": {
+    "descriptor": {
+      "type": "string"
+    },
+    "designer": {
+      "type": "string"
+    },
+    "functions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/components/schemas/SDKFunctionInstance"
+      }
+    },
+    "id": {
+      "type": "integer",
+      "format": "int64"
+    },
+    "license": {
+      "$ref": "#/components/schemas/License"
+    },
+    "link": {
+      "type": "array",
+      "items": {
+        "$ref": "#/components/schemas/Link"
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "monitoring_parameters": {
+      "type": "array",
+      "items": {
+        "$ref": "#/components/schemas/MonitoringParameter"
+      }
+    },
+    "name": {
+      "type": "string"
+    },
+    "scaling_aspect": {
+      "type": "array",
+      "items": {
+        "$ref": "#/components/schemas/ScalingAspect"
+      }
+    },
+    "scaling_ratio": {
+      "type": "string",
+      "enum": [
+        "SMALL",
+        "MEDIUM",
+        "LARGE"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "SAVED",
+        "COMMITTED"
+      ]
+    },
+    "version": {
+      "type": "string"
+    }
+  },
+  "title": "SDKService",
+  "$schema": "http://json-schema.org/schema#"
+}

@@ -1,0 +1,20 @@
+{
+  "title": "ImportedMonitoringParameter",
+  "allOf": [
+    {
+      "$ref": "./monitoring_parameter_base.json"
+    },
+    {
+      "type": "object",
+      "required": ["componentIndex", "parameterId"],
+      "properties": {
+        "componentIndex": {
+          "type": "integer"
+        },
+        "parameterId": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

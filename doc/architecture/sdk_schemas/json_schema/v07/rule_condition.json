@@ -1,0 +1,17 @@
+{
+  "title": "RuleCondition",
+  "type": "object",
+  "required": ["parameterId", "value", "comparator"],
+  "properties": {
+    "parameterId": {
+      "type": "string"
+    },
+    "value": {
+      "type": "number"
+    },
+    "comparator": {
+      "type": "string",
+      "enum": ["g", "geq", "l", "leq", "eq", "diff"]
+    }
+  }
+}

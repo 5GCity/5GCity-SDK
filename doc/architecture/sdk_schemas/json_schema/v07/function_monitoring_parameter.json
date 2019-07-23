@@ -1,0 +1,14 @@
+{
+  "title": "FunctionMonitoringParameter",
+  "oneOf": [
+    {
+      "$ref": "monitoring_parameters/aggregated_mon_param.json"
+    },
+    {
+      "$ref": "monitoring_parameters/transformed_mon_param.json"
+    },
+    {
+      "$ref": "monitoring_parameters/function_mon_param.json"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "title": "SdkServiceDescriptor",
+  "required": ["status"],
+  "allOf": [
+    {
+      "$ref": "./sdk_service_base.json"
+    }
+  ],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["SAVED", "PUBLISHED"]
+    }
+  }
+}

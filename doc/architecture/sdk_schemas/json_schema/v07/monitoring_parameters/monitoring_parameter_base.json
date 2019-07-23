@@ -1,0 +1,13 @@
+{
+  "title": "BaseMonitoringParameter",
+  "type": "object",
+  "required": ["parameterType", "parameterId"],
+  "properties": {
+    "parameterType": {
+      "type": "string"
+    },
+    "parameterId": {
+      "type": "string"
+    }
+  }
+}

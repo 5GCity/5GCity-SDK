@@ -1,0 +1,13 @@
+{
+  "title": "BaseServiceAction",
+  "type": "object",
+  "required": ["actionId", "actionType"],
+  "properties": {
+    "actionId": {
+      "type": "string"
+    },
+    "actionType": {
+      "type": "string"
+    }
+  }
+}

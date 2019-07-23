@@ -1,0 +1,20 @@
+{
+  "title": "ServiceAction",
+  "oneOf": [
+    {
+      "$ref": "./service_action/component_action.json"
+    },
+    {
+      "$ref": "./service_action/scale_in_action.json"
+    },
+    {
+      "$ref": "./service_action/scale_out_action.json"
+    },
+    {
+      "$ref": "./service_action/reconfigure_action.json"
+    }
+  ],
+  "discriminator": {
+    "propertyName": "actionType"
+  }
+}

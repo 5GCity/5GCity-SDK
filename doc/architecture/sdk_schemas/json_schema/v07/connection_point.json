@@ -1,0 +1,14 @@
+{
+  "title": "ConnectionPoint",
+  "oneOf": [
+    {
+      "$ref": "connection_points/internal_connection_point.json"
+    },
+    {
+      "$ref": "connection_points/external_connection_point.json"
+    }
+  ],
+  "discriminator": {
+    "propertyName": "cpType"
+  }
+}

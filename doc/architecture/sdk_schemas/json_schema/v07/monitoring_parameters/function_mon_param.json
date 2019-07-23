@@ -1,0 +1,18 @@
+{
+  "title": "FunctionMonitoringParameter",
+  "required": ["metricName", "metricType"],
+  "allOf": [
+    {
+      "$ref": "./monitoring_parameter_base.json"
+    }
+  ],
+  "properties": {
+    "metricName": {
+      "type": "string"
+    },
+    "metricType": {
+      "type": "string",
+      "enum": ["APPLICATION", "SYSTEM"]
+    }
+  }
+}

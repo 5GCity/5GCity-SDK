@@ -1,0 +1,29 @@
+{
+  "type": "object",
+  "properties": {
+    "action": {
+      "type": "string",
+      "enum": [
+        "SCALE_UP",
+        "SCALE_DOWN",
+        "SCALE_IN",
+        "SCALE_OUT"
+      ]
+    },
+    "id": {
+      "type": "integer",
+      "format": "int64"
+    },
+    "monitoring_parameter": {
+      "type": "array",
+      "items": {
+        "$ref": "#/components/schemas/MonitoringParameter"
+      }
+    },
+    "name": {
+      "type": "string"
+    }
+  },
+  "title": "ScalingAspect",
+  "$schema": "http://json-schema.org/schema#"
+}

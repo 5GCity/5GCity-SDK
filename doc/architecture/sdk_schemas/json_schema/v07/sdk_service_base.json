@@ -1,0 +1,104 @@
+{
+  "type": "object",
+  "required": [
+    "ownerId",
+    "name",
+    "designer",
+    "version",
+    "components",
+    "connectionPoints",
+    "links"
+  ],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "format": "int64",
+      "description": "Server-generated"
+    },
+    "ownerId": {
+      "type": "string",
+      "description": "ID of the user owning this service"
+    },
+    "name": {
+      "type": "string"
+    },
+    "designer": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "components": {
+      "type": "array",
+      "items": {
+        "$ref": "./sdk_service_component.json"
+      }
+    },
+    "connectionPoints": {
+      "type": "array",
+      "items": {
+        "$ref": "./connection_point.json"
+      }
+    },
+    "license": {
+      "$ref": "./license.json"
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "$ref": "./link.json"
+      }
+    },
+    "l3Connectivity": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "connectionPointName": {
+            "type": "string"
+          },
+          "l3Rules": {
+            "type": "array",
+            "items": {
+              "$ref": "./l3_connectivity_rule.json"
+            }
+          }
+        }
+      }
+    },
+    "availability": {
+      "type": "string",
+      "enum": ["PUBLIC", "PRIVATE"]
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "extMonitoringParameters": {
+      "type": "array",
+      "items": {
+        "$ref": "./monitoring_parameter.json"
+      }
+    },
+    "intMonitoringParameters": {
+      "type": "array",
+      "items": {
+        "$ref": "./monitoring_parameter.json"
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "$ref": "./service_action.json"
+      }
+    },
+    "actionRules": {
+      "type": "array",
+      "items": {
+        "$ref": "./service_action_rule.json"
+      }
+    }
+  }
+}

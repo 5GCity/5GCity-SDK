@@ -1,0 +1,52 @@
+{
+  "type": "object",
+  "properties": {
+    "connection_point": {
+      "type": "array",
+      "items": {
+        "$ref": "#/components/schemas/ConnectionPoint"
+      }
+    },
+    "description": {
+      "type": "string"
+    },
+    "flavours": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "SMALL",
+          "MEDIUM",
+          "LARGE"
+        ]
+      }
+    },
+    "id": {
+      "type": "integer",
+      "format": "int64"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "monitoring_parameters": {
+      "type": "array",
+      "items": {
+        "$ref": "#/components/schemas/MonitoringParameter"
+      }
+    },
+    "name": {
+      "type": "string"
+    },
+    "vendor": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    }
+  },
+  "title": "SDKFunction",
+  "$schema": "http://json-schema.org/schema#"
+}

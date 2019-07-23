@@ -1,0 +1,20 @@
+{
+  "title": "ComponentAction",
+  "allOf": [
+    {
+      "$ref": "./service_action_base.json"
+    },
+    {
+      "type": "object",
+      "required": ["componentIndex", "actionId"],
+      "properties": {
+        "componentIndex": {
+          "type": "string"
+        },
+        "actionId": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

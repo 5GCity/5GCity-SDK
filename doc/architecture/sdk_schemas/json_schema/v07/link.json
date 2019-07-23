@@ -1,0 +1,21 @@
+{
+  "title": "Link",
+  "type": "object",
+  "required": ["name", "ConnectionPointNames"],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "format": "int64",
+      "description": "Server-generated"
+    },
+    "name": {
+      "type": "string"
+    },
+    "ConnectionPointNames": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "type": "object",
+  "properties": {
+    "flavour": {
+      "type": "string",
+      "enum": [
+        "SMALL",
+        "MEDIUM",
+        "LARGE"
+      ]
+    },
+    "function_id": {
+      "type": "integer",
+      "format": "int64"
+    },
+    "id": {
+      "type": "integer",
+      "format": "int64"
+    },
+    "monitoring_parameters": {
+      "type": "array",
+      "items": {
+        "$ref": "#/components/schemas/MonitoringParameter"
+      }
+    }
+  },
+  "title": "SDKFunctionInstance",
+  "$schema": "http://json-schema.org/schema#"
+}

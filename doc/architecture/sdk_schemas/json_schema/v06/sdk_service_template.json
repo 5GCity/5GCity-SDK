@@ -1,0 +1,13 @@
+{
+  "allOf": [{"$ref": "sdk_service_base.json"}],
+  "properties": {
+    "parameters": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "title": "SDKServiceTemplate",
+  "$schema": "http://json-schema.org/schema#"
+}

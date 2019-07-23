@@ -1,0 +1,71 @@
+{
+  "type": "object",
+  "properties": {
+    "designer": {
+      "type": "string"
+    },
+    "components": {
+      "type": "array",
+      "items": {
+        "$ref": "sdk_service_component.json"
+      }
+    },
+    "id": {
+      "type": "integer",
+      "format": "int64"
+    },
+    "license": {
+      "$ref": "license.json"
+    },
+    "link": {
+      "type": "array",
+      "items": {
+        "$ref": "link.json"
+      }
+    },
+    "l3Connectivity": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "connectionPointId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "l3Rules": {
+            "type": "array",
+            "items": {
+              "$ref": "l3_connectivity_rule.json"
+            }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "monitoring_parameters": {
+      "type": "array",
+      "items": {
+        "$ref": "monitoring_parameter.json"
+      }
+    },
+    "name": {
+      "type": "string"
+    },
+    "scaling_aspect": {
+      "type": "array",
+      "items": {
+        "$ref": "scaling_aspect.json"
+      }
+    },
+    "version": {
+      "type": "string"
+    }
+  },
+  "title": "SDKServiceBase",
+  "$schema": "http://json-schema.org/schema#"
+}

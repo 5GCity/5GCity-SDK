@@ -1,0 +1,21 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "integer",
+      "format": "int64"
+    },
+    "name": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "INTERNAL",
+        "EXTERNAL"
+      ]
+    }
+  },
+  "title": "ConnectionPoint",
+  "$schema": "http://json-schema.org/schema#"
+}

@@ -1,0 +1,19 @@
+{
+  "type": "object",
+  "title": "SDKServiceComponent",
+  "$schema": "http://json-schema.org/schema#",
+  "properties": {
+    "component": {
+      "oneOf": [
+        {"$ref": "sdk_function.json"},
+        {"$ref": "sdk_service.json"}
+      ]
+    },
+    "mappingExpression": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

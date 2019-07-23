@@ -1,0 +1,36 @@
+{
+  "title": "TransformedMonitoringParameter",
+  "allOf": [
+    {
+      "$ref": "./monitoring_parameter_base.json"
+    },
+    {
+      "type": "object",
+      "required": ["transform", "argumentList", "parameterId"],
+      "properties": {
+        "transform": {
+          "type": "string",
+          "enum": [
+            "sum_over_time",
+            "avg_over_time",
+            "max_over_time",
+            "min_over_time",
+            "rate_over_time",
+            "transpose",
+            "multiply",
+            "divide"
+          ]
+        },
+        "argumentList": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "parameterId": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

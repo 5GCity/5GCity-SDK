@@ -1,0 +1,28 @@
+{
+  "type": "object",
+  "properties": {
+    "direction": {
+      "type": "string",
+      "enum": [
+        "GREATER_THAN",
+        "LOWER_THAN"
+      ]
+    },
+    "id": {
+      "type": "integer",
+      "format": "int64"
+    },
+    "name": {
+      "type": "string",
+      "enum": [
+        "AVERAGE_MEMORY_UTILIZATION"
+      ]
+    },
+    "threshold": {
+      "type": "number",
+      "format": "float"
+    }
+  },
+  "title": "MonitoringParameter",
+  "$schema": "http://json-schema.org/schema#"
+}

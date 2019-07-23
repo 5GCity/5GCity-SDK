@@ -1,0 +1,28 @@
+{
+  "title": "ReconfigureAction",
+  "allOf": [
+    {
+      "$ref": "./service_action_base.json"
+    }
+  ],
+  "properties": {
+    "extMonitoringParameters": {
+      "type": "array",
+      "items": {
+        "$ref": "../monitoring_parameter.json"
+      }
+    },
+    "intMonitoringParameters": {
+      "type": "array",
+      "items": {
+        "$ref": "../monitoring_parameter.json"
+      }
+    },
+    "actionRules": {
+      "type": "array",
+      "items": {
+        "$ref": "../service_action_rule.json"
+      }
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "title": "ScaleInAction",
+  "allOf": [
+    {
+      "$ref": "./service_action_base.json"
+    },
+    {
+      "type": "object",
+      "required": ["componentIndex"],
+      "properties": {
+        "componentIndex": {
+          "type": "string"
+        },
+        "step": {
+          "type": "integer",
+          "default": 1
+        },
+        "min": {
+          "type": "integer",
+          "default": 0
+        }
+      }
+    }
+  ]
+}

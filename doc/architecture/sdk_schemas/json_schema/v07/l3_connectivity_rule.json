@@ -1,0 +1,26 @@
+{
+  "type": "object",
+  "properties": {
+    "dst_ip": {
+      "type": "string"
+    },
+    "dst_port": {
+      "type": "integer",
+      "format": "int32"
+    },
+    "protocol": {
+      "type": "string",
+      "enum": ["UDP", "TCP", "ICMP"]
+    },
+    "src_ip": {
+      "type": "string"
+    },
+    "src_port": {
+      "type": "integer",
+      "format": "int32"
+    },
+    "valid": {
+      "type": "boolean"
+    }
+  }
+}

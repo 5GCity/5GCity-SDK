@@ -1,0 +1,23 @@
+{
+  "title": "BaseConnectionPoint",
+  "type": "object",
+  "required": ["name"],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "format": "int64",
+      "description": "Server-generated"
+    },
+    "name": {
+      "type": "string"
+    },
+    "required_port": {
+      "description": "Ports which should be open for communication",
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "format": "int32"
+      }
+    }
+  }
+}
