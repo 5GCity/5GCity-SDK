@@ -166,7 +166,7 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
     private DescriptorTemplate makeNSD(ServiceInformation info) {
         LinkedHashMap<String, Node> nodeTemplates = new LinkedHashMap<>(
             info.getVnfdData().stream().collect(Collectors.toMap(
-                data -> String.format("%s_%s_%s",data.name, data.vnfdVersion, data.vendor),
+                data -> String.format("%s_%s_%s", data.name, data.vnfdVersion, data.vendor),
                 this::makeVnfd
             ))
         );

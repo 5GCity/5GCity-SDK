@@ -20,6 +20,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import it.nextworks.composer.adaptor.interfaces.ServicesAdaptorProviderInterface;
+import it.nextworks.composer.auth.KeycloakUtils;
+import it.nextworks.composer.controller.elements.SliceResource;
 import it.nextworks.composer.executor.interfaces.FunctionManagerProviderInterface;
 import it.nextworks.composer.executor.repositories.*;
 import it.nextworks.composer.plugins.catalogue.ArchiveBuilder;
@@ -27,10 +29,7 @@ import it.nextworks.composer.plugins.catalogue.FiveGCataloguePlugin;
 import it.nextworks.composer.plugins.catalogue.ArchiveParser;
 import it.nextworks.composer.plugins.catalogue.CSARInfo;
 import it.nextworks.composer.plugins.catalogue.sol005.vnfpackagemanagement.elements.VnfPkgInfo;
-import it.nextworks.nfvmano.libs.common.exceptions.AlreadyExistingEntityException;
-import it.nextworks.nfvmano.libs.common.exceptions.FailedOperationException;
-import it.nextworks.nfvmano.libs.common.exceptions.MalformattedElementException;
-import it.nextworks.nfvmano.libs.common.exceptions.NotPermittedOperationException;
+import it.nextworks.nfvmano.libs.common.exceptions.*;
 import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
 import it.nextworks.nfvmano.libs.descriptors.templates.VirtualLinkPair;
 import it.nextworks.nfvmano.libs.descriptors.vnfd.nodes.VDU.VDUComputeNode;
@@ -47,16 +46,24 @@ import it.nextworks.sdk.exceptions.MalformedElementException;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
 import it.nextworks.sdk.exceptions.NotPublishedServiceException;
 import org.hibernate.cfg.NotYetImplementedException;
+import org.keycloak.KeycloakPrincipal;
+import org.keycloak.adapters.RefreshableKeycloakSecurityContext;
+import org.keycloak.adapters.springsecurity.account.SimpleKeycloakAccount;
+import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
+import org.keycloak.admin.client.Keycloak;
+import org.keycloak.representations.AccessToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.multipart.MultipartFile;
@@ -83,6 +90,9 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
     @Autowired
     private SdkFunctionRepository functionRepository;
+
+    @Autowired
+    private SliceRepository sliceRepository;
 
     @Autowired
     private SdkSubFunctionRepository subFunctionRepository;
@@ -112,6 +122,12 @@ public class FunctionManager implements FunctionManagerProviderInterface {
     @Qualifier("expressionAdapter")
     private ServicesAdaptorProviderInterface adapter;
 
+    @Value("${keycloak.enabled:true}")
+    private boolean keycloakEnabled;
+
+    @Autowired
+    private KeycloakUtils keycloakUtils;
+
     public FunctionManager() {
 
     }
@@ -124,22 +140,32 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         try{
             Files.createDirectories(Paths.get(storagePath));
         } catch (IOException e) {
-            log.error("Not able to create folder for retrieving VNFs from catalogue");
-            throw new FailedOperationException("Not able to create folder for retrieving VNFs from catalogue");
+            //log.error("Not able to create folder for retrieving VNFs from catalogue");
+            throw new FailedOperationException("Not able to create folder for retrieving VNFs from catalogue", e);
         }
 
         CSARInfo csarInfo;
         DescriptorTemplate dt;
         String mf;
 
-        List<VnfPkgInfo> vnfPackageInfoList = cataloguePlugin.getVnfPackageInfoList();
+        String authorization = null;
+        if(keycloakEnabled)
+            authorization = keycloakUtils.getAccessToken().getToken();
+
+        List<VnfPkgInfo> vnfPackageInfoList;
+        try {
+            vnfPackageInfoList = cataloguePlugin.getVnfPackageInfoList(null, "Bearer " + authorization);
+        }catch (RestClientException e){
+            log.debug(null, e);
+            return;
+        }
 
         Long startUpdate = Instant.now().getEpochSecond();
 
         for(VnfPkgInfo vnfPkgInfo : vnfPackageInfoList){
             try {
                 log.info("Retrieving VNF Pkg with ID " + vnfPkgInfo.getId().toString());
-                MultipartFile vnfPkg = cataloguePlugin.getVnfPkgContent(vnfPkgInfo.getId().toString(), null, storagePath);
+                MultipartFile vnfPkg = cataloguePlugin.getVnfPkgContent(vnfPkgInfo.getId().toString(), null,null, storagePath, "Bearer " + authorization);
                 csarInfo = ArchiveParser.archiveToMainDescriptor(vnfPkg);
                 csarInfo.setPackageFilename(vnfPkgInfo.getId().toString());
                 dt = csarInfo.getMst();
@@ -157,11 +183,16 @@ public class FunctionManager implements FunctionManagerProviderInterface {
                     createFunctionFromVnfd(csarInfo, mf, storagePath);
                 }
             }catch (IOException | FailedOperationException | RestClientException e) {
+                log.debug(null, e);
                 log.error("Error while parsing VNF Pkg : " + e.getMessage());
                 //throw new MalformattedElementException("Error while parsing VNF Pkg : " + e.getMessage());
             } catch (MalformattedElementException e) {
+                log.debug(null, e);
                 log.error("Error while parsing VNF Pkg, not aligned with CSAR format: " + e.getMessage());
                 //throw new MalformattedElementException("Error while parsing VNF Pkg, not aligned with CSAR format : " + e.getMessage());
+            }catch(NotExistingEntityException | NotPermittedOperationException e){
+                log.debug(null, e);
+                //exception cannot be raised in this case
             }
         }
 
@@ -178,19 +209,42 @@ public class FunctionManager implements FunctionManagerProviderInterface {
     }
 
     @Override
-    public SdkFunction getFunction(Long id) throws NotExistingEntityException {
+    public SdkFunction getFunction(Long id) throws NotExistingEntityException, NotPermittedOperationException {
         Optional<SdkFunction> result = functionRepository.findById(id);
         if (result.isPresent()) {
+            //check if user can access the slice
+            if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), result.get().getSliceId())) {
+                throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+            }
             return result.get();
         } else {
-            log.error("No function with ID " + id + " was found");
+            //log.error("No function with ID " + id + " was found");
             throw new NotExistingEntityException("No function with ID " + id + " was found");
         }
     }
 
     @Override
-    public List<SdkFunction> getFunctions() {
+    public List<SdkFunction> getFunctions(String sliceId) throws NotExistingEntityException, NotPermittedOperationException {
+        //check if the slice is present
+        if (sliceId != null) {
+            Optional<SliceResource> sliceOptional = sliceRepository.findBySliceId(sliceId);
+            if (!sliceOptional.isPresent()) {
+                log.error("Slice with sliceId " + sliceId + " does not exist");
+                throw new NotExistingEntityException("Slice with sliceId " + sliceId + " does not exist");
+            }
+        }
+        //check if user can access the slice
+        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), sliceId)) {
+            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+        }
+        //retrive only functions that belong to the slice
         List<SdkFunction> functionList = functionRepository.findAll();
+        Iterator<SdkFunction> functionIterator = functionList.iterator();
+        for (; functionIterator.hasNext() ;) {
+            SdkFunction function = functionIterator.next();
+            if (sliceId != null && !function.getSliceId().equals(sliceId))
+                functionIterator.remove();
+        }
         if (functionList.size() == 0) {
             log.debug("No functions are available");
         } else
@@ -200,10 +254,10 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
     @Override
     public String createFunction(SdkFunction function)
-        throws MalformedElementException, AlreadyExistingEntityException {
+        throws MalformedElementException, AlreadyExistingEntityException, NotExistingEntityException, NotPermittedOperationException {
         log.info("Storing into database a new function");
         if(function.getId() != null){
-            log.error("Function ID cannot be specified in function creation");
+            //log.error("Function ID cannot be specified in function creation");
             throw new MalformedElementException("Function ID cannot be specified in function creation");
         }
 
@@ -212,21 +266,26 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
         checkAndResolveFunction(function);
 
+        //check if user can access the slice, TODO add !function.getOwnerId().equals("Undefined") also in the others checks?
+        if (keycloakEnabled && !function.getOwnerId().equals("Undefined") && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), function.getSliceId())) {
+            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+        }
+
         for(MonitoringParameter mp : function.getMonitoringParameters()){
             if (mp.getId() != null) {
-                log.error("Monitoring parameter ID cannot be specified in function creation");
+                //log.error("Monitoring parameter ID cannot be specified in function creation");
                 throw new MalformedElementException("Monitoring parameter ID cannot be specified in function creation");
             }
         }
         for(RequiredPort rp : function.getRequiredPorts()){
             if (rp.getId() != null) {
-                log.error("Required port ID cannot be specified in function creation");
+                //log.error("Required port ID cannot be specified in function creation");
                 throw new MalformedElementException("Required port ID cannot be specified in function creation");
             }
         }
         for(ConnectionPoint cp : function.getConnectionPoint()){
             if (cp.getId() != null) {
-                log.error("Connection point ID cannot be specified in function creation");
+                //log.error("Connection point ID cannot be specified in function creation");
                 throw new MalformedElementException("Connection point ID cannot be specified in function creation");
             }
         }
@@ -243,7 +302,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         log.info("Updating an existing Function with ID " + function.getId());
 
         if(function.getId() == null){
-            log.error("Function ID needs to be specified");
+            //log.error("Function ID needs to be specified");
             throw new MalformedElementException("Function ID needs to be specified");
         }
 
@@ -253,14 +312,20 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         //Check if Function exists
         Optional<SdkFunction> func = functionRepository.findById(function.getId());
         if (!func.isPresent()) {
-            log.error("Function with ID " + function.getId() + " not present in database");
+            //log.error("Function with ID " + function.getId() + " not present in database");
             throw new NotExistingEntityException("Function with ID " + function.getId() + " not present in database");
         }
         log.debug("Function found on db");
 
+        //check if user can access the slice
+        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), func.get().getSliceId())) {
+            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+        }
+
+        //TODO create a function with the following two checks to reduce redundant code
         //update not allowed if the function is published to catalogue
         if(func.get().getStatus().equals(SdkFunctionStatus.COMMITTED)){
-            log.error("Function with ID " + function.getId() + " published to the catalogue. Please unpublish it before updating");
+            //log.error("Function with ID " + function.getId() + " published to the catalogue. Please unpublish it before updating");
             throw  new NotPermittedOperationException("Function with ID " + function.getId() + " published to the catalogue. Please unpublish it before updating");
         }
 
@@ -268,20 +333,21 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         List<SubFunction> subFunctions = subFunctionRepository.findByComponentId(function.getId());
         if(subFunctions.size() != 0){
             List<Long> serviceIds = subFunctions.stream().map(SubFunction::getOuterService).map(SdkService::getId).collect(Collectors.toList());
-            log.error("Function with ID " + function.getId() + " used by services with IDs " + serviceIds.toString());
+            //log.error("Function with ID " + function.getId() + " used by services with IDs " + serviceIds.toString());
             throw  new NotPermittedOperationException("Function with ID " + function.getId() + " used by services with IDs " + serviceIds.toString());
         }
 
+        //TODO create a function with the following three checks to reduce redundant code
         for(MonitoringParameter param : function.getMonitoringParameters()) {
             if (param.getId() != null) {
                 Optional<MonitoringParameter> mp = monitoringParameterRepository.findById(param.getId());
                 if (!mp.isPresent()) {
-                    log.error("Monitoring parameter with ID " + param.getId() + " is not present in database");
+                    //log.error("Monitoring parameter with ID " + param.getId() + " is not present in database");
                     throw new NotExistingEntityException("Monitoring parameter with ID " + param.getId() + " is not present in database");
                 }
 
                 if ((mp.get().getSdkFunction() == null) || (!mp.get().getSdkFunction().getId().equals(function.getId()))) {
-                    log.error("Monitoring parameter with ID " + param.getId() + " does not belong to function with ID " + function.getId());
+                    //log.error("Monitoring parameter with ID " + param.getId() + " does not belong to function with ID " + function.getId());
                     throw new NotPermittedOperationException("Monitoring parameter with ID " + param.getId() + " does not belong to function with ID " + function.getId());
                 }
             }
@@ -291,12 +357,12 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             if (param.getId() != null) {
                 Optional<ConnectionPoint> cp = connectionpointRepository.findById(param.getId());
                 if (!cp.isPresent()) {
-                    log.error("Connection point with ID " + param.getId() + " is not present in database");
+                    //log.error("Connection point with ID " + param.getId() + " is not present in database");
                     throw new NotExistingEntityException("Connection point with ID " + param.getId() + " is not present in database");
                 }
 
                 if ((cp.get().getSdkFunction() == null) || (!cp.get().getSdkFunction().getId().equals(function.getId()))) {
-                    log.error("Connection point with ID " + param.getId() + " does not belong to function with ID " + function.getId());
+                    //log.error("Connection point with ID " + param.getId() + " does not belong to function with ID " + function.getId());
                     throw new NotPermittedOperationException("Connection point with ID " + param.getId() + " does not belong to function with ID " + function.getId());
                 }
             }
@@ -306,12 +372,12 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             if (param.getId() != null) {
                 Optional<RequiredPort> rp = requiredPortRepository.findById(param.getId());
                 if (!rp.isPresent()) {
-                    log.error("Required port with ID " + param.getId() + " is not present in database");
+                    //log.error("Required port with ID " + param.getId() + " is not present in database");
                     throw new NotExistingEntityException("Required port with ID " + param.getId() + " is not present in database");
                 }
 
                 if ((rp.get().getFunction() == null) || (!rp.get().getFunction().getId().equals(function.getId()))) {
-                    log.error("Required port with ID " + param.getId() + " does not belong to function with ID " + function.getId());
+                    //log.error("Required port with ID " + param.getId() + " does not belong to function with ID " + function.getId());
                     throw new NotPermittedOperationException("Required port with ID " + param.getId() + " does not belong to function with ID " + function.getId());
                 }
             }
@@ -323,6 +389,11 @@ public class FunctionManager implements FunctionManagerProviderInterface {
                 //exception cannot be raised in this case
         }
 
+        //check if user can access the slice
+        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), function.getSliceId())) {
+            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+        }
+
         log.debug("Updating into database Function with ID " + function.getId());
 
         cleanOldRelations(func.get());
@@ -332,6 +403,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         return function.getId().toString();
     }
 
+    /*
     @Override
     public SdkFunction getFunctionById(Long id) throws NotExistingEntityException {
         log.info("Request for Function with ID " + id);
@@ -339,10 +411,11 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         if (function.isPresent()) {
             return function.get();
         } else {
-            log.error("Function with ID " + id + " not found");
+            //log.error("Function with ID " + id + " not found");
             throw new NotExistingEntityException("Function with ID " + id + " not found");
         }
     }
+    */
 
     @Override
     public void deleteFunction(Long functionId) throws NotExistingEntityException, NotPermittedOperationException {
@@ -350,13 +423,18 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         // No deletion required: all that depends on the Function will cascade.
         Optional<SdkFunction> function = functionRepository.findById(functionId);
         SdkFunction s = function.orElseThrow(() -> {
-            log.error("Function with ID " + functionId + " not found");
+            //log.error("Function with ID " + functionId + " not found");
             return new NotExistingEntityException("Function with ID " + functionId + " not found");
         });
 
+        //check if user can access the slice
+        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), s.getSliceId())) {
+            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+        }
+
         //delete not allowed if the function is published to catalogue
         if(s.getStatus().equals(SdkFunctionStatus.COMMITTED)){
-            log.error("Function with ID " + s.getId() + " published to the catalogue. Please unpublish it before deleting");
+            //log.error("Function with ID " + s.getId() + " published to the catalogue. Please unpublish it before deleting");
             throw  new NotPermittedOperationException("Function with ID " + s.getId() + " published to the catalogue. Please unpublish it before deleting");
         }
 
@@ -364,7 +442,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         List<SubFunction> subFunctions = subFunctionRepository.findByComponentId(functionId);
         if(subFunctions.size() != 0){
             List<Long> serviceIds = subFunctions.stream().map(SubFunction::getOuterService).map(SdkService::getId).collect(Collectors.toList());
-            log.error("Function with ID " + functionId + " used by services with IDs " + serviceIds.toString());
+            //log.error("Function with ID " + functionId + " used by services with IDs " + serviceIds.toString());
             throw  new NotPermittedOperationException("Function with ID " + functionId + " used by services with IDs " + serviceIds.toString());
         }
 
@@ -414,19 +492,19 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
         for (MonitoringParameter param : monitoringParameters) {
             if (!param.isValid()) {
-                log.error("Monitoring param list provided cannot be validated");
+                //log.error("Monitoring param list provided cannot be validated");
                 throw new MalformedElementException("Monitoring param list provided cannot be validated");
             }
 
             if(param.getId() != null) {
                 Optional<MonitoringParameter> mp = monitoringParameterRepository.findById(param.getId());
                 if (!mp.isPresent()) {
-                    log.error("Monitoring parameter with ID " + param.getId() + " is not present in database");
+                    //log.error("Monitoring parameter with ID " + param.getId() + " is not present in database");
                     throw new NotExistingEntityException("Monitoring parameter with ID " + param.getId() + " is not present in database");
                 }
 
                 if ((mp.get().getSdkFunction() == null) || (!mp.get().getSdkFunction().getId().equals(functionId))) {
-                    log.error("Monitoring parameter with ID " + param.getId() + " does not belong to function with ID " + functionId);
+                    //log.error("Monitoring parameter with ID " + param.getId() + " does not belong to function with ID " + functionId);
                     throw new NotPermittedOperationException("Monitoring parameter with ID " + param.getId() + " does not belong to function with ID " + functionId);
                 }
             }
@@ -434,13 +512,18 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
         Optional<SdkFunction> function = functionRepository.findById(functionId);
         if (!function.isPresent()) {
-            log.error("Function with ID " + functionId + " is not present in database");
+            //log.error("Function with ID " + functionId + " is not present in database");
             throw new NotExistingEntityException("Function with ID " + functionId + " is not present in database");
+        }
+
+        //check if user can access the slice
+        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), function.get().getSliceId())) {
+            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
         }
 
         //update not allowed if the function is published to catalogue
         if(function.get().getStatus().equals(SdkFunctionStatus.COMMITTED)){
-            log.error("Function with ID " + functionId + " published to the catalogue. Please unpublish it before updating");
+            //log.error("Function with ID " + functionId + " published to the catalogue. Please unpublish it before updating");
             throw  new NotPermittedOperationException("Function with ID " + functionId + " published to the catalogue. Please unpublish it before updating");
         }
 
@@ -448,7 +531,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         List<SubFunction> subFunctions = subFunctionRepository.findByComponentId(functionId);
         if(subFunctions.size() != 0){
             List<Long> serviceIds = subFunctions.stream().map(SubFunction::getOuterService).map(SdkService::getId).collect(Collectors.toList());
-            log.error("Function with ID " + functionId + " used by services with IDs " + serviceIds.toString());
+            //log.error("Function with ID " + functionId + " used by services with IDs " + serviceIds.toString());
             throw  new NotPermittedOperationException("Function with ID " + functionId + " used by services with IDs " + serviceIds.toString());
         }
 
@@ -473,24 +556,29 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
         Optional<MonitoringParameter> mp = monitoringParameterRepository.findById(monitoringParameterId);
         if (!mp.isPresent()) {
-            log.error("Monitoring parameter with ID " + monitoringParameterId + " is not present in database");
+            //log.error("Monitoring parameter with ID " + monitoringParameterId + " is not present in database");
             throw new NotExistingEntityException("Monitoring parameter with ID " + monitoringParameterId + " is not present in database");
         }
 
         Optional<SdkFunction> function = functionRepository.findById(functionId);
         if (!function.isPresent()) {
-            log.error("Function with ID: " + functionId + " is not present in database");
+            //log.error("Function with ID: " + functionId + " is not present in database");
             throw new NotExistingEntityException("Function with ID " + functionId + " is not present in database");
         }
 
+        //check if user can access the slice
+        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), function.get().getSliceId())) {
+            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+        }
+
         if((mp.get().getSdkFunction() == null) || (mp.get().getSdkFunction().getId().equals(functionId))){
-            log.error("Monitoring parameter with ID " + monitoringParameterId + " does not belong to function with ID " + functionId);
+            //log.error("Monitoring parameter with ID " + monitoringParameterId + " does not belong to function with ID " + functionId);
             throw  new NotPermittedOperationException("Monitoring parameter with ID " + monitoringParameterId + " does not belong to function with ID " + functionId);
         }
 
         //delete not allowed if the function is published to catalogue
         if(function.get().getStatus().equals(SdkFunctionStatus.COMMITTED)){
-            log.error("Function with ID " + functionId + " published to the catalogue. Please unpublish it before deleting");
+            //log.error("Function with ID " + functionId + " published to the catalogue. Please unpublish it before deleting");
             throw  new NotPermittedOperationException("Function with ID " + functionId + " published to the catalogue. Please unpublish it before deleting");
         }
 
@@ -498,7 +586,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         List<SubFunction> subFunctions = subFunctionRepository.findByComponentId(functionId);
         if(subFunctions.size() != 0){
             List<Long> serviceIds = subFunctions.stream().map(SubFunction::getOuterService).map(SdkService::getId).collect(Collectors.toList());
-            log.error("Function with ID " + functionId + " used by services with IDs " + serviceIds.toString());
+            //log.error("Function with ID " + functionId + " used by services with IDs " + serviceIds.toString());
             throw  new NotPermittedOperationException("Function with ID " + functionId + " used by services with IDs " + serviceIds.toString());
         }
 
@@ -522,33 +610,42 @@ public class FunctionManager implements FunctionManagerProviderInterface {
     }
 
     @Override
-    public Set<MonitoringParameter> getMonitoringParameters(Long functionId) throws NotExistingEntityException {
+    public Set<MonitoringParameter> getMonitoringParameters(Long functionId) throws NotExistingEntityException, NotPermittedOperationException {
         log.info("Request to get the list of monitoring parameters for a specific SDK Function " + functionId);
         Optional<SdkFunction> function = functionRepository.findById(functionId);
         if (!function.isPresent()) {
-            log.error("Function with ID " + functionId + " is not present in database");
+            //log.error("Function with ID " + functionId + " is not present in database");
             throw new NotExistingEntityException("Function with ID " + functionId + " is not present in database");
         }
 
+        //check if user can access the slice
+        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), function.get().getSliceId())) {
+            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+        }
         return (function.get().getMonitoringParameters());
     }
 
     @Override
-    public void publishFunction(Long functionId)
-        throws NotExistingEntityException, AlreadyPublishedServiceException {
+    public void publishFunction(Long functionId, String authorization)
+        throws NotExistingEntityException, AlreadyPublishedServiceException, NotPermittedOperationException {
         log.info("Request for publication of function with ID " + functionId);
 
         // Check if function exists
         Optional<SdkFunction> optFunction = functionRepository.findById(functionId);
 
         SdkFunction function = optFunction.orElseThrow(() -> {
-            log.error("Function  with ID " + functionId + " is not present in database");
+            //log.error("Function  with ID " + functionId + " is not present in database");
             return new NotExistingEntityException("Function with ID " + functionId + " is not present in database");
         });
 
+        //check if user can access the slice
+        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), function.getSliceId())) {
+            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+        }
+
         synchronized (this) { // To avoid multiple simultaneous calls
             if (!function.getStatus().equals(SdkFunctionStatus.SAVED)) {
-                log.error("Requested publication for an entity already has been published");
+                //log.error("Requested publication for an entity already has been published");
                 throw new AlreadyPublishedServiceException("Requested publication for an entity already has been published");
             }
             function.setStatus(SdkFunctionStatus.CHANGING);
@@ -563,6 +660,8 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         // asynchronously.
         dispatchPublishRequest(
             functionPackagePath,
+            function.getSliceId(),
+            authorization,
             vnfdInfoId -> {
                 if (vnfdInfoId != null) {
                     log.info("Function with ID {} successfully published", functionId);
@@ -579,14 +678,19 @@ public class FunctionManager implements FunctionManagerProviderInterface {
     }
 
     @Override
-    public void unPublishFunction(Long functionId)
+    public void unPublishFunction(Long functionId, String authorization)
         throws NotExistingEntityException, NotPublishedServiceException, NotPermittedOperationException {
         log.info("Requested deletion of the publication of the function with ID {}", functionId);
         Optional<SdkFunction> optFunction = functionRepository.findById(functionId);
         SdkFunction function = optFunction.orElseThrow(() -> {
-            log.error("The Function with ID {} is not present in database", functionId);
+            //log.error("The Function with ID {} is not present in database", functionId);
             return new NotExistingEntityException(String.format("Function with ID %s is not present in database", functionId));
         });
+
+        //check if user can access the slice
+        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), function.getSliceId())) {
+            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+        }
 
         //unpublish not allowed if the function is used by a commited service
         List<SubFunction> subFunctions = subFunctionRepository.findByComponentId(functionId);
@@ -595,7 +699,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             List<SdkServiceDescriptor> descriptors = descriptorRepository.findByTemplateId(serviceId);
             for(SdkServiceDescriptor descriptor : descriptors){
                 if(descriptor.getStatus().equals(SdkServiceStatus.COMMITTED)){
-                    log.error("Function with ID " + functionId + " used by a published service with ID " + serviceId);
+                    //log.error("Function with ID " + functionId + " used by a published service with ID " + serviceId);
                     throw  new NotPermittedOperationException("Function with ID " + functionId + " used by a published service with ID " + serviceId);
                 }
             }
@@ -604,7 +708,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         synchronized (this) { // To avoid multiple simultaneous calls
             // Check if is already published
             if (!function.getStatus().equals(SdkFunctionStatus.COMMITTED)) {
-                log.error("Function with ID {} is not in status COMMITTED.", functionId);
+                //log.error("Function with ID {} is not in status COMMITTED.", functionId);
                 throw new NotPublishedServiceException(String.format("Function with ID %s is not in status COMMITTED", functionId));
             }
             function.setStatus(SdkFunctionStatus.CHANGING);
@@ -614,6 +718,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
         dispatchUnPublishRequest(
             function.getVnfInfoId(),
+            authorization,
             successful -> {
                 if (successful) {
                     function.setStatus(SdkFunctionStatus.SAVED);
@@ -635,21 +740,26 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         Optional<SdkFunction> optFunction = functionRepository.findById(functionId);
 
         SdkFunction function = optFunction.orElseThrow(() -> {
-            log.error("Function with ID {} is not present in database", functionId);
+            //log.error("Function with ID {} is not present in database", functionId);
             return new NotExistingEntityException(String.format("Function with ID {} is not present in database", functionId));
         });
         return adapter.generateVirtualNetworkFunctionDescriptor(function);
     }
 
-    private void checkAndResolveFunction(SdkFunction function) throws AlreadyExistingEntityException {
+    private void checkAndResolveFunction(SdkFunction function) throws AlreadyExistingEntityException, NotExistingEntityException {
         //In case of new function, check if a function with the same vnfdId and version is present
         if(function.getId() == null) {
             Optional<SdkFunction> functionOptional = functionRepository.findByVnfdIdAndVersion(function.getVnfdId(), function.getVersion());
             if (functionOptional.isPresent()) {
-                log.error("Function with vnfdID " + function.getVnfdId() + " and version " + function.getVersion() + " is already present with ID " + functionOptional.get().getId());
+                //log.error("Function with vnfdID " + function.getVnfdId() + " and version " + function.getVersion() + " is already present with ID " + functionOptional.get().getId());
                 throw new AlreadyExistingEntityException("Function with vnfdID " + function.getVnfdId() + " and version " + function.getVersion() + " is already present with ID " + functionOptional.get().getId());
             }
         }
+
+        //check if slice is present in database
+        Optional<SliceResource> sliceOptional = sliceRepository.findBySliceId(function.getSliceId());
+        if(!sliceOptional.isPresent())
+            throw new NotExistingEntityException("Slice with sliceId " + function.getSliceId() + " is not present in database");
 
         int i = 0;
         for(ConnectionPoint cp : function.getConnectionPoint()){
@@ -680,43 +790,37 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         }
     }
 
-    private void dispatchPublishRequest(String functionPackagePath, Consumer<String> callback) {
+    private void dispatchPublishRequest(String functionPackagePath, String project, String authorization, Consumer<String> callback) {
         // TODO: dispatch publish operation to driver, then return immediately
         executor.execute(() -> {
                 try {
-                    String vnfdInfoId = cataloguePlugin.uploadNetworkFunction(functionPackagePath, "multipart/form-data", null);
+                    String vnfdInfoId = cataloguePlugin.uploadNetworkFunction(functionPackagePath, project, "multipart/form-data", null, authorization);
                     callback.accept(vnfdInfoId);
-                } catch (Exception exc) {
-                    log.error(
-                        "Could not push function package. Cause: {}",
-                        exc.getMessage()
-                    );
-                    log.debug("Details: ", exc);
+                } catch (Exception e) {
+                    log.error("Could not push function package. Cause: {}", e.getMessage());
+                    log.debug(null, e);
                     callback.accept(null);
                 }
             }
         );
     }
 
-    private void dispatchUnPublishRequest(String vnfInfoId, Consumer<Boolean> callback) {
+    private void dispatchUnPublishRequest(String vnfInfoId, String authorization, Consumer<Boolean> callback) {
         // TODO: dispatch unpublish operation to driver, then return immediately
         executor.execute(() -> {
                 try {
-                    cataloguePlugin.deleteNetworkFunction(vnfInfoId);
+                    cataloguePlugin.deleteNetworkFunction(vnfInfoId, null, authorization);
                     callback.accept(true);
-                } catch (Exception exc) {
-                    log.error(
-                        "Could not delete function package. Cause: {}",
-                        exc.getMessage()
-                    );
-                    log.debug("Details: ", exc);
+                } catch (Exception e) {
+                    log.error("Could not delete function package. Cause: {}", e.getMessage());
+                    log.debug("Details: ", e);
                     callback.accept(false);
                 }
             }
         );
     }
 
-    private void createFunctionFromVnfd(CSARInfo csarInfo, String mf, String storagePath) throws MalformattedElementException, IOException, FailedOperationException{
+    private void createFunctionFromVnfd(CSARInfo csarInfo, String mf, String storagePath) throws MalformattedElementException, IOException, FailedOperationException, NotExistingEntityException, NotPermittedOperationException{
         SdkFunction sdkFunction = new SdkFunction();
         DescriptorTemplate dt = csarInfo.getMst();
         ObjectMapper objectMapper = new ObjectMapper();
@@ -737,8 +841,6 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             sdkFunction.setGroupId("Undefined");
             sdkFunction.setVisibility(Visibility.PUBLIC);
             sdkFunction.setAccessLevel(4);
-
-            //TODO parameters, requiredPort?
 
             Set<ConnectionPoint> connectionPoints = new HashSet<>();
             List<VirtualLinkPair> virtualLinkPairs = dt.getTopologyTemplate().getSubstituitionMappings().getRequirements().getVirtualLink();
@@ -800,6 +902,8 @@ public class FunctionManager implements FunctionManagerProviderInterface {
                     throw new FailedOperationException("Error while parsing monitoring parameters : " + e.getMessage());
                 }
             }
+
+            sdkFunction.setSliceId("admin");
 
             createFunction(sdkFunction);
 
@@ -881,6 +985,21 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         } finally {
             br.close();
         }
+    }
+
+    public boolean checkUserProjects(String userName, String sliceId) {
+        if(sliceId == null)
+            return true;
+        Optional<SliceResource> optionalSlice = sliceRepository.findBySliceId(sliceId);
+        if(optionalSlice.isPresent()) {
+            List<String> users = optionalSlice.get().getUsers();
+            for (String user : users) {
+                if (user.equals(userName))
+                    return true;
+            }
+        }
+        log.error("Current user cannot access to the specified project");
+        return false;
     }
 }
 

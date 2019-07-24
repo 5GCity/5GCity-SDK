@@ -112,7 +112,7 @@ public class ArchiveBuilder {
             servicePackagePath = compress(root.toPath().toString());
         } catch (IOException e) {
             throw new IllegalStateException(
-                String.format("Could not write files. Error: %s", e.getMessage())
+                String.format("Could not write files. Error: %s", e.getMessage(), e)
             );
         }
 
@@ -201,7 +201,7 @@ public class ArchiveBuilder {
             functionPackagePath = compress(root.toPath().toString());
         } catch (IOException e) {
             throw new IllegalStateException(
-                String.format("Could not write files. Error: %s", e.getMessage())
+                String.format("Could not write files. Error: %s", e.getMessage(), e)
             );
         }
 
@@ -273,7 +273,7 @@ public class ArchiveBuilder {
                 file.getAbsolutePath(),
                 fileFolder.getAbsolutePath()
             );
-            throw new IllegalArgumentException(msg);
+            throw new IllegalArgumentException(msg, e);
         }
     }
 

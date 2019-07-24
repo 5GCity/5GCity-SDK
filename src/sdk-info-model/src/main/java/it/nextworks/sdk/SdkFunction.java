@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "id",
+    "sliceId",
     "status",
     "vnfInfoId",
     "ownerId",
@@ -64,6 +65,8 @@ public class SdkFunction implements InstantiableCandidate {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
+
+    private String sliceId;
 
     private SdkFunctionStatus status;
 
@@ -159,7 +162,17 @@ public class SdkFunction implements InstantiableCandidate {
         this.ownerId = ownerId;
     }
 
-    /*
+    @JsonProperty("sliceId")
+    public String getSliceId() {
+        return sliceId;
+    }
+
+    @JsonProperty("sliceId")
+    public void setSliceId(String sliceId) {
+        this.sliceId = sliceId;
+    }
+
+/*
     @JsonProperty("vnfdProvider")
     public String getVnfdProvider() {
         return vnfdProvider;
@@ -475,6 +488,10 @@ public class SdkFunction implements InstantiableCandidate {
         sb.append('=');
         sb.append(((this.id == null) ? "<null>" : this.id));
         sb.append(',');
+        sb.append("sliceId");
+        sb.append('=');
+        sb.append(((this.sliceId == null) ? "<null>" : this.sliceId));
+        sb.append(',');
         sb.append("status");
         sb.append('=');
         sb.append(((this.status == null) ? "<null>" : this.status));
@@ -567,6 +584,7 @@ public class SdkFunction implements InstantiableCandidate {
         result = ((result * 31) + ((this.requiredPorts == null) ? 0 : this.requiredPorts.hashCode()));
         result = ((result * 31) + ((this.minInstancesCount == null) ? 0 : this.minInstancesCount.hashCode()));
         result = ((result * 31) + ((this.maxInstancesCount == null) ? 0 : this.maxInstancesCount.hashCode()));
+        result = ((result * 31) + ((this.sliceId == null) ? 0 : this.sliceId.hashCode()));
         result = ((result * 31) + ((this.status == null) ? 0 : this.status.hashCode()));
         return result;
     }
@@ -605,6 +623,7 @@ public class SdkFunction implements InstantiableCandidate {
                 && ((this.epoch == rhs.epoch) || ((this.epoch != null) && this.epoch.equals(rhs.epoch)))
                 && ((this.requiredPorts == rhs.requiredPorts) || ((this.requiredPorts != null) && this.requiredPorts.equals(rhs.requiredPorts)))
                 && ((this.status == rhs.status) || ((this.status != null) && this.status.equals(rhs.status)))
+                && ((this.sliceId == rhs.sliceId) || ((this.sliceId != null) && this.sliceId.equals(rhs.sliceId)))
                 && ((this.parameters == rhs.parameters) || ((this.parameters != null) && this.parameters.equals(rhs.parameters))));
     }
 
@@ -613,6 +632,8 @@ public class SdkFunction implements InstantiableCandidate {
     public void isValid() throws MalformedElementException {
         if(name == null || name.length() == 0)
             throw new MalformedElementException("Please provide valid name");
+        if(sliceId == null || sliceId.length() == 0)
+            throw new MalformedElementException("Please provide valid sliceId");
         if(ownerId == null || ownerId.length() == 0)
             throw new MalformedElementException("Please provide valid ownerId");
         if(groupId == null || groupId.length() == 0)

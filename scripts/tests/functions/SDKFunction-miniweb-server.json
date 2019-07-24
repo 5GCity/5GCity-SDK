@@ -55,5 +55,6 @@
     },
     "minInstancesCount": 3,
     "maxInstancesCount": 5,
-    "requiredPorts": []
+    "requiredPorts": [],
+    "sliceId": "test"
 }

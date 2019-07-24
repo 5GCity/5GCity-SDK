@@ -10,8 +10,10 @@ import it.nextworks.composer.executor.repositories.SdkFunctionRepository;
 import it.nextworks.composer.executor.repositories.SdkServiceDescriptorRepository;
 import it.nextworks.composer.executor.repositories.SdkServiceRepository;
 import it.nextworks.composer.plugins.catalogue.FiveGCataloguePlugin;
+import it.nextworks.nfvmano.libs.common.exceptions.NotPermittedOperationException;
 import it.nextworks.sdk.SdkService;
 import it.nextworks.sdk.SdkServiceTest;
+import it.nextworks.sdk.exceptions.NotExistingEntityException;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -76,7 +78,7 @@ public class ServiceManagerTest {
 
     @Test
     @Ignore
-    public void getServices() {
+    public void getServices() throws NotExistingEntityException, NotPermittedOperationException {
         // Setup
         List<SdkService> returnedList = Arrays.asList(
             SdkServiceTest.makeTestObject(1L, Arrays.asList("p1", "p2"), Collections.singletonMap("1", 1L)),
@@ -85,7 +87,7 @@ public class ServiceManagerTest {
         when(serviceRepository.findAll()).thenReturn(returnedList);
 
         // Main test
-        List<SdkService> services = manager.getServices();
+        List<SdkService> services = manager.getServices("admin");
         assertEquals(returnedList, services);
     }
 /*

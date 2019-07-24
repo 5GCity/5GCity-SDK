@@ -38,6 +38,7 @@ import java.util.stream.Stream;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "id",
+    "sliceId",
     "ownerId",
     "name",
     "version",
@@ -135,6 +136,8 @@ public class SdkService implements InstantiableCandidate {
 
     private Integer accessLevel = 4;
 
+    private String sliceId;
+
     @Override
     public SdkServiceDescriptor makeDescriptor(List<BigDecimal> parameterValues) {
         Set<SdkComponentInstance> subInstances = new HashSet<>();
@@ -155,7 +158,8 @@ public class SdkService implements InstantiableCandidate {
         return new SdkServiceDescriptor(
             this,
             parameterValues,
-            subInstances
+            subInstances,
+            this.sliceId
         );
     }
 
@@ -310,6 +314,16 @@ public class SdkService implements InstantiableCandidate {
 
     void setId(Long id) {
         this.id = id;
+    }
+
+    @JsonProperty("sliceId")
+    public String getSliceId() {
+        return sliceId;
+    }
+
+    @JsonProperty("sliceId")
+    public void setSliceId(String sliceId) {
+        this.sliceId = sliceId;
     }
 
     @JsonProperty("license")
@@ -696,6 +710,8 @@ public class SdkService implements InstantiableCandidate {
     public void isValid() throws MalformedElementException{
         if(name == null || name.length() == 0)
             throw new MalformedElementException("Please provide valid name");
+        if(sliceId == null || sliceId.length() == 0)
+            throw new MalformedElementException("Please provide valid sliceId");
         if(ownerId == null || ownerId.length() == 0)
             throw new MalformedElementException("Please provide valid ownerId");
         if(groupId == null || groupId.length() == 0)
@@ -815,6 +831,11 @@ public class SdkService implements InstantiableCandidate {
         sb.append(((this.id == null) ? "<null>" : this.id));
         sb.append(',');
         sb.append("\n    ");
+        sb.append("sliceId");
+        sb.append('=');
+        sb.append(((this.sliceId == null) ? "<null>" : this.sliceId));
+        sb.append(',');
+        sb.append("\n    ");
         sb.append("ownerId");
         sb.append('=');
         sb.append(((this.ownerId == null) ? "<null>" : this.ownerId));
@@ -923,6 +944,7 @@ public class SdkService implements InstantiableCandidate {
         result = ((result * 31) + ((this.accessLevel == null) ? 0 : this.accessLevel.hashCode()));
         result = ((result * 31) + ((this.actions == null) ? 0 : this.actions.hashCode()));
         result = ((result * 31) + ((this.actionRules == null) ? 0 : this.actionRules.hashCode()));
+        result = ((result * 31) + ((this.sliceId == null) ? 0 : this.sliceId.hashCode()));
         return result;
     }
 
@@ -935,7 +957,7 @@ public class SdkService implements InstantiableCandidate {
             return false;
         }
         SdkService rhs = ((SdkService) other);
-        return ((((((((((((((((((((this.subFunctions == rhs.subFunctions) || ((this.subFunctions != null) && this.subFunctions.equals(rhs.subFunctions)))
+        return (((((((((((((((((((((this.subFunctions == rhs.subFunctions) || ((this.subFunctions != null) && this.subFunctions.equals(rhs.subFunctions)))
             && ((this.subServices == rhs.subServices) || ((this.subServices != null) && this.subServices.equals(rhs.subServices))))
             && ((this.metadata == rhs.metadata) || ((this.metadata != null) && this.metadata.equals(rhs.metadata))))
             && ((this.l3Connectivity == rhs.l3Connectivity) || ((this.l3Connectivity != null) && this.l3Connectivity.equals(rhs.l3Connectivity))))
@@ -953,6 +975,7 @@ public class SdkService implements InstantiableCandidate {
             && ((this.accessLevel == rhs.accessLevel) || ((this.accessLevel != null) && this.accessLevel.equals(rhs.accessLevel))))
             && ((this.actions == rhs.actions) || ((this.actions != null) && this.actions.equals(rhs.actions))))
             && ((this.actionRules == rhs.actionRules) || ((this.actionRules != null) && this.actionRules.equals(rhs.actionRules))))
+            && ((this.sliceId == rhs.sliceId) || ((this.sliceId != null) && this.sliceId.equals(rhs.sliceId))))
             && ((this.parameters == rhs.parameters) || ((this.parameters != null) && this.parameters.equals(rhs.parameters))));
     }
 

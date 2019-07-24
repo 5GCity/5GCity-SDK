@@ -57,5 +57,6 @@
     },
     "minInstancesCount": 1,
     "maxInstancesCount": 2,
-    "requiredPorts": []
+    "requiredPorts": [],
+    "sliceId": "admin"
   }

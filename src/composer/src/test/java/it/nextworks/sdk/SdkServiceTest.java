@@ -233,6 +233,7 @@ public class SdkServiceTest {
         service.setActions(new HashSet<>(Arrays.asList(action2)));
         service.setActionRules(makeActionRules());
 
+        service.setSliceId("admin");
         /*
         ScalingAspect scalingAspect = new ScalingAspect();
         scalingAspect.setName("scaling-aspect-test");
@@ -347,7 +348,7 @@ public class SdkServiceTest {
     public void testPublishService() throws Exception {
         List<BigDecimal> parameterValues = new ArrayList<>();
         parameterValues.add(new BigDecimal(1000));
-        serviceManager.publishService(Long.valueOf(10), parameterValues);
+        serviceManager.publishService(Long.valueOf(10), parameterValues, null);
         //serviceManager.publishService(Long.valueOf(40));
     }
 

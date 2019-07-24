@@ -17,4 +17,6 @@ public interface SdkServiceDescriptorRepository extends JpaRepository<SdkService
     Optional<SdkServiceDescriptor> findById(Long id);
 
     List<SdkServiceDescriptor> findByTemplateId(Long id);
+
+    List<SdkServiceDescriptor> findBySliceId(String sliceId);
 }

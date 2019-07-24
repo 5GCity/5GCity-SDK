@@ -70,7 +70,7 @@ class AdapterLink {
             Long linkId = link.getId();
             if (links.containsKey(linkId)) {
                 throw new IllegalArgumentException(String.format(
-                    "sdk-Link %s already added",
+                    "Link %s already added",
                     linkId
                 ));
             }

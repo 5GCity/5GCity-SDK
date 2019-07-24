@@ -98,7 +98,7 @@ public class DescriptorsParser {
 			fileWriter.flush();
 			fileWriter.close();
 		} catch (IOException e) {
-			log.error("Impossible to write descriptor to file. " + e.getMessage());
+			log.error("Impossible to write descriptor to file. " + e.getMessage(), e);
 			return null;
 		}
 		/*

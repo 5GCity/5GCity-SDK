@@ -165,6 +165,7 @@ public class SdkFunctionTest {
         function.setMinInstancesCount(1);
         function.setMaxInstancesCount(2);
 
+        function.setSliceId("admin");
         return function;
     }
 
@@ -214,6 +215,7 @@ public class SdkFunctionTest {
         function.setMaxInstancesCount(2);
 
         function.setStatus(SdkFunctionStatus.SAVED);
+        function.setSliceId("admin");
         return function;
     }
     
@@ -264,7 +266,7 @@ public class SdkFunctionTest {
         function.setMaxInstancesCount(2);
 
         function.setStatus(SdkFunctionStatus.SAVED);
-
+        function.setSliceId("admin");
         return function;
     }
 
@@ -304,7 +306,7 @@ public class SdkFunctionTest {
         function.setMaxInstancesCount(2);
 
         function.setStatus(SdkFunctionStatus.SAVED);
-
+        function.setSliceId("admin");
         return function;
     }
 

@@ -18,6 +18,7 @@ package it.nextworks.composer.executor.repositories;
 import it.nextworks.sdk.SdkFunction;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface SdkFunctionRepository extends JpaRepository<SdkFunction, Long> {
@@ -28,4 +29,5 @@ public interface SdkFunctionRepository extends JpaRepository<SdkFunction, Long> 
 
     Optional<SdkFunction> findByVnfdIdAndVersion(String vnfdId, String version);
 
+    List<SdkFunction> findBySliceId(String sliceId);
 }

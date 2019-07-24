@@ -39,26 +39,28 @@ public interface FunctionManagerProviderInterface {
      * @return
      * @throws NotExistingEntityException
      */
-    SdkFunction getFunction(Long id) throws NotExistingEntityException;
+    SdkFunction getFunction(Long id) throws NotExistingEntityException, NotPermittedOperationException;
 
 
     /**
      * @return
      */
-    List<SdkFunction> getFunctions();
+    List<SdkFunction> getFunctions(String sliceId) throws NotExistingEntityException, NotPermittedOperationException;
 
     //String createFunction(SdkFunction function);
 
     //String createFunction();
 
     String createFunction(SdkFunction function)
-        throws MalformedElementException, AlreadyExistingEntityException;
+        throws MalformedElementException, AlreadyExistingEntityException, NotExistingEntityException, NotPermittedOperationException;
 
     String updateFunction(SdkFunction function)
         throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException;
 
+    /*
     SdkFunction getFunctionById(Long id)
         throws NotExistingEntityException;
+    */
 
     void deleteFunction(Long functionId)
         throws NotExistingEntityException, NotPermittedOperationException;
@@ -68,10 +70,10 @@ public interface FunctionManagerProviderInterface {
         throws NotExistingEntityException, MalformedElementException, NotYetImplementedException;
     */
 
-    void publishFunction(Long functionId)
-        throws NotExistingEntityException, AlreadyPublishedServiceException;
+    void publishFunction(Long functionId, String authorization)
+        throws NotExistingEntityException, AlreadyPublishedServiceException, NotPermittedOperationException;
 
-    void unPublishFunction(Long functionDescriptorId)
+    void unPublishFunction(Long functionDescriptorId, String authorization)
         throws NotExistingEntityException, NotPublishedServiceException, NotPermittedOperationException;
 
     void updateMonitoringParameters(Long functionId, Set<MonitoringParameter> monitoringParameters)
@@ -81,7 +83,7 @@ public interface FunctionManagerProviderInterface {
         throws NotExistingEntityException, NotPermittedOperationException, MalformedElementException;
 
     Set<MonitoringParameter> getMonitoringParameters(Long functionId)
-        throws NotExistingEntityException;
+        throws NotExistingEntityException, NotPermittedOperationException;
 
     DescriptorTemplate generateTemplate(Long functionId)
         throws NotExistingEntityException;

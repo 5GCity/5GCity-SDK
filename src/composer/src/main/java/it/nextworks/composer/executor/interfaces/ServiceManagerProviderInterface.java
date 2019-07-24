@@ -34,9 +34,9 @@ import java.util.Set;
 public interface ServiceManagerProviderInterface {
 
     SdkService getServiceById(Long id)
-        throws NotExistingEntityException;
+        throws NotExistingEntityException, NotPermittedOperationException;
 
-    List<SdkService> getServices();
+    List<SdkService> getServices(String sliceId) throws NotExistingEntityException, NotPermittedOperationException;
 
     /*
     List<SdkService> getServicesUsingFunction(Long functionId)
@@ -44,7 +44,7 @@ public interface ServiceManagerProviderInterface {
     */
 
     String createService(SdkService service)
-        throws NotExistingEntityException, MalformedElementException, AlreadyExistingEntityException;
+        throws NotExistingEntityException, MalformedElementException, AlreadyExistingEntityException, NotPermittedOperationException;
 
     String updateService(SdkService service)
         throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException;
@@ -53,27 +53,27 @@ public interface ServiceManagerProviderInterface {
         throws NotExistingEntityException, NotPermittedOperationException;
 
     String createServiceDescriptor(Long serviceId, List<BigDecimal> parameterValues)
-        throws NotExistingEntityException, MalformedElementException;
+        throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException;
 
-    List<SdkServiceDescriptor> getAllDescriptors();
+    List<SdkServiceDescriptor> getAllDescriptors(String sliceId) throws NotPermittedOperationException, NotExistingEntityException;
 
     SdkServiceDescriptor getServiceDescriptor(Long descriptorId)
-        throws NotExistingEntityException;
+        throws NotExistingEntityException, NotPermittedOperationException;
 
     void deleteServiceDescriptor(Long descriptorId)
         throws NotExistingEntityException, NotPermittedOperationException;
 
-    String publishService(Long serviceId, List<BigDecimal> parameterValues)
+    String publishService(Long serviceId, List<BigDecimal> parameterValues, String authorization)
         throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException;
 
-    void publishService(Long serviceInstanceId)
-        throws NotExistingEntityException, AlreadyPublishedServiceException, NotPermittedOperationException;
+    void publishService(Long serviceInstanceId, String authorization)
+        throws NotExistingEntityException, AlreadyPublishedServiceException, NotPermittedOperationException, MalformedElementException;
 
     DescriptorTemplate generateTemplate(Long serviceDescriptorId)
-        throws NotExistingEntityException;
+        throws NotExistingEntityException, MalformedElementException;
 
-    void unPublishService(Long serviceDescriptorId)
-        throws NotExistingEntityException, NotPublishedServiceException;
+    void unPublishService(Long serviceDescriptorId, String authorization)
+        throws NotExistingEntityException, NotPublishedServiceException, NotPermittedOperationException;
 
     /*
     void updateScalingAspect(Long serviceId, Set<ScalingAspect> scalingAspects)
@@ -93,6 +93,6 @@ public interface ServiceManagerProviderInterface {
         throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException;
 
     MonitoringParameterWrapper getMonitoringParameters(Long serviceId)
-        throws NotExistingEntityException;
+        throws NotExistingEntityException, NotPermittedOperationException;
 }
 
