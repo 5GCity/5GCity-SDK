@@ -10,6 +10,7 @@ import it.nextworks.composer.executor.repositories.SdkFunctionRepository;
 import it.nextworks.composer.executor.repositories.SdkServiceDescriptorRepository;
 import it.nextworks.composer.executor.repositories.SdkServiceRepository;
 import it.nextworks.composer.plugins.catalogue.FiveGCataloguePlugin;
+import it.nextworks.nfvmano.libs.common.exceptions.NotAuthorizedOperationException;
 import it.nextworks.nfvmano.libs.common.exceptions.NotPermittedOperationException;
 import it.nextworks.sdk.SdkService;
 import it.nextworks.sdk.SdkServiceTest;
@@ -78,7 +79,7 @@ public class ServiceManagerTest {
 
     @Test
     @Ignore
-    public void getServices() throws NotExistingEntityException, NotPermittedOperationException {
+    public void getServices() throws NotExistingEntityException, NotAuthorizedOperationException {
         // Setup
         List<SdkService> returnedList = Arrays.asList(
             SdkServiceTest.makeTestObject(1L, Arrays.asList("p1", "p2"), Collections.singletonMap("1", 1L)),

@@ -19,6 +19,7 @@ import io.swagger.annotations.*;
 import it.nextworks.composer.controller.elements.MakeDescriptorRequest;
 import it.nextworks.composer.executor.ServiceManager;
 import it.nextworks.nfvmano.libs.common.exceptions.AlreadyExistingEntityException;
+import it.nextworks.nfvmano.libs.common.exceptions.NotAuthorizedOperationException;
 import it.nextworks.nfvmano.libs.common.exceptions.NotPermittedOperationException;
 import it.nextworks.sdk.*;
 import it.nextworks.sdk.exceptions.MalformedElementException;
@@ -72,7 +73,7 @@ public class ServiceController {
             log.debug(null, e);
             log.error(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-        }catch (NotPermittedOperationException e){
+        }catch (NotAuthorizedOperationException e){
             log.debug(null, e);
             log.error(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
@@ -107,7 +108,7 @@ public class ServiceController {
                 log.debug(null, e);
                 log.error(e.getMessage());
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }catch (NotPermittedOperationException e){
+            }catch (NotAuthorizedOperationException e){
                 log.debug(null, e);
                 log.error(e.getMessage());
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
@@ -146,7 +147,7 @@ public class ServiceController {
             log.debug(null, e);
             log.error(e.getMessage());
             return new ResponseEntity<String>("Malformed SdkService - " + e.getMessage(), HttpStatus.NOT_FOUND);
-        }catch (NotPermittedOperationException e){
+        }catch (NotAuthorizedOperationException e){
             log.debug(null, e);
             log.error(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
@@ -181,6 +182,10 @@ public class ServiceController {
             log.debug(null, e);
             log.error(e.getMessage());
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.CONFLICT);
+        }catch (NotAuthorizedOperationException e){
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
         }
     }
 
@@ -211,6 +216,10 @@ public class ServiceController {
                 log.debug(null, e);
                 log.error(e.getMessage());
                 return new ResponseEntity<String>(e.getMessage(), HttpStatus.CONFLICT);
+            }catch (NotAuthorizedOperationException e){
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
             }
         }
     }
@@ -242,7 +251,7 @@ public class ServiceController {
             log.debug(null, e);
             log.error(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
-        }catch (NotPermittedOperationException e){
+        }catch (NotAuthorizedOperationException e){
             log.debug(null, e);
             log.error(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
@@ -281,6 +290,10 @@ public class ServiceController {
             log.debug(null, e);
             log.error(e.getMessage());
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.CONFLICT);
+        }catch (NotAuthorizedOperationException e){
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
         }
     }
 
@@ -316,6 +329,10 @@ public class ServiceController {
             log.debug(null, e);
             log.error(e.getMessage());
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.CONFLICT);
+        }catch (NotAuthorizedOperationException e){
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
         }
     }
 
@@ -341,7 +358,7 @@ public class ServiceController {
             log.debug(null, e);
             log.error(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-        }catch (NotPermittedOperationException e){
+        }catch (NotAuthorizedOperationException e){
             log.debug(null, e);
             log.error(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
@@ -379,6 +396,10 @@ public class ServiceController {
             log.debug(null, e);
             log.error(e.getMessage());
             return new ResponseEntity<String>("Malformed SdkService - " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }catch (NotAuthorizedOperationException e){
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
         }
     }
 }

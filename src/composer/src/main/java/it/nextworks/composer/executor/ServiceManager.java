@@ -29,6 +29,7 @@ import it.nextworks.composer.plugins.catalogue.ArchiveBuilder;
 import it.nextworks.composer.plugins.catalogue.FiveGCataloguePlugin;
 import it.nextworks.nfvmano.libs.common.exceptions.AlreadyExistingEntityException;
 import it.nextworks.nfvmano.libs.common.exceptions.MalformattedElementException;
+import it.nextworks.nfvmano.libs.common.exceptions.NotAuthorizedOperationException;
 import it.nextworks.nfvmano.libs.common.exceptions.NotPermittedOperationException;
 import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
 import it.nextworks.nfvmano.libs.descriptors.templates.Node;
@@ -140,7 +141,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     }
 
     @Override
-    public List<SdkService> getServices(String sliceId) throws NotExistingEntityException, NotPermittedOperationException {
+    public List<SdkService> getServices(String sliceId) throws NotExistingEntityException, NotAuthorizedOperationException {
         log.info("Request for all service stored in database");
         //check if the slice is present
         if (sliceId != null) {
@@ -152,7 +153,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         }
         //check if user can access the slice
         if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), sliceId)) {
-            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
         }
 
         List<SdkService> serviceList = serviceRepository.findAll();
@@ -191,7 +192,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
     @Override
     public String createService(SdkService service)
-        throws NotExistingEntityException, MalformedElementException, AlreadyExistingEntityException, NotPermittedOperationException {
+        throws NotExistingEntityException, MalformedElementException, AlreadyExistingEntityException, NotAuthorizedOperationException {
 
         log.info("Storing into database a new service");
 
@@ -207,7 +208,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
         //check if user can access the slice
         if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), service.getSliceId())) {
-            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
         }
 
         for(SdkServiceComponent component : service.getComponents()){
@@ -266,7 +267,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     }
 
     @Override
-    public String updateService(SdkService service) throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException {
+    public String updateService(SdkService service) throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException, NotAuthorizedOperationException {
 		log.info("Updating an existing service with ID " + service.getId());
         if(service.getId() == null){
             //log.error("Service ID needs to be specified");
@@ -286,7 +287,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
         //check if user can access the slice
         if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), srv.get().getSliceId())) {
-            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
         }
 
         //update not allowed if the service has at least one descriptor
@@ -420,7 +421,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
         //check if user can access the slice
         if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), service.getSliceId())) {
-            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
         }
 
 		log.debug("Updating into database service with id: " + service.getId());
@@ -432,13 +433,13 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     }
 
     @Override
-    public SdkService getServiceById(Long id) throws NotExistingEntityException, NotPermittedOperationException {
+    public SdkService getServiceById(Long id) throws NotExistingEntityException, NotAuthorizedOperationException {
         log.info("Request for service with ID " + id);
         Optional<SdkService> service = serviceRepository.findById(id);
         if (service.isPresent()) {
             //check if user can access the slice
             if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), service.get().getSliceId())) {
-                throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+                throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
             }
             return service.get();
         } else {
@@ -448,7 +449,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     }
 
     @Override
-    public void deleteService(Long serviceId) throws NotExistingEntityException, NotPermittedOperationException {
+    public void deleteService(Long serviceId) throws NotExistingEntityException, NotPermittedOperationException, NotAuthorizedOperationException {
         log.info("Request for deletion of service with ID " + serviceId);
         // No deletion required: all that depends on the service will cascade.
         Optional<SdkService> service = serviceRepository.findById(serviceId);
@@ -459,7 +460,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
         //check if user can access the slice
         if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), s.getSliceId())) {
-            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
         }
 
         //delete not allowed if the service has at least one descriptor
@@ -483,7 +484,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
     @Override
     public void updateMonitoringParameters(Long serviceId, Set<MonitoringParameter> extMonitoringParameters, Set<MonitoringParameter> intMonitoringParameters)
-        throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException {
+        throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException, NotAuthorizedOperationException {
         log.info("Request to update list of scalingAspects for a specific SDK Service " + serviceId);
         Set<MonitoringParameter> monitoringParameters = new HashSet<>();
         monitoringParameters.addAll(extMonitoringParameters);
@@ -517,7 +518,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
         //check if user can access the slice
         if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), service.get().getSliceId())) {
-            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
         }
 
         //update not allowed if the service has at least one descriptor
@@ -559,7 +560,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
     @Override
     public void deleteMonitoringParameters(Long serviceId, Long monitoringParameterId)
-        throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException {
+        throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException, NotAuthorizedOperationException {
 
         log.info("Request to delete a monitoring parameter with ID " + monitoringParameterId + " for a specific SDK Service " + serviceId);
         Optional<MonitoringParameter> mp = monitoringParamRepository.findById(monitoringParameterId);
@@ -576,7 +577,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
         //check if user can access the slice
         if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), service.get().getSliceId())) {
-            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
         }
 
         if ((mp.get().getSdkFunction() != null)
@@ -637,7 +638,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     }
 
     @Override
-    public MonitoringParameterWrapper getMonitoringParameters(Long serviceId) throws NotExistingEntityException, NotPermittedOperationException {
+    public MonitoringParameterWrapper getMonitoringParameters(Long serviceId) throws NotExistingEntityException, NotAuthorizedOperationException {
         log.info("Request to get the list of monitoring parameters for a specific SDK Service " + serviceId);
         Optional<SdkService> service = serviceRepository.findById(serviceId);
         if (!service.isPresent()) {
@@ -646,14 +647,14 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         }
         //check if user can access the slice
         if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), service.get().getSliceId())) {
-            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
         }
         return new MonitoringParameterWrapper(service.get().getExtMonitoringParameters(), service.get().getIntMonitoringParameters());
     }
 
     @Override
     public String publishService(Long serviceId, List<BigDecimal> parameterValues, String authorization)
-        throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException {
+        throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException, NotAuthorizedOperationException {
         log.info("Request for publication of service with ID " + serviceId);
         // Check if service exists
         Optional<SdkService> optService = serviceRepository.findById(serviceId);
@@ -665,7 +666,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
         //check if user can access the slice
         if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), service.getSliceId())) {
-            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
         }
 
         SdkServiceDescriptor descriptor;
@@ -722,7 +723,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
     @Override
     public String createServiceDescriptor(Long serviceId, List<BigDecimal> parameterValues)
-        throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException {
+        throws NotExistingEntityException, MalformedElementException, NotAuthorizedOperationException {
         log.info("Request create-descriptor of service with ID " + serviceId);
 
         // Check if service exists
@@ -735,7 +736,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
         //check if user can access the slice
         if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), service.getSliceId())) {
-            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
         }
 
         SdkServiceDescriptor descriptor;
@@ -752,7 +753,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     }
 
     @Override
-    public List<SdkServiceDescriptor> getAllDescriptors(String sliceId) throws NotExistingEntityException, NotPermittedOperationException {
+    public List<SdkServiceDescriptor> getAllDescriptors(String sliceId) throws NotExistingEntityException, NotAuthorizedOperationException {
         log.info("Request for all service descriptors stored in database");
         //check if the slice is present
         if (sliceId != null) {
@@ -764,7 +765,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         }
         //check if user can access the slice
         if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), sliceId)) {
-            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
         }
 
         List<SdkServiceDescriptor> descriptors = serviceDescriptorRepository.findAll();
@@ -783,13 +784,13 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
     @Override
     public SdkServiceDescriptor getServiceDescriptor(Long descriptorId)
-        throws NotExistingEntityException, NotPermittedOperationException {
+        throws NotExistingEntityException, NotAuthorizedOperationException {
         log.info("Request for service descriptor with ID {}", descriptorId);
         Optional<SdkServiceDescriptor> byId = serviceDescriptorRepository.findById(descriptorId);
         //check if user can access the slice
         if(byId.isPresent()){
             if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), byId.get().getSliceId())) {
-                throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+                throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
             }
         }
         return byId.orElseThrow(() -> {
@@ -799,7 +800,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     }
 
     @Override
-    public void deleteServiceDescriptor(Long descriptorId) throws NotExistingEntityException, NotPermittedOperationException {
+    public void deleteServiceDescriptor(Long descriptorId) throws NotExistingEntityException, NotPermittedOperationException, NotAuthorizedOperationException {
         log.info("Request for deletion of service descriptor with ID {}", descriptorId);
         Optional<SdkServiceDescriptor> optDescriptor = serviceDescriptorRepository.findById(descriptorId);
         SdkServiceDescriptor descriptor = optDescriptor.orElseThrow(() -> {
@@ -809,7 +810,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
         //check if user can access the slice
         if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), descriptor.getSliceId())) {
-            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
         }
 
         //delete not allowed if the service is published to catalogue
@@ -822,7 +823,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
     @Override
     public void publishService(Long serviceDescriptorId, String authorization)
-        throws NotExistingEntityException, AlreadyPublishedServiceException, NotPermittedOperationException, MalformedElementException {
+        throws NotExistingEntityException, AlreadyPublishedServiceException, NotPermittedOperationException, MalformedElementException, NotAuthorizedOperationException {
         Optional<SdkServiceDescriptor> optDescriptor = serviceDescriptorRepository.findById(serviceDescriptorId);
 
         SdkServiceDescriptor descriptor = optDescriptor.orElseThrow(() -> {
@@ -832,7 +833,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
         //check if user can access the slice
         if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), descriptor.getSliceId())) {
-            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
         }
 
         synchronized (this) { // To avoid multiple simultaneous calls
@@ -887,7 +888,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
     @Override
     public void unPublishService(Long serviceDescriptorId, String authorization)
-        throws NotExistingEntityException, NotPublishedServiceException, NotPermittedOperationException {
+        throws NotExistingEntityException, NotPublishedServiceException, NotAuthorizedOperationException {
         log.info("Requested deletion of the publication of the service descriptor with ID {}", serviceDescriptorId);
 
         Optional<SdkServiceDescriptor> optDescriptor = serviceDescriptorRepository.findById(serviceDescriptorId);
@@ -898,7 +899,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
         //check if user can access the slice
         if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), descriptor.getSliceId())) {
-            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
         }
 
         synchronized (this) { // To avoid multiple simultaneous calls
@@ -932,13 +933,18 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
     @Override
     public DescriptorTemplate generateTemplate(Long serviceDescriptorId)
-        throws NotExistingEntityException, MalformedElementException {
+        throws NotExistingEntityException, MalformedElementException, NotAuthorizedOperationException {
         Optional<SdkServiceDescriptor> optDescriptor = serviceDescriptorRepository.findById(serviceDescriptorId);
 
         SdkServiceDescriptor descriptor = optDescriptor.orElseThrow(() -> {
             //log.error("Service descriptor with ID {} is not present in database", serviceDescriptorId);
             return new NotExistingEntityException(String.format("Service descriptor with ID %s is not present in database", serviceDescriptorId));
         });
+
+        //check if user can access the slice
+        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), descriptor.getSliceId())) {
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
+        }
 
         DescriptorTemplate nsd;
         try {
@@ -962,7 +968,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             .map(SdkServiceComponent::getComponentId);
     }
 
-    private void checkAndResolveService(SdkService service) throws NotExistingEntityException, MalformedElementException, AlreadyExistingEntityException, NotPermittedOperationException{
+    private void checkAndResolveService(SdkService service) throws NotExistingEntityException, MalformedElementException, AlreadyExistingEntityException, NotAuthorizedOperationException{
         //In case of new service, check if a service with the same name and version is present
         if(service.getId() == null) {
             Optional<SdkService> serviceOptional = serviceRepository.findByNameAndVersion(service.getName(), service.getVersion());

@@ -5,12 +5,17 @@ import org.keycloak.KeycloakPrincipal;
 import org.keycloak.KeycloakSecurityContext;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.AccessTokenResponse;
+import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+
+
+import javax.ws.rs.ProcessingException;
+import java.util.List;
 
 @Component
 public class KeycloakUtils {
@@ -44,8 +49,18 @@ public class KeycloakUtils {
         return keycloak;
     }
 
-    public AccessTokenResponse getAccessToken() {
-        return getInstance().tokenManager().grantToken();
+    public AccessTokenResponse getAccessToken() throws ProcessingException {
+        log.debug("Going to request an access token");
+        return getInstance().tokenManager().getAccessToken();
+    }
+
+    public List<UserRepresentation> getUsers() {
+        log.debug("Going to retrieve users from realm " + realm + "...");
+        List<UserRepresentation> users = getInstance().realm(realm).users().list();
+        for (UserRepresentation userRepresentation : users) {
+            log.debug("Keycloak user: " + userRepresentation.getUsername());
+        }
+        return users;
     }
 
     public static void decodeJWT(String jwtToken) {

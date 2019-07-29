@@ -21,7 +21,7 @@ public class AuthorizationFilter implements Filter {
     {
         HttpServletRequest req = (HttpServletRequest) request;
         final String val = req.getHeader("Authorization");
-        log.debug("Authorization header : " + val);
+        //log.debug("Authorization header : " + val);
         if (val == null || val.length() == 0) {
             //((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED, "The 'Authorization' header is missing. Please provide a valid token.");
             log.error("The 'Authorization' header is missing. Please provide a valid bearer token.\n");

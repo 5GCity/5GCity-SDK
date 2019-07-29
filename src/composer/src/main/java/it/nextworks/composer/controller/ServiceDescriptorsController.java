@@ -2,6 +2,7 @@ package it.nextworks.composer.controller;
 
 import io.swagger.annotations.*;
 import it.nextworks.composer.executor.interfaces.ServiceManagerProviderInterface;
+import it.nextworks.nfvmano.libs.common.exceptions.NotAuthorizedOperationException;
 import it.nextworks.nfvmano.libs.common.exceptions.NotPermittedOperationException;
 import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
 import it.nextworks.sdk.SdkServiceDescriptor;
@@ -53,7 +54,7 @@ public class ServiceDescriptorsController {
             log.debug(null, e);
             log.error(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-        } catch (NotPermittedOperationException e){
+        }catch (NotAuthorizedOperationException e){
             log.debug(null, e);
             log.error(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
@@ -78,11 +79,11 @@ public class ServiceDescriptorsController {
             SdkServiceDescriptor descriptor = serviceManager.getServiceDescriptor(serviceDescriptorId);
             log.debug("Service Descriptor entity retrived");
             return new ResponseEntity<>(descriptor, HttpStatus.OK);
-        } catch (NotExistingEntityException e) {
+        }catch (NotExistingEntityException e) {
             log.debug(null, e);
             log.error(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-        }catch (NotPermittedOperationException e){
+        }catch (NotAuthorizedOperationException e){
             log.debug(null, e);
             log.error(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
@@ -109,7 +110,7 @@ public class ServiceDescriptorsController {
             serviceManager.deleteServiceDescriptor(serviceDescriptorId);
             log.debug("Service Descriptor entity deleted");
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (NotExistingEntityException e) {
+        }catch (NotExistingEntityException e) {
             log.debug(null, e);
             log.error(e.getMessage());
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
@@ -117,6 +118,10 @@ public class ServiceDescriptorsController {
             log.debug(null, e);
             log.error(e.getMessage());
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.CONFLICT);
+        }catch (NotAuthorizedOperationException e){
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
         }
     }
 
@@ -139,7 +144,7 @@ public class ServiceDescriptorsController {
                 serviceManager.publishService(serviceDescriptorId, authorization);
                 log.debug("Service entity will be published to the Public Catalogue");
                 return new ResponseEntity<>(HttpStatus.ACCEPTED);
-            } catch (NotExistingEntityException e) {
+            }catch (NotExistingEntityException e) {
                 log.debug(null, e);
                 log.error(e.getMessage());
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
@@ -151,6 +156,10 @@ public class ServiceDescriptorsController {
                 log.debug(null, e);
                 log.error(e.getMessage());
                 return new ResponseEntity<String>(e.getMessage(), HttpStatus.CONFLICT);
+            }catch (NotAuthorizedOperationException e){
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
             }
         }
     }
@@ -173,7 +182,7 @@ public class ServiceDescriptorsController {
                 serviceManager.unPublishService(serviceDescriptorId, authorization);
                 log.debug("Service entity will be unpublished from the Public Catalogue");
                 return new ResponseEntity<>(HttpStatus.ACCEPTED);
-            } catch (NotExistingEntityException e) {
+            }catch (NotExistingEntityException e) {
                 log.debug(null, e);
                 log.error(e.getMessage());
                 return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
@@ -181,7 +190,7 @@ public class ServiceDescriptorsController {
                 log.debug(null, e);
                 log.error(e.getMessage());
                 return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
-            }catch (NotPermittedOperationException e){
+            }catch (NotAuthorizedOperationException e){
                 log.debug(null, e);
                 log.error(e.getMessage());
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
@@ -215,6 +224,10 @@ public class ServiceDescriptorsController {
                 log.debug(null, e);
                 log.error(e.getMessage());
                 return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            }catch (NotAuthorizedOperationException e){
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
             }
         }
     }

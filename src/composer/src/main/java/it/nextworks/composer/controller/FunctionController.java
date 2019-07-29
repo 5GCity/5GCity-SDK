@@ -19,6 +19,7 @@ package it.nextworks.composer.controller;
 import io.swagger.annotations.*;
 import it.nextworks.composer.executor.FunctionManager;
 import it.nextworks.nfvmano.libs.common.exceptions.AlreadyExistingEntityException;
+import it.nextworks.nfvmano.libs.common.exceptions.NotAuthorizedOperationException;
 import it.nextworks.nfvmano.libs.common.exceptions.NotPermittedOperationException;
 import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
 import it.nextworks.sdk.MonitoringParameter;
@@ -78,7 +79,7 @@ public class FunctionController {
             log.debug(null, e);
             log.error(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-        }catch (NotPermittedOperationException e){
+        }catch (NotAuthorizedOperationException e){
             log.debug(null, e);
             log.error(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
@@ -110,7 +111,7 @@ public class FunctionController {
                 log.debug(null, e);
                 log.error(e.getMessage());
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-            }catch (NotPermittedOperationException e) {
+            }catch (NotAuthorizedOperationException e) {
                 log.debug(null, e);
                 log.error(e.getMessage());
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
@@ -148,10 +149,10 @@ public class FunctionController {
             log.debug(null, e);
             log.error(e.getMessage());
             return new ResponseEntity<String>("Malformed SdkFunction - " + e.getMessage(), HttpStatus.NOT_FOUND);
-        }catch(NotPermittedOperationException e){
+        }catch (NotAuthorizedOperationException e){
             log.debug(null, e);
             log.error(e.getMessage());
-            return new ResponseEntity<String>("Malformed SdkFunction - " + e.getMessage(), HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
         }
     }
 
@@ -183,6 +184,10 @@ public class FunctionController {
             log.debug(null, e);
             log.error(e.getMessage());
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.CONFLICT);
+        }catch (NotAuthorizedOperationException e){
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
         }
     }
 
@@ -213,6 +218,10 @@ public class FunctionController {
                 log.debug(null, e);
                 log.error(e.getMessage());
                 return new ResponseEntity<String>(e.getMessage(), HttpStatus.CONFLICT);
+            }catch (NotAuthorizedOperationException e){
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
             }
         }
     }
@@ -281,10 +290,10 @@ public class FunctionController {
             log.debug(null, e);
             log.error(e.getMessage());
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
-        }catch (NotPermittedOperationException e) {
+        }catch (NotAuthorizedOperationException e){
             log.debug(null, e);
             log.error(e.getMessage());
-            return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
         }
     }
 
@@ -319,6 +328,10 @@ public class FunctionController {
                 log.debug(null, e);
                 log.error(e.getMessage());
                 return new ResponseEntity<String>(e.getMessage(), HttpStatus.CONFLICT);
+            }catch (NotAuthorizedOperationException e){
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
             }
         }
     }
@@ -354,6 +367,10 @@ public class FunctionController {
                 log.debug(null, e);
                 log.error(e.getMessage());
                 return new ResponseEntity<String>(e.getMessage(), HttpStatus.CONFLICT);
+            }catch (NotAuthorizedOperationException e){
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
             }
         }
     }
@@ -380,7 +397,7 @@ public class FunctionController {
                 log.debug(null, e);
                 log.error(e.getMessage());
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-            }catch (NotPermittedOperationException e) {
+            }catch (NotAuthorizedOperationException e){
                 log.debug(null, e);
                 log.error(e.getMessage());
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
@@ -419,6 +436,10 @@ public class FunctionController {
                 log.debug(null, e);
                 log.error(e.getMessage());
                 return new ResponseEntity<String>("Malformed SdkFunction - " + e.getMessage(), HttpStatus.BAD_REQUEST);
+            }catch (NotAuthorizedOperationException e){
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
             }
         }
     }
@@ -444,6 +465,10 @@ public class FunctionController {
                 log.debug(null, e);
                 log.error(e.getMessage());
                 return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
+            }catch (NotAuthorizedOperationException e){
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
             }
         }
     }

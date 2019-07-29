@@ -45,35 +45,20 @@ import it.nextworks.sdk.exceptions.AlreadyPublishedServiceException;
 import it.nextworks.sdk.exceptions.MalformedElementException;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
 import it.nextworks.sdk.exceptions.NotPublishedServiceException;
-import org.hibernate.cfg.NotYetImplementedException;
-import org.keycloak.KeycloakPrincipal;
-import org.keycloak.adapters.RefreshableKeycloakSecurityContext;
-import org.keycloak.adapters.springsecurity.account.SimpleKeycloakAccount;
-import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
-import org.keycloak.admin.client.Keycloak;
-import org.keycloak.representations.AccessToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.task.TaskExecutor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.annotation.PostConstruct;
 import java.io.*;
-import java.math.BigDecimal;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.*;
@@ -149,8 +134,14 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         String mf;
 
         String authorization = null;
-        if(keycloakEnabled)
-            authorization = keycloakUtils.getAccessToken().getToken();
+        if(keycloakEnabled) {
+            try{
+                authorization = keycloakUtils.getAccessToken().getToken();
+            } catch (Exception e){
+                log.debug(null, e);
+                log.error("Keycloak server is not working properly. Please check Keycloak configuration or disable authentication");
+            }
+        }
 
         List<VnfPkgInfo> vnfPackageInfoList;
         try {
@@ -190,7 +181,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
                 log.debug(null, e);
                 log.error("Error while parsing VNF Pkg, not aligned with CSAR format: " + e.getMessage());
                 //throw new MalformattedElementException("Error while parsing VNF Pkg, not aligned with CSAR format : " + e.getMessage());
-            }catch(NotExistingEntityException | NotPermittedOperationException e){
+            }catch(NotExistingEntityException | NotAuthorizedOperationException e){
                 log.debug(null, e);
                 //exception cannot be raised in this case
             }
@@ -209,12 +200,12 @@ public class FunctionManager implements FunctionManagerProviderInterface {
     }
 
     @Override
-    public SdkFunction getFunction(Long id) throws NotExistingEntityException, NotPermittedOperationException {
+    public SdkFunction getFunction(Long id) throws NotExistingEntityException, NotAuthorizedOperationException {
         Optional<SdkFunction> result = functionRepository.findById(id);
         if (result.isPresent()) {
             //check if user can access the slice
             if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), result.get().getSliceId())) {
-                throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+                throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
             }
             return result.get();
         } else {
@@ -224,7 +215,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
     }
 
     @Override
-    public List<SdkFunction> getFunctions(String sliceId) throws NotExistingEntityException, NotPermittedOperationException {
+    public List<SdkFunction> getFunctions(String sliceId) throws NotExistingEntityException, NotAuthorizedOperationException {
         //check if the slice is present
         if (sliceId != null) {
             Optional<SliceResource> sliceOptional = sliceRepository.findBySliceId(sliceId);
@@ -235,7 +226,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         }
         //check if user can access the slice
         if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), sliceId)) {
-            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
         }
         //retrive only functions that belong to the slice
         List<SdkFunction> functionList = functionRepository.findAll();
@@ -254,7 +245,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
     @Override
     public String createFunction(SdkFunction function)
-        throws MalformedElementException, AlreadyExistingEntityException, NotExistingEntityException, NotPermittedOperationException {
+        throws MalformedElementException, AlreadyExistingEntityException, NotExistingEntityException, NotAuthorizedOperationException {
         log.info("Storing into database a new function");
         if(function.getId() != null){
             //log.error("Function ID cannot be specified in function creation");
@@ -266,9 +257,9 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
         checkAndResolveFunction(function);
 
-        //check if user can access the slice, TODO add !function.getOwnerId().equals("Undefined") also in the others checks?
+        //check if user can access the slice
         if (keycloakEnabled && !function.getOwnerId().equals("Undefined") && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), function.getSliceId())) {
-            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
         }
 
         for(MonitoringParameter mp : function.getMonitoringParameters()){
@@ -298,7 +289,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
     }
 
     @Override
-    public String updateFunction(SdkFunction function) throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException {
+    public String updateFunction(SdkFunction function) throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException, NotAuthorizedOperationException {
         log.info("Updating an existing Function with ID " + function.getId());
 
         if(function.getId() == null){
@@ -319,7 +310,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
         //check if user can access the slice
         if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), func.get().getSliceId())) {
-            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
         }
 
         //TODO create a function with the following two checks to reduce redundant code
@@ -391,7 +382,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
         //check if user can access the slice
         if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), function.getSliceId())) {
-            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
         }
 
         log.debug("Updating into database Function with ID " + function.getId());
@@ -418,7 +409,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
     */
 
     @Override
-    public void deleteFunction(Long functionId) throws NotExistingEntityException, NotPermittedOperationException {
+    public void deleteFunction(Long functionId) throws NotExistingEntityException, NotPermittedOperationException, NotAuthorizedOperationException {
         log.info("Request for deletion of Function with ID " + functionId);
         // No deletion required: all that depends on the Function will cascade.
         Optional<SdkFunction> function = functionRepository.findById(functionId);
@@ -429,7 +420,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
         //check if user can access the slice
         if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), s.getSliceId())) {
-            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
         }
 
         //delete not allowed if the function is published to catalogue
@@ -487,7 +478,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
     @Override
     public void updateMonitoringParameters(Long functionId, Set<MonitoringParameter> monitoringParameters)
-        throws NotExistingEntityException, NotPermittedOperationException, MalformedElementException {
+        throws NotExistingEntityException, NotPermittedOperationException, MalformedElementException, NotAuthorizedOperationException {
         log.info("Request to update list of monitoring parameters for a specific SDK Function " + functionId);
 
         for (MonitoringParameter param : monitoringParameters) {
@@ -518,7 +509,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
         //check if user can access the slice
         if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), function.get().getSliceId())) {
-            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
         }
 
         //update not allowed if the function is published to catalogue
@@ -550,7 +541,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
     @Override
     public void deleteMonitoringParameters(Long functionId, Long monitoringParameterId)
-        throws NotExistingEntityException, NotPermittedOperationException, MalformedElementException {
+        throws NotExistingEntityException, NotPermittedOperationException, MalformedElementException, NotAuthorizedOperationException {
 
         log.info("Request to delete a monitoring parameter identified by id " + monitoringParameterId + " for a specific SDK Service " + functionId);
 
@@ -568,7 +559,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
         //check if user can access the slice
         if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), function.get().getSliceId())) {
-            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
         }
 
         if((mp.get().getSdkFunction() == null) || (mp.get().getSdkFunction().getId().equals(functionId))){
@@ -610,7 +601,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
     }
 
     @Override
-    public Set<MonitoringParameter> getMonitoringParameters(Long functionId) throws NotExistingEntityException, NotPermittedOperationException {
+    public Set<MonitoringParameter> getMonitoringParameters(Long functionId) throws NotExistingEntityException, NotAuthorizedOperationException {
         log.info("Request to get the list of monitoring parameters for a specific SDK Function " + functionId);
         Optional<SdkFunction> function = functionRepository.findById(functionId);
         if (!function.isPresent()) {
@@ -620,14 +611,14 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
         //check if user can access the slice
         if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), function.get().getSliceId())) {
-            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
         }
         return (function.get().getMonitoringParameters());
     }
 
     @Override
     public void publishFunction(Long functionId, String authorization)
-        throws NotExistingEntityException, AlreadyPublishedServiceException, NotPermittedOperationException {
+        throws NotExistingEntityException, AlreadyPublishedServiceException, NotAuthorizedOperationException {
         log.info("Request for publication of function with ID " + functionId);
 
         // Check if function exists
@@ -640,7 +631,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
         //check if user can access the slice
         if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), function.getSliceId())) {
-            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
         }
 
         synchronized (this) { // To avoid multiple simultaneous calls
@@ -679,7 +670,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
     @Override
     public void unPublishFunction(Long functionId, String authorization)
-        throws NotExistingEntityException, NotPublishedServiceException, NotPermittedOperationException {
+        throws NotExistingEntityException, NotPublishedServiceException, NotPermittedOperationException, NotAuthorizedOperationException {
         log.info("Requested deletion of the publication of the function with ID {}", functionId);
         Optional<SdkFunction> optFunction = functionRepository.findById(functionId);
         SdkFunction function = optFunction.orElseThrow(() -> {
@@ -689,7 +680,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
         //check if user can access the slice
         if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), function.getSliceId())) {
-            throw new NotPermittedOperationException("Current user cannot access to the specified slice");
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
         }
 
         //unpublish not allowed if the function is used by a commited service
@@ -736,13 +727,19 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
     @Override
     public DescriptorTemplate generateTemplate(Long functionId)
-        throws NotExistingEntityException {
+        throws NotExistingEntityException, NotAuthorizedOperationException {
         Optional<SdkFunction> optFunction = functionRepository.findById(functionId);
 
         SdkFunction function = optFunction.orElseThrow(() -> {
             //log.error("Function with ID {} is not present in database", functionId);
             return new NotExistingEntityException(String.format("Function with ID {} is not present in database", functionId));
         });
+
+        //check if user can access the slice
+        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), function.getSliceId())) {
+            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
+        }
+
         return adapter.generateVirtualNetworkFunctionDescriptor(function);
     }
 
@@ -820,7 +817,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         );
     }
 
-    private void createFunctionFromVnfd(CSARInfo csarInfo, String mf, String storagePath) throws MalformattedElementException, IOException, FailedOperationException, NotExistingEntityException, NotPermittedOperationException{
+    private void createFunctionFromVnfd(CSARInfo csarInfo, String mf, String storagePath) throws MalformattedElementException, IOException, FailedOperationException, NotExistingEntityException, NotAuthorizedOperationException{
         SdkFunction sdkFunction = new SdkFunction();
         DescriptorTemplate dt = csarInfo.getMst();
         ObjectMapper objectMapper = new ObjectMapper();

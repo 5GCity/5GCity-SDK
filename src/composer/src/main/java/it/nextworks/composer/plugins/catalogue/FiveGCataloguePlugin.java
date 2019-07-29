@@ -6,6 +6,8 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.zip.ZipInputStream;
 
+import it.nextworks.composer.controller.elements.SliceResource;
+import it.nextworks.composer.plugins.catalogue.api.management.ProjectResource;
 import it.nextworks.composer.plugins.catalogue.sol005.nsdmanagement.elements.*;
 import it.nextworks.composer.plugins.catalogue.sol005.vnfpackagemanagement.elements.CreateVnfPkgInfoRequest;
 import it.nextworks.composer.plugins.catalogue.sol005.vnfpackagemanagement.elements.PackageOperationalStateType;
@@ -36,11 +38,13 @@ public class FiveGCataloguePlugin extends CataloguePlugin {
 	
 	DefaultApi nsdApi;
 	it.nextworks.composer.plugins.catalogue.api.vnf.DefaultApi vnfApi;
+	it.nextworks.composer.plugins.catalogue.api.management.DefaultApi mgmtApi;
 	
 	public FiveGCataloguePlugin(CatalogueType type, Catalogue catalogue) {
 		super(type, catalogue);
 		nsdApi = new DefaultApi(new ApiClient(catalogue));
 		vnfApi = new it.nextworks.composer.plugins.catalogue.api.vnf.DefaultApi(new it.nextworks.composer.plugins.catalogue.invoker.vnf.ApiClient(catalogue));
+		mgmtApi = new it.nextworks.composer.plugins.catalogue.api.management.DefaultApi(new it.nextworks.composer.plugins.catalogue.invoker.management.ApiClient(catalogue));
 	}
 
 	@Bean 
@@ -251,6 +255,40 @@ public class FiveGCataloguePlugin extends CataloguePlugin {
         } catch(RestClientException e) {
             log.error("Unable to perform VnfPkgInfo deletion on public catalogue: " + e.getMessage());
             throw new RestClientException("Unable to perform VnfPkgInfo deletion on public catalogue", e);
+        }
+    }
+
+    public void createProject(String projectId, String authorization){
+        try{
+            ProjectResource project = new ProjectResource(projectId, projectId + " project");
+            mgmtApi.createProject(project, authorization);
+            log.debug("Created project on public catalogue with id: " + projectId);
+        } catch(RestClientException e) {
+            log.error("Unable to create project on public catalogue: " + e.getMessage());
+            throw new RestClientException("Unable to create project on public catalogue", e);
+        }
+    }
+
+    public void deleteProject(String projectId, String authorization){
+        try{
+            mgmtApi.deleteProject(projectId, authorization);
+            log.debug("Deleted project on public catalogue with id: " + projectId);
+        } catch(RestClientException e) {
+            log.error("Unable to delete project on public catalogue: " + e.getMessage());
+            throw new RestClientException("Unable to delete project on public catalogue", e);
+        }
+    }
+
+    public void addUserToProject(String projectId, String username, String authorization){
+        try{
+            //update users DB on public catalogue
+            mgmtApi.getUsers(authorization);
+            //add user to project on public catalogue
+            mgmtApi.addUserToProject(projectId, username, authorization);
+            log.debug("Added user " + username + " to project " + projectId + " on public catalogue");
+        } catch(RestClientException e) {
+            log.error("Unable to add user on public catalogue: " + e.getMessage());
+            throw new RestClientException("Unable to add user on public catalogue", e);
         }
     }
 
