@@ -134,7 +134,7 @@ public class FunctionController {
     public ResponseEntity<?> createFunction(@RequestBody SdkFunction request, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         log.info("Request for creation of a new function");
         try {
-            functionManager.createFunction(request);
+            functionManager.createFunction(request, false);
             log.debug("Function entity created");
             return new ResponseEntity<>(request.getId(), HttpStatus.CREATED);
         } catch (AlreadyExistingEntityException e) {

@@ -79,7 +79,6 @@ public class SecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
                 .antMatchers( "/sdk/functions/**").hasAnyRole("Administrator", "Designer")
                 .antMatchers("/sdk/sliceManagement/**").hasAnyRole("Administrator")
                .anyRequest().permitAll();
-
     }
 
     @Bean

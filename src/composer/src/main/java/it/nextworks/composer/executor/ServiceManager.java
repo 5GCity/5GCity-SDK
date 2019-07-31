@@ -136,6 +136,12 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     @Value("${keycloak.enabled:true}")
     private boolean keycloakEnabled;
 
+    @Autowired
+    private KeycloakUtils keycloakUtils;
+
+    @Value("${admin.user.name:admin}")
+    private String adminUserName;
+
     public ServiceManager() {
 
     }
@@ -150,18 +156,30 @@ public class ServiceManager implements ServiceManagerProviderInterface {
                 log.error("Slice with sliceId " + sliceId + " does not exist");
                 throw new NotExistingEntityException("Slice with sliceId " + sliceId + " does not exist");
             }
+            if(keycloakEnabled)
+                keycloakUtils.checkUserSlices(keycloakUtils.getUserNameFromJWT(), sliceId);
         }
-        //check if user can access the slice
-        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), sliceId)) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
-
+         /*
+            Filter services:
+                User can view a service if:
+                    - belongs to the owner group if the visibility is private
+                    - user accessLevel <= service accessLevel
+                    - belongs to the slice
+        */
         List<SdkService> serviceList = serviceRepository.findAll();
         Iterator<SdkService> serviceIterator = serviceList.iterator();
         for (; serviceIterator.hasNext() ;) {
             SdkService service = serviceIterator.next();
             if (sliceId != null && !service.getSliceId().equals(sliceId))
                 serviceIterator.remove();
+            else if (keycloakEnabled && !keycloakUtils.getUserNameFromJWT().equals(adminUserName)){
+                if(keycloakUtils.getAccessLevelFromJWT().compareTo(service.getAccessLevel()) > 0)
+                    serviceIterator.remove();
+                else if (service.getVisibility().equals(Visibility.PRIVATE) &&
+                    !keycloakUtils.getGroupsFromJWT().contains(service.getGroupId())){
+                    serviceIterator.remove();
+                }
+            }
         }
         if (serviceList.size() == 0) {
             log.debug("No services are available");
@@ -204,12 +222,10 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         service.isValid();
         log.debug("Service is valid");
 
-        checkAndResolveService(service);
+        if(keycloakEnabled)
+            authSecurityChecks(service, 0);
 
-        //check if user can access the slice
-        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), service.getSliceId())) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
+        checkAndResolveService(service);
 
         for(SdkServiceComponent component : service.getComponents()){
             if (component.getId() != null) {
@@ -285,10 +301,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 		}
 		log.debug("Service found on db");
 
-        //check if user can access the slice
-        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), srv.get().getSliceId())) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
+        if(keycloakEnabled)
+            authSecurityChecks(srv.get(), 0);
 
         //update not allowed if the service has at least one descriptor
         List<SdkServiceDescriptor> descriptors = serviceDescriptorRepository.findByTemplateId(service.getId());
@@ -419,10 +433,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             //exception cannot be raised in this case
         }
 
-        //check if user can access the slice
-        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), service.getSliceId())) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
+        if(keycloakEnabled)
+            authSecurityChecks(service, 0);
 
 		log.debug("Updating into database service with id: " + service.getId());
 
@@ -437,10 +449,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         log.info("Request for service with ID " + id);
         Optional<SdkService> service = serviceRepository.findById(id);
         if (service.isPresent()) {
-            //check if user can access the slice
-            if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), service.get().getSliceId())) {
-                throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-            }
+            if(keycloakEnabled)
+                authSecurityChecks(service.get(), 2);
             return service.get();
         } else {
             //log.error("Service with ID " + id + " not found");
@@ -458,10 +468,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             return new NotExistingEntityException("Service with ID " + serviceId + " not found");
         });
 
-        //check if user can access the slice
-        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), s.getSliceId())) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
+        if(keycloakEnabled)
+            authSecurityChecks(s, 1);
 
         //delete not allowed if the service has at least one descriptor
         List<SdkServiceDescriptor> descriptors = serviceDescriptorRepository.findByTemplateId(serviceId);
@@ -516,10 +524,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             throw new NotExistingEntityException("Service with ID " + serviceId + " is not present in database");
         }
 
-        //check if user can access the slice
-        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), service.get().getSliceId())) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
+        if(keycloakEnabled)
+            authSecurityChecks(service.get(), 0);
 
         //update not allowed if the service has at least one descriptor
         List<SdkServiceDescriptor> descriptors = serviceDescriptorRepository.findByTemplateId(serviceId);
@@ -575,10 +581,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             throw new NotExistingEntityException("Service with ID " + serviceId + " is not present in database");
         }
 
-        //check if user can access the slice
-        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), service.get().getSliceId())) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
+        if(keycloakEnabled)
+            authSecurityChecks(service.get(), 0);
 
         if ((mp.get().getSdkFunction() != null)
             || ((mp.get().getSdkServiceExt() != null) && (!mp.get().getSdkServiceExt().getId().equals(serviceId)))
@@ -645,10 +649,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             //log.error("Service with ID " + serviceId + " is not present in database");
             throw new NotExistingEntityException("Service with ID " + serviceId + " is not present in database");
         }
-        //check if user can access the slice
-        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), service.get().getSliceId())) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
+        if(keycloakEnabled)
+            authSecurityChecks(service.get(), 2);
         return new MonitoringParameterWrapper(service.get().getExtMonitoringParameters(), service.get().getIntMonitoringParameters());
     }
 
@@ -664,10 +666,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             return new NotExistingEntityException("Service with ID " + serviceId + " is not present in database");
         });
 
-        //check if user can access the slice
-        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), service.getSliceId())) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
+        if(keycloakEnabled)
+            authSecurityChecks(service, 2);
 
         SdkServiceDescriptor descriptor;
         try {
@@ -707,14 +707,14 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             authorization,
             nsInfoId -> {
                 if (nsInfoId != null) {
-                    log.info("Service descriptor with ID {} successfully published", serviceDescriptorId);
+                    log.info("Service descriptor with ID {} successfully published to project {}", serviceDescriptorId, service.getSliceId());
                     descriptor.setStatus(SdkServiceStatus.COMMITTED);
                     descriptor.setNsInfoId(nsInfoId);
                     serviceDescriptorRepository.saveAndFlush(descriptor);
                 } else {
                     descriptor.setStatus(SdkServiceStatus.SAVED);
                     serviceDescriptorRepository.saveAndFlush(descriptor);
-                    log.error("Error while publishing service descriptor with ID {}", serviceDescriptorId);
+                    log.error("Error while publishing service descriptor with ID {} to project {}", serviceDescriptorId, service.getSliceId());
                 }
             }
         );
@@ -734,10 +734,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             return new NotExistingEntityException("Service with ID " + serviceId + " is not present in database");
         });
 
-        //check if user can access the slice
-        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), service.getSliceId())) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
+        if(keycloakEnabled)
+            authSecurityChecks(service, 2);
 
         SdkServiceDescriptor descriptor;
         try {
@@ -762,18 +760,23 @@ public class ServiceManager implements ServiceManagerProviderInterface {
                 log.error("Slice with sliceId " + sliceId + " does not exist");
                 throw new NotExistingEntityException("Slice with sliceId " + sliceId + " does not exist");
             }
+            if(keycloakEnabled)
+                keycloakUtils.checkUserSlices(keycloakUtils.getUserNameFromJWT(), sliceId);
         }
-        //check if user can access the slice
-        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), sliceId)) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
-
         List<SdkServiceDescriptor> descriptors = serviceDescriptorRepository.findAll();
         Iterator<SdkServiceDescriptor> descriptorIterator = descriptors.iterator();
         for (; descriptorIterator.hasNext() ;) {
             SdkServiceDescriptor descriptor = descriptorIterator.next();
             if (sliceId != null && !descriptor.getSliceId().equals(sliceId))
                 descriptorIterator.remove();
+            else if (keycloakEnabled && !keycloakUtils.getUserNameFromJWT().equals(adminUserName)){
+                if(keycloakUtils.getAccessLevelFromJWT().compareTo(descriptor.getTemplate().getAccessLevel()) > 0)
+                    descriptorIterator.remove();
+                else if (descriptor.getTemplate().getVisibility().equals(Visibility.PRIVATE) &&
+                    !keycloakUtils.getGroupsFromJWT().contains(descriptor.getTemplate().getGroupId())){
+                    descriptorIterator.remove();
+                }
+            }
         }
         if(descriptors.size() == 0){
             log.debug("No service descriptors are available");
@@ -789,9 +792,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         Optional<SdkServiceDescriptor> byId = serviceDescriptorRepository.findById(descriptorId);
         //check if user can access the slice
         if(byId.isPresent()){
-            if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), byId.get().getSliceId())) {
-                throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-            }
+            if(keycloakEnabled)
+                authSecurityChecks(byId.get().getTemplate(), 2);
         }
         return byId.orElseThrow(() -> {
             //log.error("Descriptor with ID {} not found", descriptorId);
@@ -808,10 +810,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             return new NotExistingEntityException(String.format("Descriptor with ID %d not found", descriptorId));
         });
 
-        //check if user can access the slice
-        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), descriptor.getSliceId())) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
+        if(keycloakEnabled)
+            authSecurityChecks(descriptor.getTemplate(), 2);
 
         //delete not allowed if the service is published to catalogue
         if(descriptor.getStatus().equals(SdkServiceStatus.COMMITTED)){
@@ -831,10 +831,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             return new NotExistingEntityException(String.format("Service descriptor with ID %s is not present in database", serviceDescriptorId));
         });
 
-        //check if user can access the slice
-        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), descriptor.getSliceId())) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
+        if(keycloakEnabled)
+            authSecurityChecks(descriptor.getTemplate(), 2);
 
         synchronized (this) { // To avoid multiple simultaneous calls
             if (!descriptor.getStatus().equals(SdkServiceStatus.SAVED)) {
@@ -873,14 +871,14 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             authorization,
             nsInfoId -> {
                 if (nsInfoId != null) {
-                    log.info("Service descriptor with ID {} successfully published", serviceDescriptorId);
+                    log.info("Service descriptor with ID {} successfully published to project {}", serviceDescriptorId, descriptor.getSliceId());
                     descriptor.setStatus(SdkServiceStatus.COMMITTED);
                     descriptor.setNsInfoId(nsInfoId);
                     serviceDescriptorRepository.save(descriptor);
                 } else {
                     descriptor.setStatus(SdkServiceStatus.SAVED);
                     serviceDescriptorRepository.save(descriptor);
-                    log.error("Error while publishing service descriptor with ID {}", serviceDescriptorId);
+                    log.error("Error while publishing service descriptor with ID {} to project {}", serviceDescriptorId, descriptor.getSliceId());
                 }
             }
         );
@@ -897,10 +895,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             return new NotExistingEntityException(String.format("Service descriptor with ID %s is not present in database", serviceDescriptorId));
         });
 
-        //check if user can access the slice
-        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), descriptor.getSliceId())) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
+        if(keycloakEnabled)
+            authSecurityChecks(descriptor.getTemplate(), 2);
 
         synchronized (this) { // To avoid multiple simultaneous calls
             // Check if is already published
@@ -941,10 +937,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             return new NotExistingEntityException(String.format("Service descriptor with ID %s is not present in database", serviceDescriptorId));
         });
 
-        //check if user can access the slice
-        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), descriptor.getSliceId())) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
+        if(keycloakEnabled)
+            authSecurityChecks(descriptor.getTemplate(), 2);
 
         DescriptorTemplate nsd;
         try {
@@ -1170,19 +1164,50 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         }
     }
 
-    public boolean checkUserProjects(String userName, String sliceId) {
-        if(sliceId == null)
-            return true;
-        Optional<SliceResource> optionalSlice = sliceRepository.findBySliceId(sliceId);
-        if(optionalSlice.isPresent()) {
-            List<String> users = optionalSlice.get().getUsers();
-            for (String user : users) {
-                if (user.equals(userName))
-                    return true;
-            }
+    private void authSecurityChecks(SdkService service, int checkToPerform) throws NotAuthorizedOperationException{
+        log.debug("Checking if the user can access the resource");
+
+        // The admin can access all the resources
+        if(keycloakUtils.getUserNameFromJWT().equals(adminUserName))
+            return;
+
+        /*
+            0 : Create and Update
+                User can create/update a service if:
+                    - is the owner
+                    - belongs to the owner group
+                    - user accessLevel <= service accessLevel
+                    - belongs to the slice
+            1 : Delete
+                User can delete a service if:
+                    - is the owner
+                    - belongs to the slice
+            2 : Publish, Unpublish and Get
+                User can publish/unpublish/get a service if:
+                    - belongs to the owner group if the visibility is private
+                    - user accessLevel <= service accessLevel
+                    - belongs to the slice
+        */
+
+        switch (checkToPerform) {
+            case 0:
+                keycloakUtils.checkUserSlices(keycloakUtils.getUserNameFromJWT(), service.getSliceId());
+                keycloakUtils.checkUserAccessLevel(keycloakUtils.getAccessLevelFromJWT(), service.getAccessLevel());
+                keycloakUtils.checkUserGroups(keycloakUtils.getGroupsFromJWT(), service.getGroupId());
+                keycloakUtils.checkUserId(keycloakUtils.getUserNameFromJWT(), service.getOwnerId());
+                break;
+            case 1:
+                keycloakUtils.checkUserSlices(keycloakUtils.getUserNameFromJWT(), service.getSliceId());
+                keycloakUtils.checkUserId(keycloakUtils.getUserNameFromJWT(), service.getOwnerId());
+                break;
+            case 2:
+                keycloakUtils.checkUserSlices(keycloakUtils.getUserNameFromJWT(), service.getSliceId());
+                keycloakUtils.checkUserAccessLevel(keycloakUtils.getAccessLevelFromJWT(), service.getAccessLevel());
+                if(service.getVisibility().equals(Visibility.PRIVATE))
+                    keycloakUtils.checkUserGroups(keycloakUtils.getGroupsFromJWT(), service.getGroupId());
         }
-        log.error("Current user cannot access to the specified project");
-        return false;
+        log.debug("User can access the resource");
     }
+
 }
 

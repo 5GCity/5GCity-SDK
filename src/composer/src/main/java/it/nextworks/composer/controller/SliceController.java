@@ -246,8 +246,10 @@ public class SliceController {
                 return new ResponseEntity<String>("Slice with sliceId " + sliceId + " not present in DB", HttpStatus.NOT_FOUND);
             }
         } else{
-            log.error("Authentication not enabled: users are not manged");
-            return new ResponseEntity<String>("Authentication not enabled: users are not manged", HttpStatus.BAD_REQUEST);
+            log.error("Authentication not enabled: users are not managed");
+            return new ResponseEntity<String>("Authentication not enabled: users are not managed", HttpStatus.BAD_REQUEST);
         }
     }
+
+    //TODO add delete user from slice and update slice??
 }

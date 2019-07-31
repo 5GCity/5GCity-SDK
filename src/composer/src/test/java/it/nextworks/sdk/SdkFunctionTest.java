@@ -352,10 +352,10 @@ public class SdkFunctionTest {
 
         SdkFunction vPlate = makeNS1vPlateObject();
 
-        functionManager.createFunction(ns1Firewall);
-        functionManager.createFunction(ns2Firewall);
-        functionManager.createFunction(minicache);
-        functionManager.createFunction(vPlate);
+        functionManager.createFunction(ns1Firewall, true);
+        functionManager.createFunction(ns2Firewall, true);
+        functionManager.createFunction(minicache, true);
+        functionManager.createFunction(vPlate, true);
 
         Optional<SdkFunction> mwb = functionRepository.findById(minicache.getId());
         Optional<SdkFunction> vwb = functionRepository.findById(vPlate.getId());

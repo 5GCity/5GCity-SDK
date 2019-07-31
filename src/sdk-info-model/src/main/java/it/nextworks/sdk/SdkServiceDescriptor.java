@@ -179,12 +179,12 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
         return this.template.getId();
     }
 
-    @JsonProperty("serviceId")
+    @JsonProperty("sliceId")
     public String getSliceId() {
         return sliceId;
     }
 
-    @JsonProperty("serviceId")
+    @JsonProperty("sliceId")
     public void setSliceId(String sliceId) {
         this.sliceId = sliceId;
     }

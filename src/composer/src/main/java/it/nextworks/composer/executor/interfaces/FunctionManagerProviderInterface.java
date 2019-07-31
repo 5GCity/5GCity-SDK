@@ -52,7 +52,7 @@ public interface FunctionManagerProviderInterface {
 
     //String createFunction();
 
-    String createFunction(SdkFunction function)
+    String createFunction(SdkFunction function, boolean isInternalRequest)
         throws MalformedElementException, AlreadyExistingEntityException, NotExistingEntityException, NotPermittedOperationException, NotAuthorizedOperationException;
 
     String updateFunction(SdkFunction function)

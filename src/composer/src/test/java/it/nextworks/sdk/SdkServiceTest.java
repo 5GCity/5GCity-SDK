@@ -364,11 +364,11 @@ public class SdkServiceTest {
 
         SdkFunction firewall = SdkFunctionTest.makeNS1FirewallObject();
 
-        functionManager.createFunction(firewall);
+        functionManager.createFunction(firewall, true);
 
         SdkFunction vPlate = SdkFunctionTest.makeNS1vPlateObject();
 
-	    functionManager.createFunction(vPlate);
+	    functionManager.createFunction(vPlate, true);
 
         Long firewallId = firewall.getId();
 

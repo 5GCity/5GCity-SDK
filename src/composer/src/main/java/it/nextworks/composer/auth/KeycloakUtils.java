@@ -1,5 +1,8 @@
 package it.nextworks.composer.auth;
 
+import it.nextworks.composer.controller.elements.SliceResource;
+import it.nextworks.composer.executor.repositories.SliceRepository;
+import it.nextworks.nfvmano.libs.common.exceptions.NotAuthorizedOperationException;
 import org.apache.commons.codec.binary.Base64;
 import org.keycloak.KeycloakPrincipal;
 import org.keycloak.KeycloakSecurityContext;
@@ -8,6 +11,7 @@ import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,6 +20,8 @@ import org.springframework.stereotype.Component;
 
 import javax.ws.rs.ProcessingException;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Component
 public class KeycloakUtils {
@@ -42,6 +48,9 @@ public class KeycloakUtils {
 
     private Keycloak keycloak;
 
+    @Autowired
+    private SliceRepository sliceRepository;
+
     public Keycloak getInstance() {
         if (keycloak == null) {
             keycloak = Keycloak.getInstance(serverUrl, realm, userName, password, clientId, clientSecret);
@@ -63,7 +72,7 @@ public class KeycloakUtils {
         return users;
     }
 
-    public static void decodeJWT(String jwtToken) {
+    public void decodeJWT(String jwtToken) {
         log.debug("Going to decode JWT...");
         String[] split_string = jwtToken.split("\\.");
         String base64EncodedHeader = split_string[0];
@@ -82,7 +91,7 @@ public class KeycloakUtils {
         log.debug("JWT Signature: " + signature);
     }
 
-    public static String getUserNameFromJWT() {
+    public String getUserNameFromJWT() {
 
         String userName = null;
 
@@ -102,5 +111,77 @@ public class KeycloakUtils {
         }
 
         return userName;
+    }
+
+    public List<String> getGroupsFromJWT() {
+
+        List<String> groups = null;
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication.getPrincipal() instanceof KeycloakPrincipal) {
+            KeycloakPrincipal<KeycloakSecurityContext> kp = (KeycloakPrincipal<KeycloakSecurityContext>) authentication.getPrincipal();
+            // retrieving username here
+            Map<String, Object> otherClaims = kp.getKeycloakSecurityContext().getToken().getOtherClaims();
+            groups = (List<String>)otherClaims.get("groups");
+        }
+
+        if(groups != null)
+            log.debug("User groups : " + groups.toString());
+        return groups;
+    }
+
+    public Integer getAccessLevelFromJWT() {
+
+        Integer accessLevel = null;
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication.getPrincipal() instanceof KeycloakPrincipal) {
+            KeycloakPrincipal<KeycloakSecurityContext> kp = (KeycloakPrincipal<KeycloakSecurityContext>) authentication.getPrincipal();
+            // retrieving username here
+            Map<String, Object> otherClaims = kp.getKeycloakSecurityContext().getToken().getOtherClaims();
+            accessLevel = (Integer)otherClaims.get("accessLevel");
+        }
+
+        if(accessLevel != null)
+            log.debug("User accessLevel : " + accessLevel);
+        return accessLevel;
+    }
+
+    public void checkUserSlices(String userName, String resourceSliceId) throws NotAuthorizedOperationException {
+        //if(resourceSliceId == null)
+        //    return;
+        Optional<SliceResource> optionalSlice = sliceRepository.findBySliceId(resourceSliceId);
+        if(optionalSlice.isPresent()) {
+            List<String> users = optionalSlice.get().getUsers();
+            for (String user : users) {
+                if (user.equals(userName))
+                    return;
+            }
+        }
+        log.error("Current user cannot access the specified slice");
+        throw new NotAuthorizedOperationException("Current user cannot access the specified slice");
+    }
+
+    public void checkUserAccessLevel(Integer userAccessLevel, Integer resourceAccessLevel) throws NotAuthorizedOperationException {
+        if(userAccessLevel.compareTo(resourceAccessLevel) <= 0)
+            return;
+        log.error("Current user cannot access to the specified resource: accessLevel mismatch");
+        throw new NotAuthorizedOperationException("Current user cannot access to the specified resource: accessLevel mismatch");
+    }
+
+    public void checkUserGroups(List<String> userGroups, String resourceGroupId) throws NotAuthorizedOperationException {
+       if(userGroups.contains(resourceGroupId))
+           return;
+        log.error("Current user cannot access to the specified resource: group mismatch");
+        throw new NotAuthorizedOperationException("Current user cannot access to the specified resource: group mismatch");
+    }
+
+    public void checkUserId(String userName, String resourceOwnerId) throws NotAuthorizedOperationException {
+        if(userName.equals(resourceOwnerId))
+            return;
+        log.error("Current user cannot access to the specified resource: owner mismatch");
+        throw new NotAuthorizedOperationException("Current user cannot access to the specified resource: owner mismatch");
     }
 }

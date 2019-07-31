@@ -359,7 +359,6 @@ public class DefaultApi {
         if(project != null)
             queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
-        //adding fake Authorization header for bypassing security check on catalogue
         headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 

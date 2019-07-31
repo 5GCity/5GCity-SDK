@@ -37,10 +37,7 @@ import it.nextworks.nfvmano.libs.descriptors.vnfd.nodes.VDU.VDUVirtualBlockStora
 import it.nextworks.nfvmano.libs.descriptors.vnfd.nodes.VNF.VNFNode;
 import it.nextworks.nfvmano.libs.descriptors.vnfd.nodes.VnfExtCp.VnfExtCpNode;
 import it.nextworks.sdk.*;
-import it.nextworks.sdk.enums.ConnectionPointType;
-import it.nextworks.sdk.enums.SdkFunctionStatus;
-import it.nextworks.sdk.enums.SdkServiceStatus;
-import it.nextworks.sdk.enums.Visibility;
+import it.nextworks.sdk.enums.*;
 import it.nextworks.sdk.exceptions.AlreadyPublishedServiceException;
 import it.nextworks.sdk.exceptions.MalformedElementException;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
@@ -112,6 +109,9 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
     @Autowired
     private KeycloakUtils keycloakUtils;
+
+    @Value("${admin.user.name:admin}")
+    private String adminUserName;
 
     public FunctionManager() {
 
@@ -203,10 +203,8 @@ public class FunctionManager implements FunctionManagerProviderInterface {
     public SdkFunction getFunction(Long id) throws NotExistingEntityException, NotAuthorizedOperationException {
         Optional<SdkFunction> result = functionRepository.findById(id);
         if (result.isPresent()) {
-            //check if user can access the slice
-            if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), result.get().getSliceId())) {
-                throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-            }
+            if(keycloakEnabled)
+                authSecurityChecks(result.get(), 2);
             return result.get();
         } else {
             //log.error("No function with ID " + id + " was found");
@@ -223,18 +221,31 @@ public class FunctionManager implements FunctionManagerProviderInterface {
                 log.error("Slice with sliceId " + sliceId + " does not exist");
                 throw new NotExistingEntityException("Slice with sliceId " + sliceId + " does not exist");
             }
+            if(keycloakEnabled)
+                keycloakUtils.checkUserSlices(keycloakUtils.getUserNameFromJWT(), sliceId);
         }
-        //check if user can access the slice
-        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), sliceId)) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
-        //retrive only functions that belong to the slice
+
+        /*
+            Filter functions:
+                User can view a function if:
+                    - belongs to the owner group if the visibility is private
+                    - user accessLevel <= function accessLevel
+                    - belongs to the slice
+        */
         List<SdkFunction> functionList = functionRepository.findAll();
         Iterator<SdkFunction> functionIterator = functionList.iterator();
         for (; functionIterator.hasNext() ;) {
             SdkFunction function = functionIterator.next();
             if (sliceId != null && !function.getSliceId().equals(sliceId))
                 functionIterator.remove();
+            else if (keycloakEnabled && !keycloakUtils.getUserNameFromJWT().equals(adminUserName)){
+                if(keycloakUtils.getAccessLevelFromJWT().compareTo(function.getAccessLevel()) > 0)
+                    functionIterator.remove();
+                else if (function.getVisibility().equals(Visibility.PRIVATE) &&
+                            !keycloakUtils.getGroupsFromJWT().contains(function.getGroupId())){
+                    functionIterator.remove();
+                }
+            }
         }
         if (functionList.size() == 0) {
             log.debug("No functions are available");
@@ -244,7 +255,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
     }
 
     @Override
-    public String createFunction(SdkFunction function)
+    public String createFunction(SdkFunction function, boolean isInternalRequest)
         throws MalformedElementException, AlreadyExistingEntityException, NotExistingEntityException, NotAuthorizedOperationException {
         log.info("Storing into database a new function");
         if(function.getId() != null){
@@ -255,12 +266,10 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         function.isValid();
         log.debug("Function is valid");
 
-        checkAndResolveFunction(function);
+        if(keycloakEnabled && !isInternalRequest)
+            authSecurityChecks(function, 0);
 
-        //check if user can access the slice
-        if (keycloakEnabled && !function.getOwnerId().equals("Undefined") && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), function.getSliceId())) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
+        checkAndResolveFunction(function);
 
         for(MonitoringParameter mp : function.getMonitoringParameters()){
             if (mp.getId() != null) {
@@ -308,10 +317,8 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         }
         log.debug("Function found on db");
 
-        //check if user can access the slice
-        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), func.get().getSliceId())) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
+        if(keycloakEnabled)
+            authSecurityChecks(func.get(), 0);
 
         //TODO create a function with the following two checks to reduce redundant code
         //update not allowed if the function is published to catalogue
@@ -380,10 +387,8 @@ public class FunctionManager implements FunctionManagerProviderInterface {
                 //exception cannot be raised in this case
         }
 
-        //check if user can access the slice
-        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), function.getSliceId())) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
+        if(keycloakEnabled)
+            authSecurityChecks(function, 0);
 
         log.debug("Updating into database Function with ID " + function.getId());
 
@@ -418,10 +423,8 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             return new NotExistingEntityException("Function with ID " + functionId + " not found");
         });
 
-        //check if user can access the slice
-        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), s.getSliceId())) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
+        if(keycloakEnabled)
+            authSecurityChecks(s, 1);
 
         //delete not allowed if the function is published to catalogue
         if(s.getStatus().equals(SdkFunctionStatus.COMMITTED)){
@@ -507,10 +510,8 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             throw new NotExistingEntityException("Function with ID " + functionId + " is not present in database");
         }
 
-        //check if user can access the slice
-        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), function.get().getSliceId())) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
+        if(keycloakEnabled)
+            authSecurityChecks(function.get(), 0);
 
         //update not allowed if the function is published to catalogue
         if(function.get().getStatus().equals(SdkFunctionStatus.COMMITTED)){
@@ -557,10 +558,8 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             throw new NotExistingEntityException("Function with ID " + functionId + " is not present in database");
         }
 
-        //check if user can access the slice
-        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), function.get().getSliceId())) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
+        if(keycloakEnabled)
+            authSecurityChecks(function.get(), 0);
 
         if((mp.get().getSdkFunction() == null) || (mp.get().getSdkFunction().getId().equals(functionId))){
             //log.error("Monitoring parameter with ID " + monitoringParameterId + " does not belong to function with ID " + functionId);
@@ -608,11 +607,9 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             //log.error("Function with ID " + functionId + " is not present in database");
             throw new NotExistingEntityException("Function with ID " + functionId + " is not present in database");
         }
+        if(keycloakEnabled)
+            authSecurityChecks(function.get(), 2);
 
-        //check if user can access the slice
-        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), function.get().getSliceId())) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
         return (function.get().getMonitoringParameters());
     }
 
@@ -629,10 +626,8 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             return new NotExistingEntityException("Function with ID " + functionId + " is not present in database");
         });
 
-        //check if user can access the slice
-        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), function.getSliceId())) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
+        if(keycloakEnabled)
+            authSecurityChecks(function, 2);
 
         synchronized (this) { // To avoid multiple simultaneous calls
             if (!function.getStatus().equals(SdkFunctionStatus.SAVED)) {
@@ -655,14 +650,14 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             authorization,
             vnfdInfoId -> {
                 if (vnfdInfoId != null) {
-                    log.info("Function with ID {} successfully published", functionId);
+                    log.info("Function with ID {} successfully published to project {}", functionId, function.getSliceId());
                     function.setStatus(SdkFunctionStatus.COMMITTED);
                     function.setVnfInfoId(vnfdInfoId);
                     functionRepository.saveAndFlush(function);
                 } else {
                     function.setStatus(SdkFunctionStatus.SAVED);
                     functionRepository.saveAndFlush(function);
-                    log.error("Error while publishing function with ID {}", functionId);
+                    log.error("Error while publishing function with ID {} to project {}", functionId, function.getSliceId());
                 }
             }
         );
@@ -678,10 +673,8 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             return new NotExistingEntityException(String.format("Function with ID %s is not present in database", functionId));
         });
 
-        //check if user can access the slice
-        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), function.getSliceId())) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
+        if(keycloakEnabled)
+            authSecurityChecks(function, 2);
 
         //unpublish not allowed if the function is used by a commited service
         List<SubFunction> subFunctions = subFunctionRepository.findByComponentId(functionId);
@@ -734,11 +727,8 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             //log.error("Function with ID {} is not present in database", functionId);
             return new NotExistingEntityException(String.format("Function with ID {} is not present in database", functionId));
         });
-
-        //check if user can access the slice
-        if (keycloakEnabled && !checkUserProjects(KeycloakUtils.getUserNameFromJWT(), function.getSliceId())) {
-            throw new NotAuthorizedOperationException("Current user cannot access to the specified slice");
-        }
+        if(keycloakEnabled)
+            authSecurityChecks(function, 2);
 
         return adapter.generateVirtualNetworkFunctionDescriptor(function);
     }
@@ -833,9 +823,9 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             sdkFunction.setName(vnfNode.getProperties().getProductName());
             //sdkFunction.setVnfdProvider(vnfNode.getProperties().getProvider());
 
-            //TODO ownerID, groupid, visibility, accessLevel?
-            sdkFunction.setOwnerId("Undefined");
-            sdkFunction.setGroupId("Undefined");
+            sdkFunction.setSliceId("admin");
+            sdkFunction.setOwnerId(adminUserName);
+            sdkFunction.setGroupId(adminUserName);
             sdkFunction.setVisibility(Visibility.PUBLIC);
             sdkFunction.setAccessLevel(4);
 
@@ -900,9 +890,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
                 }
             }
 
-            sdkFunction.setSliceId("admin");
-
-            createFunction(sdkFunction);
+            createFunction(sdkFunction, true);
 
             sdkFunction.setStatus(SdkFunctionStatus.COMMITTED);
             //package filename is the vnfPkgInfo ID
@@ -984,19 +972,49 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         }
     }
 
-    public boolean checkUserProjects(String userName, String sliceId) {
-        if(sliceId == null)
-            return true;
-        Optional<SliceResource> optionalSlice = sliceRepository.findBySliceId(sliceId);
-        if(optionalSlice.isPresent()) {
-            List<String> users = optionalSlice.get().getUsers();
-            for (String user : users) {
-                if (user.equals(userName))
-                    return true;
-            }
+    private void authSecurityChecks(SdkFunction function, int checkToPerform) throws NotAuthorizedOperationException{
+        log.debug("Checking if the user can access the resource");
+
+        // The admin can access all the resources
+        if(keycloakUtils.getUserNameFromJWT().equals(adminUserName))
+            return;
+
+        /*
+            0 : Create and Update
+                User can create/update a function if:
+                    - is the owner
+                    - belongs to the owner group
+                    - user accessLevel <= function accessLevel
+                    - belongs to the slice
+            1 : Delete
+                User can delete a function if:
+                    - is the owner
+                    - belongs to the slice
+            2 : Publish, Unpublish and Get
+                User can publish/unpublish/get a function if:
+                    - belongs to the owner group if the visibility is private
+                    - user accessLevel <= function accessLevel
+                    - belongs to the slice
+        */
+
+        switch (checkToPerform) {
+            case 0:
+                keycloakUtils.checkUserId(keycloakUtils.getUserNameFromJWT(), function.getOwnerId());
+                keycloakUtils.checkUserGroups(keycloakUtils.getGroupsFromJWT(), function.getGroupId());
+                keycloakUtils.checkUserAccessLevel(keycloakUtils.getAccessLevelFromJWT(), function.getAccessLevel());
+                keycloakUtils.checkUserSlices(keycloakUtils.getUserNameFromJWT(), function.getSliceId());
+                break;
+            case 1:
+                keycloakUtils.checkUserId(keycloakUtils.getUserNameFromJWT(), function.getOwnerId());
+                keycloakUtils.checkUserSlices(keycloakUtils.getUserNameFromJWT(), function.getSliceId());
+                break;
+            case 2:
+                if(function.getVisibility().equals(Visibility.PRIVATE))
+                    keycloakUtils.checkUserGroups(keycloakUtils.getGroupsFromJWT(), function.getGroupId());
+                keycloakUtils.checkUserAccessLevel(keycloakUtils.getAccessLevelFromJWT(), function.getAccessLevel());
+                keycloakUtils.checkUserSlices(keycloakUtils.getUserNameFromJWT(), function.getSliceId());
         }
-        log.error("Current user cannot access to the specified project");
-        return false;
+        log.debug("User can access the resource");
     }
 }
 
