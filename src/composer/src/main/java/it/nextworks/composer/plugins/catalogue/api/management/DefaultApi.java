@@ -140,6 +140,43 @@ public class DefaultApi {
             contentType, authNames, returnType);
     }
 
+    public ProjectResource delUserFromProject(String projectId, String username, String authorization) throws RestClientException {
+        Object postBody = null;
+
+        // verify the required parameter 'nsdInfoId' is set
+        if (projectId == null) {
+            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST,
+                "Missing the required parameter 'projectId' when calling addUserToProject");
+        }
+        if (username == null) {
+            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST,
+                "Missing the required parameter 'username' when calling addUserToProject");
+        }
+        // create path and map variables
+        final Map<String, Object> uriVariables = new HashMap<String, Object>();
+        uriVariables.put("projectId", projectId);
+        uriVariables.put("userName", username);
+        String path = UriComponentsBuilder.fromPath("/catalogue/userManagement/projects/{projectId}/users/{userName}").buildAndExpand(uriVariables)
+            .toUriString();
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        headerParams.add("Authorization", authorization);
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] accepts = {"application/json", "application/yaml"};
+        final List<MediaType> accept = apiClient.selectHeaderAccept(accepts);
+        final String[] contentTypes = {};
+        final MediaType contentType = apiClient.selectHeaderContentType(contentTypes);
+
+        String[] authNames = new String[]{};
+
+        ParameterizedTypeReference<ProjectResource> returnType = new ParameterizedTypeReference<ProjectResource>() {
+        };
+        return apiClient.invokeAPI(path, HttpMethod.DELETE, queryParams, postBody, headerParams, formParams, accept,
+            contentType, authNames, returnType);
+    }
+
     public List<UserResource> getUsers(String authorization) throws RestClientException {
         Object postBody = null;
         // create path and map variables

@@ -1,5 +1,7 @@
 package it.nextworks.composer.controller.elements;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import it.nextworks.nfvmano.libs.common.DescriptorInformationElement;
 import it.nextworks.nfvmano.libs.common.exceptions.MalformattedElementException;
@@ -84,8 +86,6 @@ public class SliceResource implements DescriptorInformationElement {
         this.users = users;
     }
 
-
-
     /*
     public List<String> getNsds() {
         return nsds;
@@ -115,6 +115,14 @@ public class SliceResource implements DescriptorInformationElement {
 
     public void addUser(String userName) {
         this.users.add(userName);
+    }
+
+    public void delUser(String userName) {
+        this.users.remove(userName);
+    }
+
+    public void clearUsers(){
+        this.users.clear();
     }
 
     /*

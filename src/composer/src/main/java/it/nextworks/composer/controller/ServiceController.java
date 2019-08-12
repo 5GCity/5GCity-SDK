@@ -63,7 +63,7 @@ public class ServiceController {
         @ApiResponse(code = 404, message = "Slice not found"),
         @ApiResponse(code = 200, message = "OK")})
     @RequestMapping(value = "/", method = RequestMethod.GET)
-    public ResponseEntity<?> getServices(@RequestParam(required = false) String sliceId, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
+    public ResponseEntity<?> getServices(@RequestParam(required = true) String sliceId, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         log.info("Request for get services");
         try {
             List<SdkService> response = serviceManager.getServices(sliceId);

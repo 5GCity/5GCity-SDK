@@ -159,24 +159,26 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             if(keycloakEnabled)
                 keycloakUtils.checkUserSlices(keycloakUtils.getUserNameFromJWT(), sliceId);
         }
-         /*
-            Filter services:
-                User can view a service if:
-                    - belongs to the owner group if the visibility is private
-                    - user accessLevel <= service accessLevel
-                    - belongs to the slice
-        */
+
         List<SdkService> serviceList = serviceRepository.findAll();
         Iterator<SdkService> serviceIterator = serviceList.iterator();
         for (; serviceIterator.hasNext() ;) {
             SdkService service = serviceIterator.next();
+            //filter services per slice
             if (sliceId != null && !service.getSliceId().equals(sliceId))
                 serviceIterator.remove();
+            /*
+                Filter services if Keycloak is enabled
+                User can view a service if:
+                    - visibility is public or user is the owner if the visibility is private
+                    - user accessLevel <= service accessLevel
+                    - user belongs to the slice
+            */
             else if (keycloakEnabled && !keycloakUtils.getUserNameFromJWT().equals(adminUserName)){
                 if(keycloakUtils.getAccessLevelFromJWT().compareTo(service.getAccessLevel()) > 0)
                     serviceIterator.remove();
                 else if (service.getVisibility().equals(Visibility.PRIVATE) &&
-                    !keycloakUtils.getGroupsFromJWT().contains(service.getGroupId())){
+                    !keycloakUtils.getUserNameFromJWT().equals(service.getOwnerId())){
                     serviceIterator.remove();
                 }
             }
@@ -450,7 +452,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         Optional<SdkService> service = serviceRepository.findById(id);
         if (service.isPresent()) {
             if(keycloakEnabled)
-                authSecurityChecks(service.get(), 2);
+                authSecurityChecks(service.get(), 1);
             return service.get();
         } else {
             //log.error("Service with ID " + id + " not found");
@@ -469,7 +471,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         });
 
         if(keycloakEnabled)
-            authSecurityChecks(s, 1);
+            authSecurityChecks(s, 0);
 
         //delete not allowed if the service has at least one descriptor
         List<SdkServiceDescriptor> descriptors = serviceDescriptorRepository.findByTemplateId(serviceId);
@@ -650,7 +652,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             throw new NotExistingEntityException("Service with ID " + serviceId + " is not present in database");
         }
         if(keycloakEnabled)
-            authSecurityChecks(service.get(), 2);
+            authSecurityChecks(service.get(), 1);
         return new MonitoringParameterWrapper(service.get().getExtMonitoringParameters(), service.get().getIntMonitoringParameters());
     }
 
@@ -667,7 +669,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         });
 
         if(keycloakEnabled)
-            authSecurityChecks(service, 2);
+            authSecurityChecks(service, 1);
 
         SdkServiceDescriptor descriptor;
         try {
@@ -735,7 +737,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         });
 
         if(keycloakEnabled)
-            authSecurityChecks(service, 2);
+            authSecurityChecks(service, 1);
 
         SdkServiceDescriptor descriptor;
         try {
@@ -766,14 +768,22 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         List<SdkServiceDescriptor> descriptors = serviceDescriptorRepository.findAll();
         Iterator<SdkServiceDescriptor> descriptorIterator = descriptors.iterator();
         for (; descriptorIterator.hasNext() ;) {
+            //filters descriptors per slice
             SdkServiceDescriptor descriptor = descriptorIterator.next();
             if (sliceId != null && !descriptor.getSliceId().equals(sliceId))
                 descriptorIterator.remove();
+            /*
+                Filter descriptors if Keycloak is enabled
+                User can view a descriptors if:
+                    - visibility of the corresponding service is public or user is the owner if the visibility is private
+                    - user accessLevel <= service accessLevel
+                    - user belongs to the slice
+            */
             else if (keycloakEnabled && !keycloakUtils.getUserNameFromJWT().equals(adminUserName)){
                 if(keycloakUtils.getAccessLevelFromJWT().compareTo(descriptor.getTemplate().getAccessLevel()) > 0)
                     descriptorIterator.remove();
                 else if (descriptor.getTemplate().getVisibility().equals(Visibility.PRIVATE) &&
-                    !keycloakUtils.getGroupsFromJWT().contains(descriptor.getTemplate().getGroupId())){
+                    !keycloakUtils.getUserNameFromJWT().equals(descriptor.getTemplate().getOwnerId())){
                     descriptorIterator.remove();
                 }
             }
@@ -793,7 +803,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         //check if user can access the slice
         if(byId.isPresent()){
             if(keycloakEnabled)
-                authSecurityChecks(byId.get().getTemplate(), 2);
+                authSecurityChecks(byId.get().getTemplate(), 1);
         }
         return byId.orElseThrow(() -> {
             //log.error("Descriptor with ID {} not found", descriptorId);
@@ -811,7 +821,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         });
 
         if(keycloakEnabled)
-            authSecurityChecks(descriptor.getTemplate(), 2);
+            authSecurityChecks(descriptor.getTemplate(), 0);
 
         //delete not allowed if the service is published to catalogue
         if(descriptor.getStatus().equals(SdkServiceStatus.COMMITTED)){
@@ -832,7 +842,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         });
 
         if(keycloakEnabled)
-            authSecurityChecks(descriptor.getTemplate(), 2);
+            authSecurityChecks(descriptor.getTemplate(), 1);
 
         synchronized (this) { // To avoid multiple simultaneous calls
             if (!descriptor.getStatus().equals(SdkServiceStatus.SAVED)) {
@@ -896,7 +906,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         });
 
         if(keycloakEnabled)
-            authSecurityChecks(descriptor.getTemplate(), 2);
+            authSecurityChecks(descriptor.getTemplate(), 0);
 
         synchronized (this) { // To avoid multiple simultaneous calls
             // Check if is already published
@@ -938,7 +948,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         });
 
         if(keycloakEnabled)
-            authSecurityChecks(descriptor.getTemplate(), 2);
+            authSecurityChecks(descriptor.getTemplate(), 1);
 
         DescriptorTemplate nsd;
         try {
@@ -1172,39 +1182,41 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             return;
 
         /*
-            0 : Create and Update
-                User can create/update a service if:
-                    - is the owner
-                    - belongs to the owner group
+            foreach service in (slice==sliceId) {
+		        if(user.userName != admin.userName) {
+			        if (slice.users not contains user.userName): 	User cannot do anything
+			        if (user.accessLevel > service.accessLevel): 	User cannot do anything
+			        if (user.userName != service.ownerId) {
+				        if (resource.visibility==PRIVATE):  		User cannot do anything
+				        if (resource.visibility==PUBLIC):   		User can read, publish, create_descriptors and use in a service; User cannot update nor delete nor unpublish
+			        }
+		        }
+		        User can create, read, update, delete, create_descriptors, publish, unpublish and use in a service
+	        }
+
+            0 : Create, Update, Delete and Unpublish
+                Is possible if:
+                    - user is the owner
                     - user accessLevel <= service accessLevel
-                    - belongs to the slice
-            1 : Delete
-                User can delete a service if:
-                    - is the owner
-                    - belongs to the slice
-            2 : Publish, Unpublish and Get
-                User can publish/unpublish/get a service if:
-                    - belongs to the owner group if the visibility is private
+                    - user belongs to the slice
+            1 : Publish and Read and Create Descriptor
+                Is possible if:
+                    - visibility is public or user is the owner if the visibility is private
                     - user accessLevel <= service accessLevel
-                    - belongs to the slice
+                    - user belongs to the slice
         */
 
         switch (checkToPerform) {
             case 0:
                 keycloakUtils.checkUserSlices(keycloakUtils.getUserNameFromJWT(), service.getSliceId());
                 keycloakUtils.checkUserAccessLevel(keycloakUtils.getAccessLevelFromJWT(), service.getAccessLevel());
-                keycloakUtils.checkUserGroups(keycloakUtils.getGroupsFromJWT(), service.getGroupId());
                 keycloakUtils.checkUserId(keycloakUtils.getUserNameFromJWT(), service.getOwnerId());
                 break;
             case 1:
                 keycloakUtils.checkUserSlices(keycloakUtils.getUserNameFromJWT(), service.getSliceId());
-                keycloakUtils.checkUserId(keycloakUtils.getUserNameFromJWT(), service.getOwnerId());
-                break;
-            case 2:
-                keycloakUtils.checkUserSlices(keycloakUtils.getUserNameFromJWT(), service.getSliceId());
                 keycloakUtils.checkUserAccessLevel(keycloakUtils.getAccessLevelFromJWT(), service.getAccessLevel());
                 if(service.getVisibility().equals(Visibility.PRIVATE))
-                    keycloakUtils.checkUserGroups(keycloakUtils.getGroupsFromJWT(), service.getGroupId());
+                    keycloakUtils.checkUserId(keycloakUtils.getUserNameFromJWT(), service.getOwnerId());
         }
         log.debug("User can access the resource");
     }

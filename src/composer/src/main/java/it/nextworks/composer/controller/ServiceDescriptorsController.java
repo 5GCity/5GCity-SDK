@@ -44,7 +44,7 @@ public class ServiceDescriptorsController {
         @ApiResponse(code = 401, message = "User not authenticated"),
         @ApiResponse(code = 200, message = "OK")})
     @RequestMapping(value = "/", method = RequestMethod.GET)
-    public ResponseEntity<?> getAllDescriptor(@RequestParam(required = false) String sliceId, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
+    public ResponseEntity<?> getAllDescriptor(@RequestParam(required = true) String sliceId, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         try {
             log.info("Request GET all descriptor");
             List<SdkServiceDescriptor> allDescriptors = serviceManager.getAllDescriptors(sliceId);

@@ -130,7 +130,7 @@ public class SdkService implements InstantiableCandidate {
 
     private String ownerId;
 
-    private String groupId;
+    //private String groupId;
 
     private Visibility visibility = Visibility.fromValue("PRIVATE");
 
@@ -472,6 +472,7 @@ public class SdkService implements InstantiableCandidate {
         this.visibility = visibility;
     }
 
+    /*
     @JsonProperty("groupId")
     public String getGroupId() {
         return groupId;
@@ -481,6 +482,7 @@ public class SdkService implements InstantiableCandidate {
     public void setGroupId(String groupId) {
         this.groupId = groupId;
     }
+    */
 
     @JsonProperty("accessLevel")
     public Integer getAccessLevel() {
@@ -714,8 +716,6 @@ public class SdkService implements InstantiableCandidate {
             throw new MalformedElementException("Please provide valid sliceId");
         if(ownerId == null || ownerId.length() == 0)
             throw new MalformedElementException("Please provide valid ownerId");
-        if(groupId == null || groupId.length() == 0)
-            throw new MalformedElementException("Please provide valid groupId");
         if(designer == null || designer.length() == 0)
             throw new MalformedElementException("Please provide valid designer");
         if(version == null || version.length() == 0)
@@ -841,11 +841,6 @@ public class SdkService implements InstantiableCandidate {
         sb.append(((this.ownerId == null) ? "<null>" : this.ownerId));
         sb.append(',');
         sb.append("\n    ");
-        sb.append("groupId");
-        sb.append('=');
-        sb.append(((this.groupId == null) ? "<null>" : this.groupId));
-        sb.append(',');
-        sb.append("\n    ");
         sb.append("visibility");
         sb.append('=');
         sb.append(((this.visibility == null) ? "<null>" : this.visibility));
@@ -940,7 +935,6 @@ public class SdkService implements InstantiableCandidate {
         result = ((result * 31) + ((this.parameters == null) ? 0 : this.parameters.hashCode()));
         result = ((result * 31) + ((this.ownerId == null) ? 0 : this.ownerId.hashCode()));
         result = ((result * 31) + ((this.visibility == null) ? 0 : this.visibility.hashCode()));
-        result = ((result * 31) + ((this.groupId == null) ? 0 : this.groupId.hashCode()));
         result = ((result * 31) + ((this.accessLevel == null) ? 0 : this.accessLevel.hashCode()));
         result = ((result * 31) + ((this.actions == null) ? 0 : this.actions.hashCode()));
         result = ((result * 31) + ((this.actionRules == null) ? 0 : this.actionRules.hashCode()));
@@ -971,12 +965,11 @@ public class SdkService implements InstantiableCandidate {
             && ((this.id == rhs.id) || ((this.id != null) && this.id.equals(rhs.id))))
             && ((this.ownerId == rhs.ownerId) || ((this.ownerId != null) && this.ownerId.equals(rhs.ownerId))))
             && ((this.visibility == rhs.visibility) || ((this.visibility != null) && this.visibility.equals(rhs.visibility))))
-            && ((this.groupId == rhs.groupId) || ((this.groupId != null) && this.groupId.equals(rhs.groupId))))
             && ((this.accessLevel == rhs.accessLevel) || ((this.accessLevel != null) && this.accessLevel.equals(rhs.accessLevel))))
             && ((this.actions == rhs.actions) || ((this.actions != null) && this.actions.equals(rhs.actions))))
             && ((this.actionRules == rhs.actionRules) || ((this.actionRules != null) && this.actionRules.equals(rhs.actionRules))))
             && ((this.sliceId == rhs.sliceId) || ((this.sliceId != null) && this.sliceId.equals(rhs.sliceId))))
-            && ((this.parameters == rhs.parameters) || ((this.parameters != null) && this.parameters.equals(rhs.parameters))));
+            && ((this.parameters == rhs.parameters) || ((this.parameters != null) && this.parameters.equals(rhs.parameters)))));
     }
 
     @JsonIgnore

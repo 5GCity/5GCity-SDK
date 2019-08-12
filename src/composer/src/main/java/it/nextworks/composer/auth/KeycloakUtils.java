@@ -113,6 +113,7 @@ public class KeycloakUtils {
         return userName;
     }
 
+    /*
     public List<String> getGroupsFromJWT() {
 
         List<String> groups = null;
@@ -130,6 +131,7 @@ public class KeycloakUtils {
             log.debug("User groups : " + groups.toString());
         return groups;
     }
+    */
 
     public Integer getAccessLevelFromJWT() {
 
@@ -171,12 +173,14 @@ public class KeycloakUtils {
         throw new NotAuthorizedOperationException("Current user cannot access to the specified resource: accessLevel mismatch");
     }
 
+    /*
     public void checkUserGroups(List<String> userGroups, String resourceGroupId) throws NotAuthorizedOperationException {
        if(userGroups.contains(resourceGroupId))
            return;
         log.error("Current user cannot access to the specified resource: group mismatch");
         throw new NotAuthorizedOperationException("Current user cannot access to the specified resource: group mismatch");
     }
+    */
 
     public void checkUserId(String userName, String resourceOwnerId) throws NotAuthorizedOperationException {
         if(userName.equals(resourceOwnerId))

@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestClientException;
 
 import javax.annotation.PostConstruct;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -98,6 +99,7 @@ public class SliceController {
                 log.error(e.getMessage());
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
             }
+            slice.clearUsers();
             slice.addUser(adminUser);
             createdSliceResource = sliceRepository.saveAndFlush(slice);
             log.info("Slice " + slice.getSliceId() + " successfully created");
@@ -106,7 +108,7 @@ public class SliceController {
         return new ResponseEntity<SliceResource>(createdSliceResource, HttpStatus.CREATED);
     }
 
-    @ApiOperation(value = "Get the complete list of slices available in database", response = SliceResource.class, responseContainer = "List")
+    @ApiOperation(value = "Get the complete list of slices available in database or get the list of slices for a user", response = SliceResource.class, responseContainer = "List")
     @ApiResponses(value = {
         @ApiResponse(code = 403, message = "User not allowed to access the resource"),
         @ApiResponse(code = 401, message = "User not authenticated"),
@@ -167,7 +169,6 @@ public class SliceController {
                                            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
 
         log.info("Received request for deleting Slice with Slice ID " + sliceId);
-        SliceResource sliceResource;
         Optional<SliceResource> optional = sliceRepository.findBySliceId(sliceId);
         if (optional.isPresent()) {
             if (functionRepository.findBySliceId(sliceId).size() == 0 && serviceRepository.findBySliceId(sliceId).size() == 0) {
@@ -196,7 +197,7 @@ public class SliceController {
         @ApiResponse(code = 403, message = "User not allowed to access the resource"),
         @ApiResponse(code = 401, message = "User not authenticated"),
         @ApiResponse(code = 404, message = "Slice not found in database or user not found in Keycloak"),
-        @ApiResponse(code = 400, message = "Query without parameter sliceId or userName"),
+        @ApiResponse(code = 400, message = "Query without parameter sliceId or userName or user already present in the slice"),
         @ApiResponse(code = 200, message = "OK")})
     @RequestMapping(value = "/slices/{sliceId}/users/{userName}", method = RequestMethod.PUT)
     public ResponseEntity<?> addUserToSlice (@ApiParam(value = "", required = true)
@@ -205,51 +206,106 @@ public class SliceController {
                                               @PathVariable("userName") String userName,
                                               @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         log.info("Received request for adding User " + userName + " to slice " + sliceId);
-        if(keycloakEnabled) {
-            if (sliceId == null) {
-                log.error("Query without parameter sliceId");
-                return new ResponseEntity<String>("Query without parameter sliceId", HttpStatus.BAD_REQUEST);
-            }
-            if (userName == null) {
-                log.error("Query without parameter userName");
-                return new ResponseEntity<String>("Query without parameter userName", HttpStatus.BAD_REQUEST);
-            }
-            SliceResource sliceResource;
-            Optional<SliceResource> optional = sliceRepository.findBySliceId(sliceId);
-            if (optional.isPresent()) {
-                List<UserRepresentation> users = null;
+        if (sliceId == null) {
+            log.error("Query without parameter sliceId");
+            return new ResponseEntity<String>("Query without parameter sliceId", HttpStatus.BAD_REQUEST);
+        }
+        if (userName == null) {
+            log.error("Query without parameter userName");
+            return new ResponseEntity<String>("Query without parameter userName", HttpStatus.BAD_REQUEST);
+        }
+        SliceResource sliceResource;
+        Optional<SliceResource> optional = sliceRepository.findBySliceId(sliceId);
+        if (optional.isPresent()) {
+            List<UserRepresentation> users = null;
+            if(keycloakEnabled) {
                 try{
                     users = keycloakUtils.getUsers();
                 }catch(Exception e){
                     log.debug(null, e);
                     log.error("Keycloak server is not working properly. Please check Keycloak configuration or disable authentication");
                 }
-                if(users != null && users.stream().map(UserRepresentation::getUsername).collect(Collectors.toList()).contains(userName)){
-                    try {
-                        cataloguePlugin.addUserToProject(sliceId, userName, authorization);
-                    }catch (RestClientException e){
-                        log.debug(null, e);
-                        log.error(e.getMessage());
-                        return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-                    }
-                    sliceResource = optional.get();
-                    sliceResource.addUser(userName);
-                    sliceRepository.saveAndFlush(sliceResource);
-                    log.info("User " + userName + " successfully added to slice " + sliceId);
-                    return new ResponseEntity<SliceResource>(sliceResource, HttpStatus.OK);
-                }else{
-                    log.error("User not present in Keycloak");
-                    return new ResponseEntity<String>("User not present in Keycloak", HttpStatus.NOT_FOUND);
-                }
-            } else {
-                log.error("Slice with sliceId " + sliceId + " not present in DB");
-                return new ResponseEntity<String>("Slice with sliceId " + sliceId + " not present in DB", HttpStatus.NOT_FOUND);
             }
-        } else{
-            log.error("Authentication not enabled: users are not managed");
-            return new ResponseEntity<String>("Authentication not enabled: users are not managed", HttpStatus.BAD_REQUEST);
+            if(users != null && !users.stream().map(UserRepresentation::getUsername).collect(Collectors.toList()).contains(userName)){
+                log.error("User not present in Keycloak");
+                return new ResponseEntity<String>("User not present in Keycloak", HttpStatus.NOT_FOUND);
+            }
+            //check if user is already present in the slice
+            sliceResource = optional.get();
+            List<String> sliceUsers = sliceResource.getUsers();
+            if(sliceUsers.contains(userName)){
+                log.error("User already present in the slice");
+                return new ResponseEntity<String>("User already present in the slice", HttpStatus.BAD_REQUEST);
+            }
+            try {
+                if(keycloakEnabled)
+                    cataloguePlugin.addUserToProject(sliceId, userName, authorization);
+            }catch (RestClientException e){
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            sliceResource.addUser(userName);
+            sliceRepository.saveAndFlush(sliceResource);
+            log.info("User " + userName + " successfully added to slice " + sliceId);
+            return new ResponseEntity<SliceResource>(sliceResource, HttpStatus.OK);
+        } else {
+            log.error("Slice with sliceId " + sliceId + " not present in DB");
+            return new ResponseEntity<String>("Slice with sliceId " + sliceId + " not present in DB", HttpStatus.NOT_FOUND);
         }
     }
 
-    //TODO add delete user from slice and update slice??
+    @ApiOperation(value = "Delete user from a slice")
+    @ApiResponses(value = {
+        @ApiResponse(code = 403, message = "User not allowed to access the resource"),
+        @ApiResponse(code = 401, message = "User not authenticated"),
+        @ApiResponse(code = 404, message = "Slice not found in database or user not found in the slice"),
+        @ApiResponse(code = 400, message = "Query without parameter sliceId or userName"),
+        @ApiResponse(code = 200, message = "OK")})
+    @RequestMapping(value = "/slices/{sliceId}/users/{userName}", method = RequestMethod.DELETE)
+    public ResponseEntity<?> delUserFromSlice (@ApiParam(value = "", required = true)
+                                                @PathVariable("sliceId") String sliceId,
+                                                @ApiParam(value = "", required = true)
+                                                @PathVariable("userName") String userName,
+                                                @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
+        log.info("Received request for delete User " + userName + " from slice " + sliceId);
+        if (sliceId == null) {
+            log.error("Query without parameter sliceId");
+            return new ResponseEntity<String>("Query without parameter sliceId", HttpStatus.BAD_REQUEST);
+        }
+        if (userName == null) {
+            log.error("Query without parameter userName");
+            return new ResponseEntity<String>("Query without parameter userName", HttpStatus.BAD_REQUEST);
+        }
+        if(userName.equals(adminUser)){
+            log.error("Admin user cannot be deleted from a slice");
+            return new ResponseEntity<String>("Admin user cannot be deleted from a slice", HttpStatus.BAD_REQUEST);
+        }
+        SliceResource sliceResource;
+        Optional<SliceResource> optional = sliceRepository.findBySliceId(sliceId);
+        if (optional.isPresent()) {
+            sliceResource = optional.get();
+            //check if user is present in the slice
+            List<String> sliceUsers = sliceResource.getUsers();
+            if(!sliceUsers.contains(userName)){
+                log.error("User " + userName + " not present in the slice");
+                return new ResponseEntity<String>("User " + userName + " not present in the slice", HttpStatus.NOT_FOUND);
+            }
+            try {
+                if(keycloakEnabled)
+                    cataloguePlugin.delUserFromProject(sliceId, userName, authorization);
+            }catch (RestClientException e){
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            sliceResource.delUser(userName);
+            sliceRepository.saveAndFlush(sliceResource);
+            log.info("User " + userName + " successfully deleted from slice " + sliceId);
+            return new ResponseEntity<SliceResource>(sliceResource, HttpStatus.OK);
+        } else {
+            log.error("Slice with sliceId " + sliceId + " not present in DB");
+            return new ResponseEntity<String>("Slice with sliceId " + sliceId + " not present in DB", HttpStatus.NOT_FOUND);
+        }
+    }
 }

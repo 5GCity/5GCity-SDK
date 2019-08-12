@@ -120,7 +120,7 @@ public class SdkFunction implements InstantiableCandidate {
 
     private Visibility visibility = Visibility.fromValue("PRIVATE");
 
-    private String groupId;
+    //private String groupId;
 
     private Integer accessLevel = 4;//TODO default to?
 
@@ -374,6 +374,7 @@ public class SdkFunction implements InstantiableCandidate {
         }
     }
 
+    /*
     @JsonProperty("groupId")
     public String getGroupId() {
         return groupId;
@@ -383,6 +384,7 @@ public class SdkFunction implements InstantiableCandidate {
     public void setGroupId(String groupId) {
         this.groupId = groupId;
     }
+     */
 
     @JsonProperty("accessLevel")
     public Integer getAccessLevel() {
@@ -500,10 +502,6 @@ public class SdkFunction implements InstantiableCandidate {
         sb.append('=');
         sb.append(((this.ownerId == null) ? "<null>" : this.ownerId));
         sb.append(',');
-        sb.append("groupId");
-        sb.append('=');
-        sb.append(((this.groupId == null) ? "<null>" : this.groupId));
-        sb.append(',');
         sb.append("visibility");
         sb.append('=');
         sb.append(((this.visibility == null) ? "<null>" : this.visibility));
@@ -575,7 +573,6 @@ public class SdkFunction implements InstantiableCandidate {
         result = ((result * 31) + ((this.connectionPoint == null) ? 0 : this.connectionPoint.hashCode()));
         result = ((result * 31) + ((this.id == null) ? 0 : this.id.hashCode()));
         result = ((result * 31) + ((this.ownerId == null) ? 0 : this.ownerId.hashCode()));
-        result = ((result * 31) + ((this.groupId == null) ? 0 : this.groupId.hashCode()));
         result = ((result * 31) + ((this.accessLevel == null) ? 0 : this.accessLevel.hashCode()));
         result = ((result * 31) + ((this.swImageData == null) ? 0 : this.swImageData.hashCode()));
         result = ((result * 31) + ((this.epoch == null) ? 0 : this.epoch.hashCode()));
@@ -615,7 +612,6 @@ public class SdkFunction implements InstantiableCandidate {
                 && ((this.ownerId == rhs.ownerId) || ((this.ownerId != null) && this.ownerId.equals(rhs.ownerId)))
                 && ((this.visibility == rhs.visibility) || ((this.visibility != null) && this.visibility.equals(rhs.visibility)))
                 && ((this.ownerId == rhs.ownerId) || ((this.ownerId != null) && this.ownerId.equals(rhs.ownerId)))
-                && ((this.groupId == rhs.groupId) || ((this.groupId != null) && this.groupId.equals(rhs.groupId)))
                 && ((this.accessLevel == rhs.accessLevel) || ((this.accessLevel != null) && this.accessLevel.equals(rhs.accessLevel)))
                 && ((this.swImageData == rhs.swImageData) || ((this.swImageData != null) && this.swImageData.equals(rhs.swImageData)))
                 && ((this.minInstancesCount == rhs.minInstancesCount) || ((this.minInstancesCount != null) && this.minInstancesCount.equals(rhs.minInstancesCount)))
@@ -636,8 +632,6 @@ public class SdkFunction implements InstantiableCandidate {
             throw new MalformedElementException("Please provide valid sliceId");
         if(ownerId == null || ownerId.length() == 0)
             throw new MalformedElementException("Please provide valid ownerId");
-        if(groupId == null || groupId.length() == 0)
-            throw new MalformedElementException("Please provide valid groupId");
         if(version == null || version.length() == 0)
             throw new MalformedElementException("Please provide valid version");
         if(vendor == null || vendor.length() == 0)

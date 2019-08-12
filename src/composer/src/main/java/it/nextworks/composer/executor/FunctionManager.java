@@ -204,7 +204,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         Optional<SdkFunction> result = functionRepository.findById(id);
         if (result.isPresent()) {
             if(keycloakEnabled)
-                authSecurityChecks(result.get(), 2);
+                authSecurityChecks(result.get(), 1);
             return result.get();
         } else {
             //log.error("No function with ID " + id + " was found");
@@ -225,24 +225,25 @@ public class FunctionManager implements FunctionManagerProviderInterface {
                 keycloakUtils.checkUserSlices(keycloakUtils.getUserNameFromJWT(), sliceId);
         }
 
-        /*
-            Filter functions:
-                User can view a function if:
-                    - belongs to the owner group if the visibility is private
-                    - user accessLevel <= function accessLevel
-                    - belongs to the slice
-        */
         List<SdkFunction> functionList = functionRepository.findAll();
         Iterator<SdkFunction> functionIterator = functionList.iterator();
         for (; functionIterator.hasNext() ;) {
             SdkFunction function = functionIterator.next();
+            // filter functions per slice
             if (sliceId != null && !function.getSliceId().equals(sliceId))
                 functionIterator.remove();
+            /*
+                Filter functions if Keycloak is enabled
+                User can view a function if:
+                    - visibility is public or user is the owner if the visibility is private
+                    - user accessLevel <= function accessLevel
+                    - user belongs to the slice
+            */
             else if (keycloakEnabled && !keycloakUtils.getUserNameFromJWT().equals(adminUserName)){
                 if(keycloakUtils.getAccessLevelFromJWT().compareTo(function.getAccessLevel()) > 0)
                     functionIterator.remove();
                 else if (function.getVisibility().equals(Visibility.PRIVATE) &&
-                            !keycloakUtils.getGroupsFromJWT().contains(function.getGroupId())){
+                            !keycloakUtils.getUserNameFromJWT().equals(function.getOwnerId())){
                     functionIterator.remove();
                 }
             }
@@ -424,7 +425,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         });
 
         if(keycloakEnabled)
-            authSecurityChecks(s, 1);
+            authSecurityChecks(s, 0);
 
         //delete not allowed if the function is published to catalogue
         if(s.getStatus().equals(SdkFunctionStatus.COMMITTED)){
@@ -608,7 +609,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             throw new NotExistingEntityException("Function with ID " + functionId + " is not present in database");
         }
         if(keycloakEnabled)
-            authSecurityChecks(function.get(), 2);
+            authSecurityChecks(function.get(), 1);
 
         return (function.get().getMonitoringParameters());
     }
@@ -627,7 +628,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         });
 
         if(keycloakEnabled)
-            authSecurityChecks(function, 2);
+            authSecurityChecks(function, 1);
 
         synchronized (this) { // To avoid multiple simultaneous calls
             if (!function.getStatus().equals(SdkFunctionStatus.SAVED)) {
@@ -674,7 +675,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         });
 
         if(keycloakEnabled)
-            authSecurityChecks(function, 2);
+            authSecurityChecks(function, 0);
 
         //unpublish not allowed if the function is used by a commited service
         List<SubFunction> subFunctions = subFunctionRepository.findByComponentId(functionId);
@@ -728,7 +729,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             return new NotExistingEntityException(String.format("Function with ID {} is not present in database", functionId));
         });
         if(keycloakEnabled)
-            authSecurityChecks(function, 2);
+            authSecurityChecks(function, 1);
 
         return adapter.generateVirtualNetworkFunctionDescriptor(function);
     }
@@ -825,7 +826,6 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
             sdkFunction.setSliceId("admin");
             sdkFunction.setOwnerId(adminUserName);
-            sdkFunction.setGroupId(adminUserName);
             sdkFunction.setVisibility(Visibility.PUBLIC);
             sdkFunction.setAccessLevel(4);
 
@@ -980,39 +980,41 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             return;
 
         /*
-            0 : Create and Update
-                User can create/update a function if:
-                    - is the owner
-                    - belongs to the owner group
+            foreach function in (slice==sliceId) {
+                if(user.userName != admin.userName) {
+                    if (slice.users not contains user.userName): 	User cannot do anything
+                    if (user.accessLevel > function.accessLevel): 	User cannot do anything
+                    if (user.userName != function.ownerId) {
+                        if (resource.visibility==PRIVATE):  		User cannot do anything
+                        if (resource.visibility==PUBLIC):   		User can read, publish, use in a service; User cannot update nor unpublish nor delete
+                    }
+                }
+                User can create, read, update, delete, publish, unpublish, use in a service
+            }
+
+            0 : Create, Update, Delete and Unpublish
+                Is possible if:
+                    - user is the owner
                     - user accessLevel <= function accessLevel
-                    - belongs to the slice
-            1 : Delete
-                User can delete a function if:
-                    - is the owner
-                    - belongs to the slice
-            2 : Publish, Unpublish and Get
-                User can publish/unpublish/get a function if:
-                    - belongs to the owner group if the visibility is private
+                    - user belongs to the slice
+            1 : Publish and Read
+                Is possible if:
+                    - visibility is public or user is the owner if the visibility is private
                     - user accessLevel <= function accessLevel
-                    - belongs to the slice
+                    - user belongs to the slice
         */
 
         switch (checkToPerform) {
             case 0:
-                keycloakUtils.checkUserId(keycloakUtils.getUserNameFromJWT(), function.getOwnerId());
-                keycloakUtils.checkUserGroups(keycloakUtils.getGroupsFromJWT(), function.getGroupId());
-                keycloakUtils.checkUserAccessLevel(keycloakUtils.getAccessLevelFromJWT(), function.getAccessLevel());
                 keycloakUtils.checkUserSlices(keycloakUtils.getUserNameFromJWT(), function.getSliceId());
+                keycloakUtils.checkUserAccessLevel(keycloakUtils.getAccessLevelFromJWT(), function.getAccessLevel());
+                keycloakUtils.checkUserId(keycloakUtils.getUserNameFromJWT(), function.getOwnerId());
                 break;
             case 1:
-                keycloakUtils.checkUserId(keycloakUtils.getUserNameFromJWT(), function.getOwnerId());
                 keycloakUtils.checkUserSlices(keycloakUtils.getUserNameFromJWT(), function.getSliceId());
-                break;
-            case 2:
-                if(function.getVisibility().equals(Visibility.PRIVATE))
-                    keycloakUtils.checkUserGroups(keycloakUtils.getGroupsFromJWT(), function.getGroupId());
                 keycloakUtils.checkUserAccessLevel(keycloakUtils.getAccessLevelFromJWT(), function.getAccessLevel());
-                keycloakUtils.checkUserSlices(keycloakUtils.getUserNameFromJWT(), function.getSliceId());
+                if(function.getVisibility().equals(Visibility.PRIVATE))
+                    keycloakUtils.checkUserId(keycloakUtils.getUserNameFromJWT(), function.getOwnerId());
         }
         log.debug("User can access the resource");
     }

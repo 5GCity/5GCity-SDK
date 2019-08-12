@@ -292,6 +292,17 @@ public class FiveGCataloguePlugin extends CataloguePlugin {
         }
     }
 
+    public void delUserFromProject(String projectId, String username, String authorization){
+        try{
+            //add user to project on public catalogue
+            mgmtApi.delUserFromProject(projectId, username, authorization);
+            log.debug("Deleted user " + username + " from project " + projectId + " on public catalogue");
+        } catch(RestClientException e) {
+            log.error("Unable to delete user on public catalogue: " + e.getMessage());
+            throw new RestClientException("Unable to delete user on public catalogue", e);
+        }
+    }
+
 	private MultipartFile createMultiPartFromFile(File file, String contentType) throws IOException {
 	    byte[] content = null;
 		try {

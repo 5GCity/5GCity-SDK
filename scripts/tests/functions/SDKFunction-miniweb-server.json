@@ -1,6 +1,6 @@
 {
     "status": "SAVED",
-    "ownerId": "NXW",
+    "ownerId": "designer1",
     "name": "miniweb-server",
     "description": "Miniweb Server",
     "vendor": "NXW",
@@ -40,8 +40,7 @@
         "name": "max_cpu_utilization"
       }
     ],
-    "groupId": "NXW",
-    "accessLevel": 2,
+    "accessLevel": 4,
     "swImageData": {
       "imgName": "cirros",
       "imgVersion": "2.0",
@@ -56,5 +55,5 @@
     "minInstancesCount": 3,
     "maxInstancesCount": 5,
     "requiredPorts": [],
-    "sliceId": "test"
+    "sliceId": "test2"
 }

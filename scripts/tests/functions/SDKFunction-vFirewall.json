@@ -1,6 +1,6 @@
  {
     "status": "SAVED",
-    "ownerId": "NXW",
+    "ownerId": "designer1",
     "name": "vFirewall-v5",
     "description": "VNF descriptor: vFirewall-v5. Generated with 5GCity SDK",
     "vendor": "NXW",
@@ -42,8 +42,7 @@
         "name": "cpu_utilization"
       }
     ],
-    "groupId": "NXw",
-    "accessLevel": 4,
+    "accessLevel": 2,
     "swImageData": {
       "imgName": "cirros",
       "imgVersion": "1.0",
