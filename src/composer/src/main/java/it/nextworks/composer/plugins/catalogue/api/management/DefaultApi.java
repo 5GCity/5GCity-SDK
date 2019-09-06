@@ -103,6 +103,37 @@ public class DefaultApi {
             contentType, authNames, returnType);
     }
 
+    public ProjectResource getProject(String projectId, String authorization) throws RestClientException {
+        Object postBody = null;
+
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST,
+                "Missing the required parameter 'projectId' when calling getProject");
+        }
+
+        final Map<String, Object> uriVariables = new HashMap<String, Object>();
+        uriVariables.put("projectId", projectId);
+        String path = UriComponentsBuilder.fromPath("/catalogue/projectManagement/projects/{projectId}").buildAndExpand(uriVariables).toUriString();
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        headerParams.add("Authorization", authorization);
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] accepts = {"application/json", "application/yaml"};
+        final List<MediaType> accept = apiClient.selectHeaderAccept(accepts);
+        final String[] contentTypes = {};
+        final MediaType contentType = apiClient.selectHeaderContentType(contentTypes);
+
+        String[] authNames = new String[]{};
+
+        ParameterizedTypeReference<ProjectResource> returnType = new ParameterizedTypeReference<ProjectResource>() {
+        };
+        return apiClient.invokeAPI(path, HttpMethod.GET, queryParams, postBody, headerParams, formParams, accept,
+            contentType, authNames, returnType);
+    }
+
     public ProjectResource addUserToProject(String projectId, String username, String authorization) throws RestClientException {
         Object postBody = null;
 
