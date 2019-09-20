@@ -1,5 +1,6 @@
 #!/bin/bash
 
+cd /home/$USER/
 
 ## Update source lists
 sudo apt update
@@ -7,14 +8,11 @@ sudo apt update
 echo "Install git and systemd"
 sudo apt install systemd git -y
 
-## Installing JDK
-echo -e "Installing JDK 1.8"
-sudo add-apt-repository ppa:webupd8team/java -y
+## Installing Open JDK
+echo -e "Installing Open JDK 1.8"
+sudo add-apt-repository ppa:openjdk-r/ppa -y
 sudo apt update
-echo "oracle-java8-installer shared/accepted-oracle-license-v1-1 select true" | sudo debconf-set-selections
-sudo apt install oracle-java8-installer -y
-
-
+sudo apt-get install openjdk-8-jdk -y
 
 ## Installing maven
 echo -e "Installing Maven 3.3.9"
@@ -25,10 +23,20 @@ sudo mv apache-maven-3.3.9/* /opt/maven/3.3.9/
 sudo ln -s /opt/maven/3.3.9/ /opt/maven/current
 echo 'export MAVEN_HOME=/opt/maven/current' >> ~/.bashrc
 echo 'export PATH=$PATH:$MAVEN_HOME/bin' >> ~/.bashrc
+export MAVEN_HOME=/opt/maven/current
+export PATH=$PATH:$MAVEN_HOME/bin
 
+## installing postgres
+echo -e "Installing Postgres Server"
+sudo apt install postgresql postgresql-contrib -y
 
-## installing mariadb
-echo -e "Installing MariaDB Server"
-export DEBIAN_FRONTEND=noninteractive
-sudo apt-get install -y mariadb-server
+## installing nfv-sol-libs
+git clone https://github.com/nextworks-it/nfv-sol-libs/
+cd  nfv-sol-libs
+git checkout v2.0
+chmod +x install_nfv_sol_libs.sh
+./install_nfv_sol_libs.sh
 
+cd -
+
+exit 0

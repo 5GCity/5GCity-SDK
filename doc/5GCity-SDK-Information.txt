@@ -1,0 +1,75 @@
+5GCity SDK - Slice support
+
+	- SDK-core has now a concept similar to projects in OSM and OpenStack: this object is called 'slice' and is identified by a 'sliceId'
+	- When SDK starts from scratch (drop mode for DB in application.properties), an admin slice and an admin user with administrative roles are created
+	- SliceId of admin slice is hardcoded and is equal to 'admin'
+	- UserName for admin user is instead configurable in application.properties ('admin.user.name', default: 'admin') and must match a user in Keycloak with Administrator role
+	- To create a new slice the main endpoints are:
+		1. POST on /sdk/sliceManagement/slices: create a slice and bind it only to admin user (all slices are linked to admin user). SDK also creates the project in the 5G App & Services Catalogue if it does not exist.
+		2. PUT on /sdk/sliceManagement/slices/{sliceId}/users/{userName} to add a user to a slice (userName must exist in Keycloak).
+	- To retrieve the list of slices for a particular user:
+		1. GET on /sdk/sliceManagement/slices?user=userName
+	- SliceId is a mandatory parameter to set when working with SDK resources (SDKFunction, SDKService and SDKServiceDescriptor). Search data model for sliceId parameter. 
+	- When the user makes GET for retrieving resource list, sliceId must be specified in the Request Parameter (sliceId=). 
+
+5GCity SDK - Endpoint access
+
+	There are 3 realm roles: Administrator, Composer, Designer
+	
+	+-------------------------------+---------------+----------+--------------+
+	|   Authorizations              | Administrator | Designer |    Composer  |
+	+-------------------------------+---------------+----------+--------------+
+	| /sdk/sliceManagement/**       |       x       |   read   |     read     |
+	| /sdk/services/**              |       x       |    x     |      x       |
+	| /sdk/services_descriptor/**   |       x       |    x     |      x       |
+	| /sdk/functions/**             |       x       |    x     |     read     |
+	|                               |               |          | [un-]publish |
+        +-------------------------------+---------------+----------+--------------+
+
+5GCity SDK - Business Logic
+
+	To read/write on SDK resources management, 4 data model parameters are taken into consideration: sliceId, ownerId, accessLevel, visibility
+	
+	- visibility: PUBLIC | PRIVATE
+	- accessLevel: 0..4  
+
+	When a user is created in Keycloak, one attribute must be specified: accessLevel (int). Keycloak must be configured to include accessLevel inside the token.
+
+	### for ENDPOINTS /sdk/functions/** ###
+	foreach function in (slice==sliceId) {
+		if(user.userName != admin.userName) {
+			if (slice.users not contains user.userName): 	User cannot do anything
+			if (user.accessLevel > function.accessLevel): 	User cannot do anything
+			if (user.userName != function.ownerId) {
+				if (resource.visibility==PRIVATE):  		User cannot do anything
+				if (resource.visibility==PUBLIC):   		User can read, publish, use in a service; User cannot update nor unpublish nor delete
+			}
+		}
+		User can create, read, update, delete, publish, unpublish, use in a service
+	}	
+
+	### for ENDPOINTS /sdk/services/** ###
+	foreach service in (slice==sliceId) {
+		if(user.userName != admin.userName) {
+			if (slice.users not contains user.userName): 	User cannot do anything
+			if (user.accessLevel > service.accessLevel): 	User cannot do anything
+			if (user.userName != service.ownerId) {
+				if (resource.visibility==PRIVATE):  		User cannot do anything
+				if (resource.visibility==PUBLIC):   		User can read, publish, create descriptors, use in a service; User cannot update nor delete
+			}	
+		}
+		User can create, read, update, delete, publish, create descriptors, use in a service
+	}	
+	
+	### for ENDPOINT /sdk/services_descriptor/** ###
+	foreach service in (slice==sliceId) {
+		if(user.userName != admin.userName) {
+			if (slice.users not contains user.username): 	User cannot do anything
+			if (user.accessLevel > service.accessLevel): 	User cannot do anything
+			if (user.userName != service.ownerId) {
+				if (service.visibility==PRIVATE):  			User cannot do anything
+				if (service.visibility==PUBLIC):   			User can read and publish; User cannot unpublish nor delete
+			}
+		}
+		User can read, publish, unpublish and delete
+	}
