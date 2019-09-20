@@ -81,6 +81,9 @@ public class VnfPkgInfo {
     @JsonProperty("c2cOnboardingState")
     private C2COnboardingStateType c2cOnboardingState;
 
+    @JsonProperty("projectId")
+    private String projectId;
+
     public VnfPkgInfo id(UUID id) {
         this.id = id;
         return this;
@@ -416,6 +419,14 @@ public class VnfPkgInfo {
         this.c2cOnboardingState = c2cOnboardingState;
     }
 
+    public String getProjectId() {
+        return projectId;
+    }
+
+    public void setProjectId(String projectId) {
+        this.projectId = projectId;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -438,12 +449,13 @@ public class VnfPkgInfo {
                 Objects.equals(this.operationalState, vnfPkgInfo.operationalState) &&
                 Objects.equals(this.usageState, vnfPkgInfo.usageState) &&
                 Objects.equals(this.userDefinedData, vnfPkgInfo.userDefinedData) &&
+                Objects.equals(this.projectId, vnfPkgInfo.projectId) &&
                 Objects.equals(this.links, vnfPkgInfo.links);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, vnfdId, vnfProvider, vnfProductName, vnfSoftwareVersion, vnfdVersion, checksum, softwareImages, additionalArtifacts, onboardingState, operationalState, usageState, userDefinedData, links);
+        return Objects.hash(projectId, id, vnfdId, vnfProvider, vnfProductName, vnfSoftwareVersion, vnfdVersion, checksum, softwareImages, additionalArtifacts, onboardingState, operationalState, usageState, userDefinedData, links);
     }
 
     @Override
@@ -465,6 +477,7 @@ public class VnfPkgInfo {
         sb.append("    usageState: ").append(toIndentedString(usageState)).append("\n");
         sb.append("    userDefinedData: ").append(toIndentedString(userDefinedData)).append("\n");
         sb.append("    links: ").append(toIndentedString(links)).append("\n");
+        sb.append("    projectId: ").append(toIndentedString(projectId)).append("\n");
         sb.append("}");
         return sb.toString();
     }

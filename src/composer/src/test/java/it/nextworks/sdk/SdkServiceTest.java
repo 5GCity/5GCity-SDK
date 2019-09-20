@@ -132,7 +132,7 @@ public class SdkServiceTest {
         service.setVersion("0.1");
         service.setDesigner("Nextworks");
         service.setOwnerId("Nextworks");
-        service.setGroupId("NXW");
+        //service.setGroupId("NXW");
 
         License license = new License();
         license.setType(LicenseType.PUBLIC);

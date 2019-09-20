@@ -6,6 +6,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.zip.ZipInputStream;
 
+import com.openshift.internal.restclient.model.Project;
 import it.nextworks.composer.controller.elements.SliceResource;
 import it.nextworks.composer.plugins.catalogue.api.management.ProjectResource;
 import it.nextworks.composer.plugins.catalogue.sol005.nsdmanagement.elements.*;
@@ -276,6 +277,17 @@ public class FiveGCataloguePlugin extends CataloguePlugin {
         } catch(RestClientException e) {
             log.error("Unable to delete project on public catalogue: " + e.getMessage());
             throw new RestClientException("Unable to delete project on public catalogue", e);
+        }
+    }
+
+    public ProjectResource getProject(String projectId, String authorization){
+        try{
+            ProjectResource project = mgmtApi.getProject(projectId, authorization);
+            log.debug("Retrieved  project on public catalogue with id: " + projectId);
+            return project;
+        } catch(RestClientException e) {
+            log.error("Unable to retrieve project on public catalogue: " + e.getMessage());
+            throw new RestClientException("Unable to retrieve project on public catalogue", e);
         }
     }
 

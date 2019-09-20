@@ -28,6 +28,7 @@ import it.nextworks.composer.plugins.catalogue.ArchiveBuilder;
 import it.nextworks.composer.plugins.catalogue.FiveGCataloguePlugin;
 import it.nextworks.composer.plugins.catalogue.ArchiveParser;
 import it.nextworks.composer.plugins.catalogue.CSARInfo;
+import it.nextworks.composer.plugins.catalogue.api.management.ProjectResource;
 import it.nextworks.composer.plugins.catalogue.sol005.vnfpackagemanagement.elements.VnfPkgInfo;
 import it.nextworks.nfvmano.libs.common.exceptions.*;
 import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
@@ -171,7 +172,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
                     functionRepository.saveAndFlush(functionOptional.get());
                 }else {
                     log.info("Creating function with vnfdID " + dt.getMetadata().getDescriptorId() + " and version " + dt.getMetadata().getVersion());
-                    createFunctionFromVnfd(csarInfo, mf, storagePath);
+                    createFunctionFromVnfd(csarInfo, mf, storagePath, vnfPkgInfo.getProjectId(), authorization);
                 }
             }catch (IOException | FailedOperationException | RestClientException e) {
                 log.debug(null, e);
@@ -808,7 +809,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         );
     }
 
-    private void createFunctionFromVnfd(CSARInfo csarInfo, String mf, String storagePath) throws MalformattedElementException, IOException, FailedOperationException, NotExistingEntityException, NotAuthorizedOperationException{
+    private void createFunctionFromVnfd(CSARInfo csarInfo, String mf, String storagePath, String projectId, String authorization) throws MalformattedElementException, IOException, FailedOperationException, NotExistingEntityException, NotAuthorizedOperationException{
         SdkFunction sdkFunction = new SdkFunction();
         DescriptorTemplate dt = csarInfo.getMst();
         ObjectMapper objectMapper = new ObjectMapper();
@@ -824,7 +825,23 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             sdkFunction.setName(vnfNode.getProperties().getProductName());
             //sdkFunction.setVnfdProvider(vnfNode.getProperties().getProvider());
 
-            sdkFunction.setSliceId("admin");
+            //check if project exists as slice, if not create it
+            Optional<SliceResource> sliceOptional = sliceRepository.findBySliceId(projectId);
+            SliceResource slice;
+            if(!sliceOptional.isPresent()) {
+                log.info("Slice with id " + projectId + " doesn't exist");
+                //get project information from catalogue
+                ProjectResource projectResource = cataloguePlugin.getProject(projectId, authorization);
+                slice = new SliceResource(projectId, projectId, projectResource.getUsers());
+                if(!projectResource.getUsers().contains(adminUserName))
+                    slice.addUser(adminUserName);
+                sliceRepository.saveAndFlush(slice);
+                log.info("Created slice with id " + projectId);
+            }
+
+            sdkFunction.setSliceId(projectId);
+            //check if is correct assigning ownership to the provider
+            //sdkFunction.setOwnerId(vnfNode.getProperties().getProvider());
             sdkFunction.setOwnerId(adminUserName);
             sdkFunction.setVisibility(Visibility.PUBLIC);
             sdkFunction.setAccessLevel(4);
