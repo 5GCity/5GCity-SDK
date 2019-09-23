@@ -2,7 +2,7 @@
 The 5GCity SDK is a sub-module of the 5GCity Platform
 
 # Scope
-The 5GCity SDK allows the vertical user to compose services and functions, and perform CRUD operations on these. The vertical user will have the possibility to publish the created services or functions into the 5G APP & Service Catalogue, after an internal process of validation and translation into the ETSI TOSCA model. 
+The 5GCity SDK allows the vertical user to compose services and functions, and perform CRUD operations on these. The vertical user will have the possibility to publish the created services or functions into the 5G App & Service Catalogue, after an internal process of validation and translation into the ETSI TOSCA model. 
 
 # Full deployment
 For a full deployment of the 5GCity SDK, please follow the instruction at: [Full Deployment guide-line]
@@ -79,7 +79,7 @@ The term Slice in the context of 5GCity SDK represents the concept of Project.
 		"version": "1.0",
 		"description": "Test Function",
 		"vnfdId": "057289e2-7b8e-4280-8734-43b924f64b85",
-		"sliceId": "slice_test"
+		"sliceId": "slice_test",
 		"ownerId": "NXW",
 		"vendor": "NXW",
 		"visibility": "PRIVATE",
@@ -415,5 +415,5 @@ Please use the GitHub issues for feedback.
 
 
 [//]: #
-[Full Deployment guide-line]: https://github.com/5GCity/5GCity-SDK/blob/devel/doc/README.md
+[Full Deployment guide-line]: doc/README.md
 [Nextworks S.r.l.]: http://www.nextworks.it/

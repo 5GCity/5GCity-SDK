@@ -6,7 +6,7 @@ This document aims to provide accurate instructions about how to deploy an insta
 # Requirements
 Two physical/virtual machines for **5GCity SDK** and **5G App & Service Catalogue**. 
 An extra physical/VM machine will be needed in case the 5G App & Service Catalogue will be configured with a **MANO Orchestrator (OSM R5)**.
-Network connectivity is requested between ***5GCity SDK*** and ***5G App & Service Catalogue***, as well as between ***5G App & Service Catalogue*** and ***OSM***. 
+Network connectivity is requested between **5GCity SDK** and **5G App & Service Catalogue**, as well as between **5G App & Service Catalogue** and **OSM**. 
 
 # 5GCity SDK
 ## Prerequisites
@@ -26,9 +26,9 @@ A physical or virtual machine running ubuntu 16.04, with the following software:
 
  - Java 1.8
     ```sh
-    $ sudo add-apt-repository ppa:webupd8team/java
+    $ sudo add-apt-repository ppa:openjdk-r/ppa
     $ sudo apt update
-    $ sudo apt install oracle-java8-installer
+    $ sudo apt install openjdk-8-jdk 
     
     ```
     
@@ -130,5 +130,5 @@ However, authentication and authorization might be enabled directly in the 5GCit
 [//]: #
 [5G App & Service Catalogue]: https://github.com/nextworks-it/5g-catalogue
 [OSM Rel FIVE]: https://osm.etsi.org/wikipub/index.php/OSM_Release_FIVE#Install_OSM
-[bootstrap-deps.sh]: https://github.com/5GCity/5GCity-SDK/blob/master/scripts/config/bootstrap-deps.sh
-[5GCity-SDK-Information]: https://github.com/5GCity/5GCity-SDK/blob/master/doc/5GCity-SDK-Information.txt
+[bootstrap-deps.sh]: ../scripts/config/bootstrap-deps.sh
+[5GCity-SDK-Information]: 5GCity-SDK-Information.txt

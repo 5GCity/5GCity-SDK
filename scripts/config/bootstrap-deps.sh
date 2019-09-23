@@ -37,6 +37,4 @@ git checkout v2.0
 chmod +x install_nfv_sol_libs.sh
 ./install_nfv_sol_libs.sh
 
-cd -
-
 exit 0
