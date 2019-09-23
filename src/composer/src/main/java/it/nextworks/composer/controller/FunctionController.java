@@ -19,6 +19,7 @@ package it.nextworks.composer.controller;
 import io.swagger.annotations.*;
 import it.nextworks.composer.executor.FunctionManager;
 import it.nextworks.nfvmano.libs.common.exceptions.AlreadyExistingEntityException;
+import it.nextworks.nfvmano.libs.common.exceptions.NotAuthorizedOperationException;
 import it.nextworks.nfvmano.libs.common.exceptions.NotPermittedOperationException;
 import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
 import it.nextworks.sdk.MonitoringParameter;
@@ -27,19 +28,15 @@ import it.nextworks.sdk.exceptions.AlreadyPublishedServiceException;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
 import it.nextworks.sdk.exceptions.MalformedElementException;
 import it.nextworks.sdk.exceptions.NotPublishedServiceException;
-import org.hibernate.cfg.NotYetImplementedException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.List;
@@ -64,72 +61,29 @@ public class FunctionController {
      *
      * @return functionList List<Function>
      */
-    @ApiOperation(value = "Get the complete list of the SDK Functions available in database", response = SdkFunction.class, responseContainer = "List")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "OK")})
+    @ApiOperation(value = "Get the complete list of SDK Functions available in database", response = SdkFunction.class, responseContainer = "List")
+    @ApiResponses(value = {
+        @ApiResponse(code = 403, message = "User not allowed to access the resource"),
+        @ApiResponse(code = 401, message = "User not authenticated"),
+        @ApiResponse(code = 404, message = "Slice not found"),
+        @ApiResponse(code = 200, message = "OK")})
     @RequestMapping(value = "/", method = RequestMethod.GET)
-    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
-    public ResponseEntity<?> getFunctions() {
+    public ResponseEntity<?> getFunctions(@RequestParam(required = true) String sliceId, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         log.info("Request for getting functions");
-
-        /*
-        ApiImplicitParams implicitParam = this.getClass().getAnnotation(ApiImplicitParams.class);
-        implicitParam.value()[0].paramType();
-        implicitParam.value()[0].name();
-        implicitParam.value()[0].dataType();
-        implicitParam.value()[0].required();
-        String authorization = implicitParam.value()[0].value();
-        */
-
-        /*
-        if (authorization != null) {
-            log.debug("Received getVNFPkgsInfo request with TOKEN :" + authorization);
-
-            log.debug("Going to validate received TOKEN for getting user infos...");
-
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            log.debug("Authenticated user: " + authentication.getName()
-                + " | Role: " + authentication.getAuthorities().toString()
-                + " | Credentials: " + authentication.getCredentials().toString()
-                + " | Details: " + authentication.getDetails().toString()
-                + " | Principal: " + authentication.getPrincipal().toString());
-
-            if (authentication.getPrincipal() instanceof KeycloakPrincipal) {
-                KeycloakPrincipal<KeycloakSecurityContext> kp = (KeycloakPrincipal<KeycloakSecurityContext>) authentication.getPrincipal();
-                // retrieving username here
-                String username = kp.getKeycloakSecurityContext().getToken().getPreferredUsername();
-            }
-
-            try {
-                keycloakService.getUsers();
-            } catch (FailedOperationException e) {
-                e.printStackTrace();
-            }
-            UserRepresentation userRepresentation = keycloakService.buildUserRepresentation("test5gcatalogue", "5gcatalogue", "5gcatalogue");
-            try {
-                keycloakService.createUser(userRepresentation);
-            } catch (FailedOperationException e) {
-                e.printStackTrace();
-            } catch (AlreadyExistingEntityException e) {
-                e.printStackTrace();
-            } catch (MalformattedElementException e) {
-                e.printStackTrace();
-            }
-            List<UserRepresentation> userRepresentations = null;
-            try {
-                userRepresentations = keycloakService.getUsers();
-            } catch (FailedOperationException e) {
-                e.printStackTrace();
-            }
-            for (UserRepresentation userRepresentation1 : userRepresentations) {
-                if (userRepresentation1.getUsername().equalsIgnoreCase("test5gcatalogue")) {
-                    keycloakService.addUserToGroup(userRepresentation1.getId());
-                }
-            }
-            */
-
-        List<SdkFunction> response = new ArrayList<>();
-        response = functionManager.getFunctions();
-        return new ResponseEntity<List<SdkFunction>>(response, HttpStatus.OK);
+        try {
+            List<SdkFunction> response = new ArrayList<>();
+            response = functionManager.getFunctions(sliceId);
+            log.debug("Function entities retrived");
+            return new ResponseEntity<List<SdkFunction>>(response, HttpStatus.OK);
+        }catch (NotExistingEntityException e){
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }catch (NotAuthorizedOperationException e){
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
+        }
     }
 
     /**
@@ -138,22 +92,29 @@ public class FunctionController {
      */
     @ApiOperation(value = "Search a SDK Function with ID", response = SdkFunction.class)
     @ApiResponses(value = {
+        @ApiResponse(code = 403, message = "User not allowed to access the resource"),
+        @ApiResponse(code = 401, message = "User not authenticated"),
         @ApiResponse(code = 400, message = "Query without parameter functionId"),
-        @ApiResponse(code = 404, message = "SDK Function not found in database"),
+        @ApiResponse(code = 404, message = "SDK Function not found in database or slice not found"),
         @ApiResponse(code = 200, message = "OK")})
     @RequestMapping(value = "/{functionId}", method = RequestMethod.GET)
-    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
-    public ResponseEntity<?> getFunction(@PathVariable Long functionId) {
+    public ResponseEntity<?> getFunction(@PathVariable Long functionId, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         log.info("Receiving a request to get the function with ID: " + functionId);
         if (functionId == null) {
             return new ResponseEntity<String>("Query without parameter functionId", HttpStatus.BAD_REQUEST);
         } else {
             try {
                 SdkFunction result = functionManager.getFunction(functionId);
+                log.debug("Function entity retrived");
                 return new ResponseEntity<SdkFunction>(result, HttpStatus.OK);
             } catch (NotExistingEntityException e) {
-                log.debug(e.toString());
+                log.debug(null, e);
+                log.error(e.getMessage());
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+            }catch (NotAuthorizedOperationException e) {
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
             }
         }
     }
@@ -164,31 +125,47 @@ public class FunctionController {
      */
     @ApiOperation(value = "Create a new SDK Function")
     @ApiResponses(value = {
+        @ApiResponse(code = 403, message = "User not allowed to access the resource"),
+        @ApiResponse(code = 401, message = "User not authenticated"),
         @ApiResponse(code = 400, message = "SDK Function already present in database or function cannot be validated"),
+        @ApiResponse(code = 404, message = "Slice not found"),
         @ApiResponse(code = 201, message = "SDK Function created")})
     @RequestMapping(value = "/", method = RequestMethod.POST)
-    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
-    public ResponseEntity<?> createFunction(@RequestBody SdkFunction request) {
+    public ResponseEntity<?> createFunction(@RequestBody SdkFunction request, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         log.info("Request for creation of a new function");
         try {
-            functionManager.createFunction(request);
+            functionManager.createFunction(request, false);
             log.debug("Function entity created");
             return new ResponseEntity<>(request.getId(), HttpStatus.CREATED);
-        } catch (MalformedElementException | AlreadyExistingEntityException e) {
-            log.error(e.toString());
+        } catch (AlreadyExistingEntityException e) {
+            log.debug(null, e);
+            log.error(e.getMessage());
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }catch(MalformedElementException e){
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<String>("Malformed SdkFunction - " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }catch(NotExistingEntityException e){
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<String>("Malformed SdkFunction - " + e.getMessage(), HttpStatus.NOT_FOUND);
+        }catch (NotAuthorizedOperationException e){
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
         }
     }
 
     @ApiOperation(value = "Modify an existing SDK Function")
     @ApiResponses(value = {
+        @ApiResponse(code = 403, message = "User not allowed to access the resource"),
+        @ApiResponse(code = 401, message = "User not authenticated"),
         @ApiResponse(code = 400, message = "SDK Function cannot be validated"),
-        @ApiResponse(code = 404, message = "SDK Function not present in database"),
-        @ApiResponse(code = 403, message = "SDK Function cannot be updated"),
+        @ApiResponse(code = 404, message = "SDK Function not present in database or slice not found"),
+        @ApiResponse(code = 409, message = "SDK Function cannot be updated"),
         @ApiResponse(code = 204, message = "SDK Function updated")})
     @RequestMapping(value = "/", method = RequestMethod.PUT)
-    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
-    public ResponseEntity<?> updateFunction(@RequestBody SdkFunction request) {
+    public ResponseEntity<?> updateFunction(@RequestBody SdkFunction request, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         log.info("Request for update of a function");
 
         try {
@@ -196,26 +173,34 @@ public class FunctionController {
             log.debug("Function entity updated");
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } catch (NotExistingEntityException e) {
-            log.error(e.toString());
+            log.debug(null, e);
+            log.error(e.getMessage());
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (MalformedElementException e) {
-            log.error(e.toString());
-            return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<String>("Malformed SdkFunction - " + e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (NotPermittedOperationException e){
-                log.error(e.toString());
-                return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<String>(e.getMessage(), HttpStatus.CONFLICT);
+        }catch (NotAuthorizedOperationException e){
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
         }
     }
 
     @ApiOperation(value = "Delete a SDK Function from database")
     @ApiResponses(value = {
+        @ApiResponse(code = 403, message = "User not allowed to access the resource"),
+        @ApiResponse(code = 401, message = "User not authenticated"),
         @ApiResponse(code = 204, message = "SDK Function deleted"),
         @ApiResponse(code = 404, message = "SDK Function not present in database"),
-        @ApiResponse(code = 403, message = "SDK Function cannot be deleted"),
+        @ApiResponse(code = 409, message = "SDK Function cannot be deleted"),
         @ApiResponse(code = 400, message = "Deletion request without parameter functionId")})
     @RequestMapping(value = "/{functionId}", method = RequestMethod.DELETE)
-    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
-    public ResponseEntity<?> deleteFunction(@PathVariable Long functionId) {
+    public ResponseEntity<?> deleteFunction(@PathVariable Long functionId, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         log.info("Request for deletion of a function with id: " + functionId);
         if (functionId == null) {
             log.error("Deletion request without parameter functionId");
@@ -223,13 +208,20 @@ public class FunctionController {
         } else {
             try {
                 functionManager.deleteFunction(functionId);
+                log.debug("Function entity deleted");
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             } catch (NotExistingEntityException e) {
-                log.error(e.toString());
+                log.debug(null, e);
+                log.error(e.getMessage());
                 return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
             }catch (NotPermittedOperationException e){
-                log.error(e.toString());
-                return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<String>(e.getMessage(), HttpStatus.CONFLICT);
+            }catch (NotAuthorizedOperationException e){
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
             }
         }
     }
@@ -274,64 +266,86 @@ public class FunctionController {
 
     @ApiOperation(value = "Publish SDK Function to Public Catalogue")
     @ApiResponses(value = {
+        @ApiResponse(code = 403, message = "User not allowed to access the resource"),
+        @ApiResponse(code = 401, message = "User not authenticated"),
         @ApiResponse(code = 202, message = "Virtual Network Function descriptor created. The descriptor will be published to the Public Catalogue"),
         @ApiResponse(code = 404, message = "SDK Function not present in database"),
         @ApiResponse(code = 400, message = "Publish request without parameter functionId or SDK Function already published")})
     @RequestMapping(value = "/{functionId}/publish", method = RequestMethod.POST)
-    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
-    public ResponseEntity<?> publishFunction(@PathVariable Long functionId) {
+    public ResponseEntity<?> publishFunction(@PathVariable Long functionId, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         log.info("Request publication of a function with ID {}", functionId);
         if (functionId == null) {
             log.error("Publication request without parameter functionId");
             return new ResponseEntity<>("Publication request without parameter functionId", HttpStatus.BAD_REQUEST);
         }
         try {
-            functionManager.publishFunction(functionId);
+            functionManager.publishFunction(functionId, authorization);
+            log.debug("Function entity will be published to the Public Catalogue");
             return new ResponseEntity<>(HttpStatus.ACCEPTED);
         } catch (NotExistingEntityException e) {
-            log.error(e.toString());
+            log.debug(null, e);
+            log.error(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }catch (AlreadyPublishedServiceException e) {
-            log.error(e.toString());
+            log.debug(null, e);
+            log.error(e.getMessage());
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }catch (NotAuthorizedOperationException e){
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
         }
     }
 
     @ApiOperation(value = "Unpublish SDK Function from Public Catalogue")
     @ApiResponses(value = {
+        @ApiResponse(code = 403, message = "User not allowed to access the resource"),
+        @ApiResponse(code = 401, message = "User not authenticated"),
         @ApiResponse(code = 202, message = "SDK Function will be removed from the Public Catalogue"),
         @ApiResponse(code = 404, message = "SDK Function not present in database"),
-        @ApiResponse(code = 400, message = "Publish request without parameter functionId or SDK Function not yet published")})
+        @ApiResponse(code = 409, message = "SDK Function cannot be unpublished"),
+        @ApiResponse(code = 400, message = "Unpublish request without parameter functionId or SDK Function not yet published")})
     @RequestMapping(value = "/{functionId}/unpublish", method = RequestMethod.POST)
-    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
-    public ResponseEntity<?> unPublishFunction(@PathVariable Long functionId) {
+    public ResponseEntity<?> unPublishFunction(@PathVariable Long functionId, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         log.info("Request to unpublish function with ID " + functionId + " from the Public Catalogue");
         if (functionId == null) {
             log.error("Request without parameter functionId");
             return new ResponseEntity<String>("Request without parameter functionId", HttpStatus.BAD_REQUEST);
         } else {
             try {
-                functionManager.unPublishFunction(functionId);
+                functionManager.unPublishFunction(functionId, authorization);
+                log.debug("Function entity will be unpublished from the Public Catalogue");
                 return new ResponseEntity<>(HttpStatus.ACCEPTED);
             } catch (NotExistingEntityException e) {
-                log.error(e.toString());
+                log.debug(null, e);
+                log.error(e.getMessage());
                 return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
             } catch (NotPublishedServiceException e) {
-                log.error(e.toString());
+                log.debug(null, e);
+                log.error(e.getMessage());
                 return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            }catch (NotPermittedOperationException e) {
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<String>(e.getMessage(), HttpStatus.CONFLICT);
+            }catch (NotAuthorizedOperationException e){
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
             }
         }
     }
 
     @ApiOperation(value = "Modify an existing list of monitoring parameters related to a SDK Function")
     @ApiResponses(value = {
+        @ApiResponse(code = 403, message = "User not allowed to access the resource"),
+        @ApiResponse(code = 401, message = "User not authenticated"),
         @ApiResponse(code = 400, message = "SDK Function or Monitoring Parameters cannot be validated"),
         @ApiResponse(code = 404, message = "SDK Function or Monitoring Parameters not present in database"),
-        @ApiResponse(code = 403, message = "Monitoring Parameters cannot be updated"),
+        @ApiResponse(code = 409, message = "Monitoring Parameters cannot be updated"),
         @ApiResponse(code = 204, message = "Monitoring Parameters updated")})
     @RequestMapping(value = "/{functionId}/monitoring_params", method = RequestMethod.PUT)
-    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
-    public ResponseEntity<?> updateMonitoringParametersForFunction(@PathVariable Long functionId, @RequestBody Set<MonitoringParameter> monitoringParameters) {
+    public ResponseEntity<?> updateMonitoringParametersForFunction(@PathVariable Long functionId, @RequestBody Set<MonitoringParameter> monitoringParameters, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         log.info("Request for update of a monitoringParameter list");
         if (functionId == null) {
             log.error("Request without parameter functionId");
@@ -342,26 +356,34 @@ public class FunctionController {
                 log.debug("Function entity updated with the requested monitoring parameters");
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             } catch (NotExistingEntityException e) {
-                log.error(e.toString());
+                log.debug(null, e);
+                log.error(e.getMessage());
                 return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
             } catch (MalformedElementException e) {
-                log.error(e.toString());
-                return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<String>("Malformed SdkFunction - " + e.getMessage(), HttpStatus.BAD_REQUEST);
             } catch(NotPermittedOperationException e){
-                log.error(e.toString());
-                return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<String>(e.getMessage(), HttpStatus.CONFLICT);
+            }catch (NotAuthorizedOperationException e){
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
             }
         }
     }
 
     @ApiOperation(value = "Get the list of  Monitoring Parameters for a SDK Function with ID", response = MonitoringParameter.class, responseContainer = "List")
     @ApiResponses(value = {
+        @ApiResponse(code = 403, message = "User not allowed to access the resource"),
+        @ApiResponse(code = 401, message = "User not authenticated"),
         @ApiResponse(code = 400, message = "Query without parameter functionId"),
         @ApiResponse(code = 404, message = "SDK Function or Monitoring Parameters not present in database"),
         @ApiResponse(code = 200, message = "OK")})
     @RequestMapping(value = "/{functionId}/monitoring_params", method = RequestMethod.GET)
-    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
-    public ResponseEntity<?> getMonitoringParametersForFunction(@PathVariable Long functionId) {
+    public ResponseEntity<?> getMonitoringParametersForFunction(@PathVariable Long functionId, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         log.info("Request for get list of monitoringParams available on a specific function with ID " + functionId);
         if (functionId == null) {
             log.error("Request without parameter functionId");
@@ -369,24 +391,30 @@ public class FunctionController {
         } else {
             try {
                 Set<MonitoringParameter> response = functionManager.getMonitoringParameters(functionId);
-                log.debug("Returning list of monitoringParams related to a specific function with ID " + functionId);
+                log.debug("Returning list of Monitoring Parameters related to a specific function with ID " + functionId);
                 return new ResponseEntity<Set<MonitoringParameter>>(response, HttpStatus.OK);
             } catch (NotExistingEntityException e) {
-                log.debug(e.toString());
+                log.debug(null, e);
+                log.error(e.getMessage());
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+            }catch (NotAuthorizedOperationException e){
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
             }
         }
     }
 
     @ApiOperation(value = "Delete Monitoring Parameters from SDK Function")
     @ApiResponses(value = {
+        @ApiResponse(code = 403, message = "User not allowed to access the resource"),
+        @ApiResponse(code = 401, message = "User not authenticated"),
         @ApiResponse(code = 204, message = "Monitoring parameter deleted"),
         @ApiResponse(code = 404, message = "SDK Function or Monitoring Parameters not present in database"),
-        @ApiResponse(code = 403, message = "Monitoring Parameters cannot be deleted"),
+        @ApiResponse(code = 409, message = "Monitoring Parameters cannot be deleted"),
         @ApiResponse(code = 400, message = "Deletion request without parameter functionId or function cannot be validated")})
     @RequestMapping(value = "/{functionId}/monitoring_params/{monitoringParameterId}", method = RequestMethod.DELETE)
-    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
-    public ResponseEntity<?> deleteMonitoringParametersForFunction(@PathVariable Long functionId, @PathVariable Long monitoringParameterId) {
+    public ResponseEntity<?> deleteMonitoringParametersForFunction(@PathVariable Long functionId, @PathVariable Long monitoringParameterId, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         log.info("Request for deletion of monitoring parameter from SDK Function identified by id: " + functionId);
         if (functionId == null) {
             log.error("Request without parameter functionId");
@@ -394,27 +422,36 @@ public class FunctionController {
         }else {
             try {
                 functionManager.deleteMonitoringParameters(functionId, monitoringParameterId);
+                log.debug("Monitoring Parameter deleted");
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             } catch (NotExistingEntityException e) {
-                log.error(e.toString());
+                log.debug(null, e);
+                log.error(e.getMessage());
                 return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
             } catch (NotPermittedOperationException e) {
-                log.error(e.toString());
-                return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<String>(e.getMessage(), HttpStatus.CONFLICT);
             } catch (MalformedElementException e) {
-                log.error(e.toString());
-                return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<String>("Malformed SdkFunction - " + e.getMessage(), HttpStatus.BAD_REQUEST);
+            }catch (NotAuthorizedOperationException e){
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
             }
         }
     }
 
     @ApiOperation(value = "Get Vnfd from SDK Function")
     @ApiResponses(value = {
+        @ApiResponse(code = 403, message = "User not allowed to access the resource"),
+        @ApiResponse(code = 401, message = "User not authenticated"),
         @ApiResponse(code = 200, message = "OK"),
         @ApiResponse(code = 400, message = "SDK Function not present in databse")})
     @RequestMapping(value = "/{functionId}/vnfd", method = RequestMethod.GET)
-    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
-    public ResponseEntity<?> getVnfd(@PathVariable Long functionId) {
+    public ResponseEntity<?> getVnfd(@PathVariable Long functionId, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         log.info("Request GET Vnfd for function with ID " + functionId);
         if (functionId == null) {
             log.error("GET Vnfd request without parameter functionId");
@@ -422,10 +459,16 @@ public class FunctionController {
         } else {
             try {
                 DescriptorTemplate descriptorTemplate = functionManager.generateTemplate(functionId);
+                log.debug("Vnfd entity retrived");
                 return new ResponseEntity<>(descriptorTemplate, HttpStatus.OK);
             }catch (NotExistingEntityException e) {
-                log.error(e.toString());
+                log.debug(null, e);
+                log.error(e.getMessage());
                 return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
+            }catch (NotAuthorizedOperationException e){
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
             }
         }
     }

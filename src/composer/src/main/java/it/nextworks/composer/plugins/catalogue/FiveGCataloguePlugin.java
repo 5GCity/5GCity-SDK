@@ -6,6 +6,9 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.zip.ZipInputStream;
 
+import com.openshift.internal.restclient.model.Project;
+import it.nextworks.composer.controller.elements.SliceResource;
+import it.nextworks.composer.plugins.catalogue.api.management.ProjectResource;
 import it.nextworks.composer.plugins.catalogue.sol005.nsdmanagement.elements.*;
 import it.nextworks.composer.plugins.catalogue.sol005.vnfpackagemanagement.elements.CreateVnfPkgInfoRequest;
 import it.nextworks.composer.plugins.catalogue.sol005.vnfpackagemanagement.elements.PackageOperationalStateType;
@@ -36,11 +39,13 @@ public class FiveGCataloguePlugin extends CataloguePlugin {
 	
 	DefaultApi nsdApi;
 	it.nextworks.composer.plugins.catalogue.api.vnf.DefaultApi vnfApi;
+	it.nextworks.composer.plugins.catalogue.api.management.DefaultApi mgmtApi;
 	
 	public FiveGCataloguePlugin(CatalogueType type, Catalogue catalogue) {
 		super(type, catalogue);
 		nsdApi = new DefaultApi(new ApiClient(catalogue));
 		vnfApi = new it.nextworks.composer.plugins.catalogue.api.vnf.DefaultApi(new it.nextworks.composer.plugins.catalogue.invoker.vnf.ApiClient(catalogue));
+		mgmtApi = new it.nextworks.composer.plugins.catalogue.api.management.DefaultApi(new it.nextworks.composer.plugins.catalogue.invoker.management.ApiClient(catalogue));
 	}
 
 	@Bean 
@@ -51,7 +56,7 @@ public class FiveGCataloguePlugin extends CataloguePlugin {
 		return converter; 
 	}
 	
-	public String uploadNetworkService(String servicePackagePath, String contentType, KeyValuePairs userDefinedData) throws RestClientException, IOException {
+	public String uploadNetworkService(String servicePackagePath, String project, String contentType, KeyValuePairs userDefinedData, String authorization) throws RestClientException, IOException {
 
 		/* Create CreateNsInfoRequest */
 		CreateNsdInfoRequest request = new CreateNsdInfoRequest();
@@ -62,11 +67,11 @@ public class FiveGCataloguePlugin extends CataloguePlugin {
 		NsdInfo nsInfo;
 		// Create NsdInfo and perform post on /ns_descriptors
 		try{
-			nsInfo = nsdApi.createNsdInfo(request);
+			nsInfo = nsdApi.createNsdInfo(request, project, authorization);
 			log.debug("Created nsInfo with id: "  + nsInfo.getId());
-		} catch(RestClientException e1) {
-			log.error("Unable to perform NsdInfo creation on public catalogue: " + e1.getMessage());
-			throw new RestClientException("Unable to perform NsdInfo creation on public catalogue"); 
+		} catch(RestClientException e) {
+			log.error("Unable to perform NsdInfo creation on public catalogue: " + e.getMessage());
+			throw new RestClientException("Unable to perform NsdInfo creation on public catalogue", e);
 		}
 		//TODO: implementare la parte di Description Parser
 		//log.debug("Creating file from DescriptorTempalate");
@@ -77,66 +82,66 @@ public class FiveGCataloguePlugin extends CataloguePlugin {
 		MultipartFile multipartFile = this.createMultiPartFromFile(servicePackage, contentType);
 		try {
 			log.debug("Trying to push data to catalogue");
-			nsdApi.uploadNSD(nsInfo.getId().toString(), multipartFile, contentType);
+			nsdApi.uploadNSD(nsInfo.getId().toString(), project,  multipartFile, contentType, authorization);
 			log.debug("Data has been pushed correctly");
 //			nsdApi.uploadNSD(nsInfo.getId().toString(), fileDescriptor, contentType);
-		} catch(RestClientException e2) {
-			log.error("Something went wrong pushing the descriptor content on the catalogue: " + e2.getMessage());
-			nsdApi.deleteNSDInfo(nsInfo.getId().toString());
-			throw new RestClientException("Something went wrong pushing the descriptor content on the catalogue: " + e2.getMessage());
+		} catch(RestClientException e) {
+			log.error("Something went wrong pushing the descriptor content on the catalogue: " + e.getMessage());
+			nsdApi.deleteNSDInfo(nsInfo.getId().toString(), project, authorization);
+			throw new RestClientException("Something went wrong pushing the descriptor content on the catalogue: " + e.getMessage(), e);
 		}
 		
 		return nsInfo.getId().toString();
 	}
 
-	public void deleteNetworkService(String nsInfoId){
+	public void deleteNetworkService(String nsInfoId, String project, String authorization){
 
         // Delete nsInfo
         try{
             NsdInfoModifications updateBody = new NsdInfoModifications();
             updateBody.setNsdOperationalState(NsdOperationalStateType.DISABLED);
-            nsdApi.updateNSDInfo(nsInfoId, updateBody);
-            nsdApi.deleteNSDInfo(nsInfoId);
+            nsdApi.updateNSDInfo(nsInfoId, project, updateBody, authorization);
+            nsdApi.deleteNSDInfo(nsInfoId, project, authorization);
             log.debug("Deleted nsInfo with id: "  + nsInfoId);
-        } catch(RestClientException e1) {
-            log.error("Unable to perform nsInfo deletion on public catalogue: " + e1.getMessage());
-            throw new RestClientException("Unable to perform nsInfo deletion on public catalogue");
+        } catch(RestClientException e) {
+            log.error("Unable to perform nsInfo deletion on public catalogue: " + e.getMessage());
+            throw new RestClientException("Unable to perform nsInfo deletion on public catalogue", e);
         }
 
     }
 
-	public NsdInfo getNsDescriptorInfo(String nsInfoId) {
+	public NsdInfo getNsDescriptorInfo(String nsInfoId, String project, String authorization) {
 
 		NsdInfo nsdInfo;
 		try {
-			nsdInfo = nsdApi.getNSDInfo(nsInfoId);
-		} catch(RestClientException e1) {
-			log.error("RestClientException when trying to get NsdInfo  " + nsInfoId + ". Error: " + e1.getMessage());
-			throw new RestClientException("RestClientException when trying to get NsdInfo  " + nsInfoId + ". Error: " + e1.getMessage()); 
+			nsdInfo = nsdApi.getNSDInfo(nsInfoId, project, authorization);
+		} catch(RestClientException e) {
+			log.error("RestClientException when trying to get NsdInfo  " + nsInfoId + ". Error: " + e.getMessage());
+			throw new RestClientException("RestClientException when trying to get NsdInfo  " + nsInfoId + ". Error: " + e.getMessage(), e);
 		}
 		
 		return nsdInfo;
 	}
 	
 	
-	public DescriptorTemplate getNsdContent(String nsInfoId, String range) {
+	public DescriptorTemplate getNsdContent(String nsInfoId, String project,  String range, String authorization) {
 		
 		Object obj;
 		
 		try {
-			obj = nsdApi.getNSD(nsInfoId, range);
-		} catch(RestClientException e1) {
-			log.error("RestClientException when trying to get NsdInfo  " + nsInfoId + ". Error: " + e1.getMessage());
-			throw new RestClientException("RestClientException when trying to get NsdInfo  " + nsInfoId + ". Error: " + e1.getMessage()); 
+			obj = nsdApi.getNSD(nsInfoId, project, range, authorization);
+		} catch(RestClientException e) {
+			log.error("RestClientException when trying to get NsdInfo  " + nsInfoId + ". Error: " + e.getMessage());
+			throw new RestClientException("RestClientException when trying to get NsdInfo  " + nsInfoId + ". Error: " + e.getMessage(), e);
 		}
 
 		if (obj instanceof MultipartFile) {
 			try {
 				File file = convertToFile((MultipartFile) obj);
 				return DescriptorsParser.fileToDescriptorTemplate(file);
-			} catch(Exception e2) {
+			} catch(Exception e) {
 				log.error("The file returned from the catalogue is not an File object");
-				throw new ClassCastException("The file returned from the catalogue is not an File object"); 
+				throw new ClassCastException("The file returned from the catalogue is not an File object");
 			}
 			
 		} else {
@@ -147,40 +152,40 @@ public class FiveGCataloguePlugin extends CataloguePlugin {
 	}
 	
 	
-	public List<NsdInfo> getNsdInfoList(){
+	public List<NsdInfo> getNsdInfoList(String project, String authorization){
 		List<NsdInfo> nsdList = null;
 		
 		try {
-			nsdList = nsdApi.getNSDsInfo();
-		} catch(RestClientException e1) {
+			nsdList = nsdApi.getNSDsInfo(project, authorization);
+		} catch(RestClientException e) {
 			log.error("RestClientException when trying to get list of nsdInfos");
-			throw new RestClientException("RestClientException when trying to get list of nsdInfos"); 
+			throw new RestClientException("RestClientException when trying to get list of nsdInfos", e);
 		}
 		
 		return nsdList;
 	}
 	
 	
-	public List<VnfPkgInfo> getVnfPackageInfoList(){
+	public List<VnfPkgInfo> getVnfPackageInfoList(String project, String authorization){
 		List<VnfPkgInfo> vnfPkgList = null;
 		
 		try {
-			vnfPkgList = vnfApi.getVNFPkgsInfo();
-		} catch(RestClientException e1) {
-			log.error("RestClientException when trying to get list of VnfPkgInfos");
-			throw new RestClientException("RestClientException when trying to get list of VnfPkgInfos " + e1.getMessage());
+			vnfPkgList = vnfApi.getVNFPkgsInfo(project, authorization);
+		} catch(RestClientException e) {
+			log.error("RestClientException when trying to get list of VnfPkgInfos : " + e.getMessage());
+			throw new RestClientException("RestClientException when trying to get list of VnfPkgInfos", e);
 		}
 		return vnfPkgList;
 	}
 	
 	
-	public MultipartFile getVnfPkgContent(String vnfPkgId, String range, String storagePath) {
+	public MultipartFile getVnfPkgContent(String vnfPkgId, String project, String range, String storagePath, String authorization) {
 		
 		Resource obj;
         File targetFile;
 
 		try {
-			obj = (Resource) vnfApi.getVNFPkg(vnfPkgId, range);
+			obj = (Resource) vnfApi.getVNFPkg(vnfPkgId, project, range, authorization);
             InputStream inputStream = obj.getInputStream();
             targetFile = new File(String.format("%s%s.zip", storagePath, vnfPkgId));
             java.nio.file.Files.copy(
@@ -196,16 +201,16 @@ public class FiveGCataloguePlugin extends CataloguePlugin {
 
             return multipartFile;
 
-		} catch(RestClientException e1) {
-			log.error("RestClientException when trying to get vnfPkg  " + vnfPkgId + ". Error: " + e1.getMessage());
-			throw new RestClientException("RestClientException when trying to get vnfPkg  " + vnfPkgId + ". Error: " + e1.getMessage());
+		} catch(RestClientException e) {
+			log.error("RestClientException when trying to get vnfPkg  " + vnfPkgId + ". Error: " + e.getMessage());
+			throw new RestClientException("RestClientException when trying to get vnfPkg  " + vnfPkgId + ". Error: " + e.getMessage(), e);
 		} catch (IOException e) {
             log.error("Error while getting VNF Pkg file: " + e.getMessage());
-            throw new RestClientException("RestClientException when trying to get vnfPkg  " + vnfPkgId + ". Error: " + e.getMessage());
+            throw new RestClientException("RestClientException when trying to get vnfPkg  " + vnfPkgId + ". Error: " + e.getMessage(), e);
         }
 	}
 
-	public String uploadNetworkFunction(String functionPackagePath, String contentType, KeyValuePairs userDefinedData) throws RestClientException, IOException {
+	public String uploadNetworkFunction(String functionPackagePath, String project, String contentType, KeyValuePairs userDefinedData, String authorization) throws RestClientException, IOException {
 
 	    /* Create CreateVnfPkgInfoRequest */
         CreateVnfPkgInfoRequest request = new CreateVnfPkgInfoRequest();
@@ -217,77 +222,108 @@ public class FiveGCataloguePlugin extends CataloguePlugin {
 
         // Create VnfPkgInfo and perform post on /vnf_packages
         try{
-            vnfPkgInfo = vnfApi.createVNFPkgInfo(request);
+            vnfPkgInfo = vnfApi.createVNFPkgInfo(request, project, authorization);
             log.debug("Created vnfPkgInfo with id: "  + vnfPkgInfo.getId());
-        } catch(RestClientException e1) {
-            log.error("Unable to perform VnfPkgInfo creation on public catalogue: " + e1.getMessage());
-            throw new RestClientException("Unable to perform VnfPkgInfo creation on public catalogue");
+        } catch(RestClientException e) {
+            log.error("Unable to perform VnfPkgInfo creation on public catalogue: " + e.getMessage());
+            throw new RestClientException("Unable to perform VnfPkgInfo creation on public catalogue", e);
         }
 
         File functionPackage = new File(functionPackagePath);
         MultipartFile multipartFile = this.createMultiPartFromFile(functionPackage, contentType);
         try {
             log.debug("Trying to push data to catalogue");
-            vnfApi.uploadVNFPkg(vnfPkgInfo.getId().toString(), multipartFile, contentType);
+            vnfApi.uploadVNFPkg(vnfPkgInfo.getId().toString(), project, multipartFile, contentType, authorization);
             log.debug("Data has been pushed correctly");
-        } catch(RestClientException e2) {
-            log.error("Something went wrong pushing the descriptor content on the catalogue: " + e2.getMessage());
-            vnfApi.deleteVNFPkgInfo(vnfPkgInfo.getId().toString());
-            throw new RestClientException("Something went wrong pushing the descriptor content on the catalogue: " + e2.getMessage());
+        } catch(RestClientException e) {
+            log.error("Something went wrong pushing the descriptor content on the catalogue: " + e.getMessage());
+            vnfApi.deleteVNFPkgInfo(vnfPkgInfo.getId().toString(), project, authorization);
+            throw new RestClientException("Something went wrong pushing the descriptor content on the catalogue: " + e.getMessage(), e);
         }
 
         return vnfPkgInfo.getId().toString();
 	}
 
-    public void deleteNetworkFunction(String vnfInfoId){
+    public void deleteNetworkFunction(String vnfInfoId, String project, String authorization){
 
         // Delete VnfPkgInfo
         try{
             VnfPkgInfoModifications updateBody = new VnfPkgInfoModifications();
             updateBody.setOperationalState(PackageOperationalStateType.DISABLED);
-            vnfApi.updateVNFPkgInfo(vnfInfoId, updateBody);
-            vnfApi.deleteVNFPkgInfo(vnfInfoId);
+            vnfApi.updateVNFPkgInfo(vnfInfoId, project, updateBody, authorization);
+            vnfApi.deleteVNFPkgInfo(vnfInfoId, project, authorization);
             log.debug("Deleted vnfPkgInfo with id: " + vnfInfoId);
-        } catch(RestClientException e1) {
-            log.error("Unable to perform VnfPkgInfo deletion on public catalogue: " + e1.getMessage());
-            throw new RestClientException("Unable to perform VnfPkgInfo deletion on public catalogue");
+        } catch(RestClientException e) {
+            log.error("Unable to perform VnfPkgInfo deletion on public catalogue: " + e.getMessage());
+            throw new RestClientException("Unable to perform VnfPkgInfo deletion on public catalogue", e);
+        }
+    }
+
+    public void createProject(String projectId, String authorization){
+        try{
+            ProjectResource project = new ProjectResource(projectId, projectId + " project");
+            mgmtApi.createProject(project, authorization);
+            log.debug("Created project on public catalogue with id: " + projectId);
+        } catch(RestClientException e) {
+            log.error("Unable to create project on public catalogue: " + e.getMessage());
+            throw new RestClientException("Unable to create project on public catalogue", e);
+        }
+    }
+
+    public void deleteProject(String projectId, String authorization){
+        try{
+            mgmtApi.deleteProject(projectId, authorization);
+            log.debug("Deleted project on public catalogue with id: " + projectId);
+        } catch(RestClientException e) {
+            log.error("Unable to delete project on public catalogue: " + e.getMessage());
+            throw new RestClientException("Unable to delete project on public catalogue", e);
+        }
+    }
+
+    public ProjectResource getProject(String projectId, String authorization){
+        try{
+            ProjectResource project = mgmtApi.getProject(projectId, authorization);
+            log.debug("Retrieved  project on public catalogue with id: " + projectId);
+            return project;
+        } catch(RestClientException e) {
+            log.error("Unable to retrieve project on public catalogue: " + e.getMessage());
+            throw new RestClientException("Unable to retrieve project on public catalogue", e);
+        }
+    }
+
+    public void addUserToProject(String projectId, String username, String authorization){
+        try{
+            //update users DB on public catalogue
+            mgmtApi.getUsers(authorization);
+            //add user to project on public catalogue
+            mgmtApi.addUserToProject(projectId, username, authorization);
+            log.debug("Added user " + username + " to project " + projectId + " on public catalogue");
+        } catch(RestClientException e) {
+            log.error("Unable to add user on public catalogue: " + e.getMessage());
+            throw new RestClientException("Unable to add user on public catalogue", e);
+        }
+    }
+
+    public void delUserFromProject(String projectId, String username, String authorization){
+        try{
+            //add user to project on public catalogue
+            mgmtApi.delUserFromProject(projectId, username, authorization);
+            log.debug("Deleted user " + username + " from project " + projectId + " on public catalogue");
+        } catch(RestClientException e) {
+            log.error("Unable to delete user on public catalogue: " + e.getMessage());
+            throw new RestClientException("Unable to delete user on public catalogue", e);
         }
     }
 
 	private MultipartFile createMultiPartFromFile(File file, String contentType) throws IOException {
-//		DiskFileItem fileItem = new DiskFileItem("file", "text/plain", false, file.getName(), (int) file.length() , file.getParentFile());
-//	    fileItem.getOutputStream();
-//	    MultipartFile multipartFile = new CommonsMultipartFile(fileItem);
-		
-		byte[] content = null;
+	    byte[] content = null;
 		try {
 		    content = Files.readAllBytes(file.toPath());
 		} catch (final IOException e) {
 		}
 		MultipartFile multipartFile = new MockMultipartFile("file",
 		                     file.getName(), contentType, content);
-		
 
-		
-		
-//		FileInputStream input = new FileInputStream(file);
-//	    MultipartFile multipartFile = new MockMultipartFile("file",
-//	            file.getName(), contentType, IOUtils.toByteArray(input));
-//
-//		FileItem fileItem = new DiskFileItem("mainFile", Files.probeContentType(file.toPath()), false, file.getName(), (int) file.length(), file.getParentFile());
-//
-//		try {
-//		    InputStream input = new FileInputStream(file);
-//		    OutputStream os = fileItem.getOutputStream();
-//		    IOUtils.copy(input, os);
-//		    // Or faster..
-//		    // IOUtils.copy(new FileInputStream(file), fileItem.getOutputStream());
-//		} catch (IOException ex) {
-//		    // do something.
-//		}
-//
-//		MultipartFile multipartFile = new CommonsMultipartFile(fileItem);
-		
 		return multipartFile;
 
 	}

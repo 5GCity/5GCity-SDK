@@ -22,8 +22,7 @@ import org.springframework.test.context.web.WebAppConfiguration;
 import java.time.Instant;
 import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Created by Marco Capitani on 04/12/18.
@@ -146,7 +145,7 @@ public class SdkFunctionTest {
         //function.setVnfdVersion("v1.0");
         function.setOwnerId("NXW");
         //function.setVnfdProvider("NXW");
-        function.setGroupId("NXW");
+        //function.setGroupId("NXW");
         ConnectionPoint cp1 = ConnectionPointTest.makeNS1vPlateObject1();
 
         function.setConnectionPoint(new HashSet<>(Arrays.asList(cp1)));
@@ -166,6 +165,7 @@ public class SdkFunctionTest {
         function.setMinInstancesCount(1);
         function.setMaxInstancesCount(2);
 
+        function.setSliceId("admin");
         return function;
     }
 
@@ -192,7 +192,7 @@ public class SdkFunctionTest {
         //function.setVnfdVersion("v5.0");
         function.setOwnerId("NXW");
         //function.setVnfdProvider("NXW");
-        function.setGroupId("NXW");
+        //function.setGroupId("NXW");
 
         ConnectionPoint cp1 = ConnectionPointTest.makeNS1FirewallObject1();
         ConnectionPoint cp2 = ConnectionPointTest.makeNS1FirewallObject2();
@@ -216,6 +216,7 @@ public class SdkFunctionTest {
         function.setMaxInstancesCount(2);
 
         function.setStatus(SdkFunctionStatus.SAVED);
+        function.setSliceId("admin");
         return function;
     }
     
@@ -245,7 +246,7 @@ public class SdkFunctionTest {
         //function.setVnfdVersion("v6.0");
         function.setOwnerId("NXW");
         //function.setVnfdProvider("NXW");
-        function.setGroupId("NXW");
+        //function.setGroupId("NXW");
 
         ConnectionPoint cp1 = ConnectionPointTest.makeFirewallDemobject1();
         ConnectionPoint cp2 = ConnectionPointTest.makeFirewallDemobject2();
@@ -267,7 +268,7 @@ public class SdkFunctionTest {
         function.setMaxInstancesCount(2);
 
         function.setStatus(SdkFunctionStatus.SAVED);
-
+        function.setSliceId("admin");
         return function;
     }
 
@@ -286,7 +287,7 @@ public class SdkFunctionTest {
         //function.setVnfdVersion("v1.0");
         function.setOwnerId("NXW");
         //function.setVnfdProvider("NXW");
-        function.setGroupId("NXW");
+        //function.setGroupId("NXW");
 
         ConnectionPoint cp1 = ConnectionPointTest.makeMiniwebDemobject1();
 
@@ -307,7 +308,7 @@ public class SdkFunctionTest {
         function.setMaxInstancesCount(2);
 
         function.setStatus(SdkFunctionStatus.SAVED);
-
+        function.setSliceId("admin");
         return function;
     }
 
@@ -343,7 +344,7 @@ public class SdkFunctionTest {
 
     @Test
     @Ignore // requires DB
-    public void testCityService() {
+    public void testCityService() throws Exception{
 
         SdkFunction ns1Firewall = makeNS1FirewallObject();
 
@@ -353,15 +354,10 @@ public class SdkFunctionTest {
 
         SdkFunction vPlate = makeNS1vPlateObject();
 
-        assertTrue(ns1Firewall.isValid());
-        assertTrue(ns2Firewall.isValid());
-        assertTrue(minicache.isValid());
-        assertTrue(vPlate.isValid());
-
-        functionRepository.saveAndFlush(ns1Firewall);
-        functionRepository.saveAndFlush(vPlate);
-        functionRepository.saveAndFlush(ns2Firewall);
-        functionRepository.saveAndFlush(minicache);
+        functionManager.createFunction(ns1Firewall, true);
+        functionManager.createFunction(ns2Firewall, true);
+        functionManager.createFunction(minicache, true);
+        functionManager.createFunction(vPlate, true);
 
         Optional<SdkFunction> mwb = functionRepository.findById(minicache.getId());
         Optional<SdkFunction> vwb = functionRepository.findById(vPlate.getId());

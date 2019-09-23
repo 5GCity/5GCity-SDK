@@ -8,6 +8,7 @@ import it.nextworks.sdk.enums.SdkFunctionStatus;
 import it.nextworks.sdk.enums.Visibility;
 import it.nextworks.sdk.enums.SdkServiceComponentType;
 import it.nextworks.sdk.evalex.ExtendedExpression;
+import it.nextworks.sdk.exceptions.MalformedElementException;
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "id",
+    "sliceId",
     "status",
     "vnfInfoId",
     "ownerId",
@@ -63,6 +65,8 @@ public class SdkFunction implements InstantiableCandidate {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
+
+    private String sliceId;
 
     private SdkFunctionStatus status;
 
@@ -116,7 +120,7 @@ public class SdkFunction implements InstantiableCandidate {
 
     private Visibility visibility = Visibility.fromValue("PRIVATE");
 
-    private String groupId;
+    //private String groupId;
 
     private Integer accessLevel = 4;//TODO default to?
 
@@ -126,7 +130,7 @@ public class SdkFunction implements InstantiableCandidate {
 
     private Integer minInstancesCount = 1;
 
-    private Integer maxInstancesCount;
+    private Integer maxInstancesCount = 1;
 
     @JsonProperty("status")
     public SdkFunctionStatus getStatus() {
@@ -158,7 +162,17 @@ public class SdkFunction implements InstantiableCandidate {
         this.ownerId = ownerId;
     }
 
-    /*
+    @JsonProperty("sliceId")
+    public String getSliceId() {
+        return sliceId;
+    }
+
+    @JsonProperty("sliceId")
+    public void setSliceId(String sliceId) {
+        this.sliceId = sliceId;
+    }
+
+/*
     @JsonProperty("vnfdProvider")
     public String getVnfdProvider() {
         return vnfdProvider;
@@ -360,6 +374,7 @@ public class SdkFunction implements InstantiableCandidate {
         }
     }
 
+    /*
     @JsonProperty("groupId")
     public String getGroupId() {
         return groupId;
@@ -369,6 +384,7 @@ public class SdkFunction implements InstantiableCandidate {
     public void setGroupId(String groupId) {
         this.groupId = groupId;
     }
+     */
 
     @JsonProperty("accessLevel")
     public Integer getAccessLevel() {
@@ -474,6 +490,10 @@ public class SdkFunction implements InstantiableCandidate {
         sb.append('=');
         sb.append(((this.id == null) ? "<null>" : this.id));
         sb.append(',');
+        sb.append("sliceId");
+        sb.append('=');
+        sb.append(((this.sliceId == null) ? "<null>" : this.sliceId));
+        sb.append(',');
         sb.append("status");
         sb.append('=');
         sb.append(((this.status == null) ? "<null>" : this.status));
@@ -481,10 +501,6 @@ public class SdkFunction implements InstantiableCandidate {
         sb.append("ownerId");
         sb.append('=');
         sb.append(((this.ownerId == null) ? "<null>" : this.ownerId));
-        sb.append(',');
-        sb.append("groupId");
-        sb.append('=');
-        sb.append(((this.groupId == null) ? "<null>" : this.groupId));
         sb.append(',');
         sb.append("visibility");
         sb.append('=');
@@ -557,7 +573,6 @@ public class SdkFunction implements InstantiableCandidate {
         result = ((result * 31) + ((this.connectionPoint == null) ? 0 : this.connectionPoint.hashCode()));
         result = ((result * 31) + ((this.id == null) ? 0 : this.id.hashCode()));
         result = ((result * 31) + ((this.ownerId == null) ? 0 : this.ownerId.hashCode()));
-        result = ((result * 31) + ((this.groupId == null) ? 0 : this.groupId.hashCode()));
         result = ((result * 31) + ((this.accessLevel == null) ? 0 : this.accessLevel.hashCode()));
         result = ((result * 31) + ((this.swImageData == null) ? 0 : this.swImageData.hashCode()));
         result = ((result * 31) + ((this.epoch == null) ? 0 : this.epoch.hashCode()));
@@ -566,6 +581,7 @@ public class SdkFunction implements InstantiableCandidate {
         result = ((result * 31) + ((this.requiredPorts == null) ? 0 : this.requiredPorts.hashCode()));
         result = ((result * 31) + ((this.minInstancesCount == null) ? 0 : this.minInstancesCount.hashCode()));
         result = ((result * 31) + ((this.maxInstancesCount == null) ? 0 : this.maxInstancesCount.hashCode()));
+        result = ((result * 31) + ((this.sliceId == null) ? 0 : this.sliceId.hashCode()));
         result = ((result * 31) + ((this.status == null) ? 0 : this.status.hashCode()));
         return result;
     }
@@ -596,7 +612,6 @@ public class SdkFunction implements InstantiableCandidate {
                 && ((this.ownerId == rhs.ownerId) || ((this.ownerId != null) && this.ownerId.equals(rhs.ownerId)))
                 && ((this.visibility == rhs.visibility) || ((this.visibility != null) && this.visibility.equals(rhs.visibility)))
                 && ((this.ownerId == rhs.ownerId) || ((this.ownerId != null) && this.ownerId.equals(rhs.ownerId)))
-                && ((this.groupId == rhs.groupId) || ((this.groupId != null) && this.groupId.equals(rhs.groupId)))
                 && ((this.accessLevel == rhs.accessLevel) || ((this.accessLevel != null) && this.accessLevel.equals(rhs.accessLevel)))
                 && ((this.swImageData == rhs.swImageData) || ((this.swImageData != null) && this.swImageData.equals(rhs.swImageData)))
                 && ((this.minInstancesCount == rhs.minInstancesCount) || ((this.minInstancesCount != null) && this.minInstancesCount.equals(rhs.minInstancesCount)))
@@ -604,12 +619,43 @@ public class SdkFunction implements InstantiableCandidate {
                 && ((this.epoch == rhs.epoch) || ((this.epoch != null) && this.epoch.equals(rhs.epoch)))
                 && ((this.requiredPorts == rhs.requiredPorts) || ((this.requiredPorts != null) && this.requiredPorts.equals(rhs.requiredPorts)))
                 && ((this.status == rhs.status) || ((this.status != null) && this.status.equals(rhs.status)))
+                && ((this.sliceId == rhs.sliceId) || ((this.sliceId != null) && this.sliceId.equals(rhs.sliceId)))
                 && ((this.parameters == rhs.parameters) || ((this.parameters != null) && this.parameters.equals(rhs.parameters))));
     }
 
     @JsonIgnore
     @Override
-    public boolean isValid() {
+    public void isValid() throws MalformedElementException {
+        if(name == null || name.length() == 0)
+            throw new MalformedElementException("Please provide valid name");
+        if(sliceId == null || sliceId.length() == 0)
+            throw new MalformedElementException("Please provide valid sliceId");
+        if(ownerId == null || ownerId.length() == 0)
+            throw new MalformedElementException("Please provide valid ownerId");
+        if(version == null || version.length() == 0)
+            throw new MalformedElementException("Please provide valid version");
+        if(vendor == null || vendor.length() == 0)
+            throw new MalformedElementException("Please provide valid vendor");
+        if(vnfdId == null || vnfdId.length() == 0 || !checkVnfdIdFormat())
+            throw new MalformedElementException("Please provide valid UUID as vnfdId");
+        if(minInstancesCount == null || minInstancesCount < 1)
+            throw new MalformedElementException("Please provide valid minInstancesCount (at least 1)");
+        if(maxInstancesCount == null || maxInstancesCount < minInstancesCount)
+            throw new MalformedElementException("Please provide valid maxInstancesCount (>= minInstancesCount)");
+        if(!validateCps())
+            throw new MalformedElementException("Please provide valid connection points");
+        if(!validateExpressions())
+            throw new MalformedElementException("Please provide valid expressions");
+        if(!validateMonitoringParameters())
+            throw new MalformedElementException("Please provide valid monitoring parameters");
+        if(!validateRequiredPorts())
+            throw new MalformedElementException("Please provide valid required ports");
+        if(swImageData == null)
+            throw new MalformedElementException("Please provide valid swImageData");
+        else
+            swImageData.isValid();
+
+        /*
         return name != null && name.length() > 0
             && ownerId != null
             && groupId != null
@@ -626,6 +672,8 @@ public class SdkFunction implements InstantiableCandidate {
             && swImageData.isValid()
             && minInstancesCount > 0
             && maxInstancesCount > 0 && maxInstancesCount >= minInstancesCount;
+
+         */
     }
 
     private boolean checkVnfdIdFormat(){

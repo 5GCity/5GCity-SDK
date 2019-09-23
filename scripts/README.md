@@ -1,2 +1,2 @@
 # Scripts
-This folder contains the scripts necessary install, run and test the SDK Composer
+This folder contains the scripts necessary install, run and performe few tests on the 5GCity SDK

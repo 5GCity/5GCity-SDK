@@ -18,6 +18,7 @@ package it.nextworks.composer.executor.repositories;
 import it.nextworks.sdk.SdkService;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 
@@ -26,4 +27,6 @@ public interface SdkServiceRepository extends JpaRepository<SdkService, Long> {
     Optional<SdkService> findById(Long id);
 
     Optional<SdkService> findByNameAndVersion(String name, String version);
+
+    List<SdkService> findBySliceId(String sliceId);
 }

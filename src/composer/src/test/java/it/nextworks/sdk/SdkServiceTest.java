@@ -132,7 +132,7 @@ public class SdkServiceTest {
         service.setVersion("0.1");
         service.setDesigner("Nextworks");
         service.setOwnerId("Nextworks");
-        service.setGroupId("NXW");
+        //service.setGroupId("NXW");
 
         License license = new License();
         license.setType(LicenseType.PUBLIC);
@@ -233,6 +233,7 @@ public class SdkServiceTest {
         service.setActions(new HashSet<>(Arrays.asList(action2)));
         service.setActionRules(makeActionRules());
 
+        service.setSliceId("admin");
         /*
         ScalingAspect scalingAspect = new ScalingAspect();
         scalingAspect.setName("scaling-aspect-test");
@@ -347,8 +348,14 @@ public class SdkServiceTest {
     public void testPublishService() throws Exception {
         List<BigDecimal> parameterValues = new ArrayList<>();
         parameterValues.add(new BigDecimal(1000));
-        serviceManager.publishService(Long.valueOf(10), parameterValues);
+        serviceManager.publishService(Long.valueOf(10), parameterValues, null);
         //serviceManager.publishService(Long.valueOf(40));
+    }
+
+    @Test
+    @Ignore // requires DB
+    public void testGetNSD() throws Exception {
+        serviceManager.generateTemplate(Long.valueOf(62));
     }
 
     @Test
@@ -357,15 +364,11 @@ public class SdkServiceTest {
 
         SdkFunction firewall = SdkFunctionTest.makeNS1FirewallObject();
 
-        assertTrue(firewall.isValid());
-
-        functionManager.createFunction(firewall);
+        functionManager.createFunction(firewall, true);
 
         SdkFunction vPlate = SdkFunctionTest.makeNS1vPlateObject();
 
-	assertTrue(vPlate.isValid());
-
-	functionManager.createFunction(vPlate);
+	    functionManager.createFunction(vPlate, true);
 
         Long firewallId = firewall.getId();
 
@@ -377,8 +380,6 @@ public class SdkServiceTest {
                 ConnectionPoint::getId
             ))
         );
-
-        assertTrue(service.isValid());
 
         serviceManager.createService(service);
 

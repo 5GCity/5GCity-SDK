@@ -46,7 +46,7 @@ public class DefaultApi {
         this.apiClient = apiClient;
     }
 
-    public VnfPkgInfo createVNFPkgInfo(CreateVnfPkgInfoRequest body) throws RestClientException {
+    public VnfPkgInfo createVNFPkgInfo(CreateVnfPkgInfoRequest body, String project, String authorization) throws RestClientException {
         Object postBody = body;
 
         // verify the required parameter 'body' is set
@@ -57,7 +57,11 @@ public class DefaultApi {
         String path = UriComponentsBuilder.fromPath("/vnfpkgm/v1/vnf_packages").build().toUriString();
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        if(project != null)
+            queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
+        //adding fake Authorization header for bypassing security check on catalogue
+        headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] accepts = {
@@ -76,7 +80,7 @@ public class DefaultApi {
         return apiClient.invokeAPI(path, HttpMethod.POST, queryParams, postBody, headerParams, formParams, accept, contentType, authNames, returnType);
     }
 
-    public void deleteVNFPkgInfo(String vnfPkgId) throws RestClientException {
+    public void deleteVNFPkgInfo(String vnfPkgId, String project, String authorization) throws RestClientException {
         Object postBody = null;
 
         // verify the required parameter 'vnfPkgId' is set
@@ -90,7 +94,11 @@ public class DefaultApi {
         String path = UriComponentsBuilder.fromPath("/vnfpkgm/v1/vnf_packages/{vnfPkgId}").buildAndExpand(uriVariables).toUriString();
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        if(project != null)
+            queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
+        //adding fake Authorization header for bypassing security check on catalogue
+        headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] accepts = {
@@ -107,7 +115,7 @@ public class DefaultApi {
         apiClient.invokeAPI(path, HttpMethod.DELETE, queryParams, postBody, headerParams, formParams, accept, contentType, authNames, returnType);
     }
 
-    public Object getVNFD(String vnfPkgId) throws RestClientException {
+    public Object getVNFD(String vnfPkgId, String project, String authorization) throws RestClientException {
         Object postBody = null;
 
         // verify the required parameter 'vnfPkgId' is set
@@ -121,7 +129,11 @@ public class DefaultApi {
         String path = UriComponentsBuilder.fromPath("/vnfpkgm/v1/vnf_packages/{vnfPkgId}/vnfd").buildAndExpand(uriVariables).toUriString();
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        if(project != null)
+            queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
+        //adding fake Authorization header for bypassing security check on catalogue
+        headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] accepts = {
@@ -138,7 +150,7 @@ public class DefaultApi {
         return apiClient.invokeAPI(path, HttpMethod.GET, queryParams, postBody, headerParams, formParams, accept, contentType, authNames, returnType);
     }
 
-    public Object getVNFPkg(String vnfPkgId, String range) throws RestClientException {
+    public Object getVNFPkg(String vnfPkgId, String project, String range, String authorization) throws RestClientException {
         Object postBody = null;
 
         // verify the required parameter 'vnfPkgId' is set
@@ -152,7 +164,11 @@ public class DefaultApi {
         String path = UriComponentsBuilder.fromPath("/vnfpkgm/v1/vnf_packages/{vnfPkgId}/package_content").buildAndExpand(uriVariables).toUriString();
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        if(project != null)
+            queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
+        //adding fake Authorization header for bypassing security check on catalogue
+        headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         if (range != null)
@@ -170,13 +186,17 @@ public class DefaultApi {
         return apiClient.invokeAPI(path, HttpMethod.GET, queryParams, postBody, headerParams, formParams, accept, contentType, authNames, returnType);
     }
 
-    public List<VnfPkgInfo> getVNFPkgsInfo() throws RestClientException {
+    public List<VnfPkgInfo> getVNFPkgsInfo(String project, String authorization) throws RestClientException {
         Object postBody = null;
 
         String path = UriComponentsBuilder.fromPath("/vnfpkgm/v1/vnf_packages").build().toUriString();
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        if(project != null)
+            queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
+        //adding fake Authorization header for bypassing security check on catalogue
+        headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] accepts = {
@@ -193,7 +213,7 @@ public class DefaultApi {
         return apiClient.invokeAPI(path, HttpMethod.GET, queryParams, postBody, headerParams, formParams, accept, contentType, authNames, returnType);
     }
 
-    public Object queryVNFPkgArtifact(String vnfPkgId, String artifactPath, String range) throws RestClientException {
+    public Object queryVNFPkgArtifact(String vnfPkgId, String project, String artifactPath, String range, String authorization) throws RestClientException {
         Object postBody = null;
 
         // verify the required parameter 'vnfPkgId' is set
@@ -213,7 +233,11 @@ public class DefaultApi {
         String path = UriComponentsBuilder.fromPath("/vnfpkgm/v1/vnf_packages/{vnfPkgId}/artifacts/{artifactPath}").buildAndExpand(uriVariables).toUriString();
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        if(project != null)
+            queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
+        //adding fake Authorization header for bypassing security check on catalogue
+        headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         if (range != null)
@@ -233,7 +257,7 @@ public class DefaultApi {
         return apiClient.invokeAPI(path, HttpMethod.GET, queryParams, postBody, headerParams, formParams, accept, contentType, authNames, returnType);
     }
 
-    public VnfPkgInfo queryVNFPkgInfo(String vnfPkgId) throws RestClientException {
+    public VnfPkgInfo queryVNFPkgInfo(String vnfPkgId, String project, String authorization) throws RestClientException {
         Object postBody = null;
 
         // verify the required parameter 'vnfPkgId' is set
@@ -247,7 +271,11 @@ public class DefaultApi {
         String path = UriComponentsBuilder.fromPath("/vnfpkgm/v1/vnf_packages/{vnfPkgId}").buildAndExpand(uriVariables).toUriString();
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        if(project != null)
+            queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
+        //adding fake Authorization header for bypassing security check on catalogue
+        headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] accepts = {
@@ -264,7 +292,7 @@ public class DefaultApi {
         return apiClient.invokeAPI(path, HttpMethod.GET, queryParams, postBody, headerParams, formParams, accept, contentType, authNames, returnType);
     }
 
-    public VnfPkgInfoModifications updateVNFPkgInfo(String vnfPkgId, VnfPkgInfoModifications body) throws RestClientException {
+    public VnfPkgInfoModifications updateVNFPkgInfo(String vnfPkgId, String project, VnfPkgInfoModifications body, String authorization) throws RestClientException {
         Object postBody = body;
 
         // verify the required parameter 'vnfPkgId' is set
@@ -283,9 +311,11 @@ public class DefaultApi {
         String path = UriComponentsBuilder.fromPath("/vnfpkgm/v1/vnf_packages/{vnfPkgId}").buildAndExpand(uriVariables).toUriString();
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
-
+        if(project != null)
+            queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
-
+        //adding fake Authorization header for bypassing security check on catalogue
+        headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] accepts = {
@@ -307,7 +337,7 @@ public class DefaultApi {
         return apiClient.invokeAPI(path, HttpMethod.PATCH, queryParams, postBody, headerParams, formParams, accept, contentType, authNames, returnType);
     }
 
-    public Object uploadVNFPkg(String vnfPkgId, Object body, String contentType) throws RestClientException {
+    public Object uploadVNFPkg(String vnfPkgId, String project, Object body, String contentType, String authorization) throws RestClientException {
         Object postBody = body;
 
         // verify the required parameter 'vnfPkgId' is set
@@ -326,7 +356,10 @@ public class DefaultApi {
         String path = UriComponentsBuilder.fromPath("/vnfpkgm/v1/vnf_packages/{vnfPkgId}/package_content").buildAndExpand(uriVariables).toUriString();
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        if(project != null)
+            queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
+        headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         if (contentType != null)
@@ -347,14 +380,14 @@ public class DefaultApi {
         };
         if (contentType.equalsIgnoreCase("multipart/form-data")) {
             log.debug("executing modified invoker");
-            return apiClient.invokeApi(path, HttpMethod.PUT, body);
+            return apiClient.invokeApi(path, HttpMethod.PUT, body, authorization);
         } else {
             return apiClient.invokeAPI(path, HttpMethod.PUT, queryParams, postBody, headerParams, formParams, accept,
                     finalContentType, authNames, returnType);
         }
     }
 
-    public void uploadVNFPkgFromURI(String vnfPkgId, UploadVnfPackageFromUriRequest body) throws RestClientException {
+    public void uploadVNFPkgFromURI(String vnfPkgId, String project, UploadVnfPackageFromUriRequest body, String authorization) throws RestClientException {
         Object postBody = body;
 
         // verify the required parameter 'vnfPkgId' is set
@@ -373,7 +406,11 @@ public class DefaultApi {
         String path = UriComponentsBuilder.fromPath("/vnfpkgm/v1/vnf_packages/{vnfPkgId}/package_content/upload_from_uri").buildAndExpand(uriVariables).toUriString();
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        if(project != null)
+            queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
+        //adding fake Authorization header for bypassing security check on catalogue
+        headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] accepts = {

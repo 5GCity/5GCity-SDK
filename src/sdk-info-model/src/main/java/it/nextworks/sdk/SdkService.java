@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import it.nextworks.sdk.enums.Visibility;
 import it.nextworks.sdk.enums.ConnectionPointType;
 import it.nextworks.sdk.enums.SdkServiceComponentType;
+import it.nextworks.sdk.exceptions.MalformedElementException;
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -37,6 +38,7 @@ import java.util.stream.Stream;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "id",
+    "sliceId",
     "ownerId",
     "name",
     "version",
@@ -128,11 +130,13 @@ public class SdkService implements InstantiableCandidate {
 
     private String ownerId;
 
-    private String groupId;
+    //private String groupId;
 
     private Visibility visibility = Visibility.fromValue("PRIVATE");
 
     private Integer accessLevel = 4;
+
+    private String sliceId;
 
     @Override
     public SdkServiceDescriptor makeDescriptor(List<BigDecimal> parameterValues) {
@@ -154,7 +158,8 @@ public class SdkService implements InstantiableCandidate {
         return new SdkServiceDescriptor(
             this,
             parameterValues,
-            subInstances
+            subInstances,
+            this.sliceId
         );
     }
 
@@ -311,6 +316,16 @@ public class SdkService implements InstantiableCandidate {
         this.id = id;
     }
 
+    @JsonProperty("sliceId")
+    public String getSliceId() {
+        return sliceId;
+    }
+
+    @JsonProperty("sliceId")
+    public void setSliceId(String sliceId) {
+        this.sliceId = sliceId;
+    }
+
     @JsonProperty("license")
     public License getLicense() {
         return license;
@@ -457,6 +472,7 @@ public class SdkService implements InstantiableCandidate {
         this.visibility = visibility;
     }
 
+    /*
     @JsonProperty("groupId")
     public String getGroupId() {
         return groupId;
@@ -466,6 +482,7 @@ public class SdkService implements InstantiableCandidate {
     public void setGroupId(String groupId) {
         this.groupId = groupId;
     }
+    */
 
     @JsonProperty("accessLevel")
     public Integer getAccessLevel() {
@@ -483,12 +500,10 @@ public class SdkService implements InstantiableCandidate {
         return SdkServiceComponentType.SDK_SERVICE;
     }
 
-    public void resolveComponents(Set<SdkFunction> functions, Set<SdkService> services) {
-        if (!isValid()) {
-            throw new IllegalStateException(
-                "Cannot resolve components: service is not valid"
-            );
-        }
+    public void resolveComponents(Set<SdkFunction> functions, Set<SdkService> services) throws MalformedElementException{
+
+        this.isValid();
+
         Map<Long, SdkFunction> functionMap = functions.stream()
             .collect(Collectors.toMap(SdkFunction::getId, Function.identity()));
         for (SubFunction subFunction : subFunctions) {
@@ -600,7 +615,7 @@ public class SdkService implements InstantiableCandidate {
                 }
             default:
                 throw new IllegalStateException(String.format(
-                    "unknown cp type %s on cp %s",
+                    "Unknown cp type %s on cp %s",
                     cp.getType(),
                     cpName
                 ));
@@ -621,6 +636,8 @@ public class SdkService implements InstantiableCandidate {
         // Check correspondence between links and cps
         Set<String> takenCps = new HashSet<>();
         for (Link l : link) {
+            if(!l.isValid())
+                return false;
             Set<String> linkCps = new HashSet<>(l.getConnectionPointNames());
             Set<Integer> componentIndexes = new HashSet<>();
             for(ConnectionPoint cp : thisCps){
@@ -652,8 +669,7 @@ public class SdkService implements InstantiableCandidate {
                     // some are unknown
                     linkCps.removeAll(takenCps);
                     throw new IllegalStateException(String.format(
-                        "Invalid links, CPs '%s' are not available for linking " +
-                            "(unknown? part of an int-to-ext bridge?)",
+                        "Invalid links, CPs '%s' are not available for linking",
                         linkCps
                     ));
                 }
@@ -693,7 +709,39 @@ public class SdkService implements InstantiableCandidate {
 
     @JsonIgnore
     @Override
-    public boolean isValid() {
+    public void isValid() throws MalformedElementException{
+        if(name == null || name.length() == 0)
+            throw new MalformedElementException("Please provide valid name");
+        if(sliceId == null || sliceId.length() == 0)
+            throw new MalformedElementException("Please provide valid sliceId");
+        if(ownerId == null || ownerId.length() == 0)
+            throw new MalformedElementException("Please provide valid ownerId");
+        if(designer == null || designer.length() == 0)
+            throw new MalformedElementException("Please provide valid designer");
+        if(version == null || version.length() == 0)
+            throw new MalformedElementException("Please provide valid version");
+        if(license == null || !license.isValid())
+            throw new MalformedElementException("Please provide valid license");
+        if(!validateL3Connectivity())
+            throw new MalformedElementException("Please provide valid l3 connectivity");
+        if(!validateMonitoringParameters())
+            throw new MalformedElementException("Please provide valid monitoring parameters");
+        if(!validateAction())
+            throw new MalformedElementException("Please provide valid actions and action rules");
+        if(!validateCps())
+            throw new MalformedElementException("Please provide valid connection points");
+        if(!validateExpressions())
+            throw new MalformedElementException("Please provide valid parameters");
+        if(!validateComponents() || !validateComponentIndex())
+            throw new MalformedElementException("Please provide valid components");
+        try{
+            if(!validateLinks())
+                throw new MalformedElementException("Please provide valid links");
+        }catch(IllegalStateException e){
+            throw new MalformedElementException(e.getMessage());
+        }
+
+        /*
         return  name != null
                 && ownerId != null
                 && groupId != null
@@ -709,7 +757,7 @@ public class SdkService implements InstantiableCandidate {
                 && validateLinks()
                 && validateExpressions()
                 && validateCps();
-
+         */
     }
 
     private boolean validateAction(){
@@ -783,14 +831,14 @@ public class SdkService implements InstantiableCandidate {
         sb.append(((this.id == null) ? "<null>" : this.id));
         sb.append(',');
         sb.append("\n    ");
+        sb.append("sliceId");
+        sb.append('=');
+        sb.append(((this.sliceId == null) ? "<null>" : this.sliceId));
+        sb.append(',');
+        sb.append("\n    ");
         sb.append("ownerId");
         sb.append('=');
         sb.append(((this.ownerId == null) ? "<null>" : this.ownerId));
-        sb.append(',');
-        sb.append("\n    ");
-        sb.append("groupId");
-        sb.append('=');
-        sb.append(((this.groupId == null) ? "<null>" : this.groupId));
         sb.append(',');
         sb.append("\n    ");
         sb.append("visibility");
@@ -887,10 +935,10 @@ public class SdkService implements InstantiableCandidate {
         result = ((result * 31) + ((this.parameters == null) ? 0 : this.parameters.hashCode()));
         result = ((result * 31) + ((this.ownerId == null) ? 0 : this.ownerId.hashCode()));
         result = ((result * 31) + ((this.visibility == null) ? 0 : this.visibility.hashCode()));
-        result = ((result * 31) + ((this.groupId == null) ? 0 : this.groupId.hashCode()));
         result = ((result * 31) + ((this.accessLevel == null) ? 0 : this.accessLevel.hashCode()));
         result = ((result * 31) + ((this.actions == null) ? 0 : this.actions.hashCode()));
         result = ((result * 31) + ((this.actionRules == null) ? 0 : this.actionRules.hashCode()));
+        result = ((result * 31) + ((this.sliceId == null) ? 0 : this.sliceId.hashCode()));
         return result;
     }
 
@@ -903,7 +951,7 @@ public class SdkService implements InstantiableCandidate {
             return false;
         }
         SdkService rhs = ((SdkService) other);
-        return ((((((((((((((((((((this.subFunctions == rhs.subFunctions) || ((this.subFunctions != null) && this.subFunctions.equals(rhs.subFunctions)))
+        return (((((((((((((((((((((this.subFunctions == rhs.subFunctions) || ((this.subFunctions != null) && this.subFunctions.equals(rhs.subFunctions)))
             && ((this.subServices == rhs.subServices) || ((this.subServices != null) && this.subServices.equals(rhs.subServices))))
             && ((this.metadata == rhs.metadata) || ((this.metadata != null) && this.metadata.equals(rhs.metadata))))
             && ((this.l3Connectivity == rhs.l3Connectivity) || ((this.l3Connectivity != null) && this.l3Connectivity.equals(rhs.l3Connectivity))))
@@ -917,11 +965,11 @@ public class SdkService implements InstantiableCandidate {
             && ((this.id == rhs.id) || ((this.id != null) && this.id.equals(rhs.id))))
             && ((this.ownerId == rhs.ownerId) || ((this.ownerId != null) && this.ownerId.equals(rhs.ownerId))))
             && ((this.visibility == rhs.visibility) || ((this.visibility != null) && this.visibility.equals(rhs.visibility))))
-            && ((this.groupId == rhs.groupId) || ((this.groupId != null) && this.groupId.equals(rhs.groupId))))
             && ((this.accessLevel == rhs.accessLevel) || ((this.accessLevel != null) && this.accessLevel.equals(rhs.accessLevel))))
             && ((this.actions == rhs.actions) || ((this.actions != null) && this.actions.equals(rhs.actions))))
             && ((this.actionRules == rhs.actionRules) || ((this.actionRules != null) && this.actionRules.equals(rhs.actionRules))))
-            && ((this.parameters == rhs.parameters) || ((this.parameters != null) && this.parameters.equals(rhs.parameters))));
+            && ((this.sliceId == rhs.sliceId) || ((this.sliceId != null) && this.sliceId.equals(rhs.sliceId))))
+            && ((this.parameters == rhs.parameters) || ((this.parameters != null) && this.parameters.equals(rhs.parameters)))));
     }
 
     @JsonIgnore

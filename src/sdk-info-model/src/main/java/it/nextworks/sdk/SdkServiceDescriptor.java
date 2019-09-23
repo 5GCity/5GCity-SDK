@@ -71,6 +71,7 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
     @ManyToOne
     private SdkService template;
 
+    private String sliceId;
 
     private SdkServiceDescriptor() {
         super();
@@ -80,7 +81,8 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
     public SdkServiceDescriptor(
         SdkService template,
         List<BigDecimal> parameterValues,
-        Set<SdkComponentInstance> subDescriptors
+        Set<SdkComponentInstance> subDescriptors,
+        String sliceId
     ) {
         super();
         if (!(template.getFreeParametersNumber() == parameterValues.size())) {
@@ -92,6 +94,7 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
         }
         this.parameterValues = parameterValues;
         this.template = template;
+        this.sliceId = sliceId;
         setSubDescriptors(subDescriptors);
     }
 
@@ -176,6 +179,16 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
         return this.template.getId();
     }
 
+    @JsonProperty("sliceId")
+    public String getSliceId() {
+        return sliceId;
+    }
+
+    @JsonProperty("sliceId")
+    public void setSliceId(String sliceId) {
+        this.sliceId = sliceId;
+    }
+
     private void validateComponents() {
         Set<Long> subServicesIds = subServices.stream()
             .map(ss -> ss.getTemplate().getId())
@@ -226,7 +239,8 @@ public class SdkServiceDescriptor extends SdkComponentInstance {
     public boolean isValid() {
         return template != null
             && parameterValues != null
-            && template.getFreeParametersNumber() == parameterValues.size();
+            && template.getFreeParametersNumber() == parameterValues.size()
+            && sliceId != null;
     }
 
     @JsonProperty("parameters")

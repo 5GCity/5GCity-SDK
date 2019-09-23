@@ -16,26 +16,22 @@
 package it.nextworks.composer.controller;
 
 import io.swagger.annotations.*;
+import it.nextworks.composer.controller.elements.MakeDescriptorRequest;
 import it.nextworks.composer.executor.ServiceManager;
 import it.nextworks.nfvmano.libs.common.exceptions.AlreadyExistingEntityException;
+import it.nextworks.nfvmano.libs.common.exceptions.NotAuthorizedOperationException;
 import it.nextworks.nfvmano.libs.common.exceptions.NotPermittedOperationException;
 import it.nextworks.sdk.*;
 import it.nextworks.sdk.exceptions.MalformedElementException;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
-import it.nextworks.sdk.exceptions.NotPublishedServiceException;
 import org.aspectj.weaver.ast.Not;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -60,14 +56,28 @@ public class ServiceController {
      *
      * @return servicesList List<Service>
      */
-    @ApiOperation(value = "Get the complete list of the SDK Services available in database", response = SdkService.class, responseContainer = "List")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "OK")})
+    @ApiOperation(value = "Get the complete list of SDK Services available in database", response = SdkService.class, responseContainer = "List")
+    @ApiResponses(value = {
+        @ApiResponse(code = 403, message = "User not allowed to access the resource"),
+        @ApiResponse(code = 401, message = "User not authenticated"),
+        @ApiResponse(code = 404, message = "Slice not found"),
+        @ApiResponse(code = 200, message = "OK")})
     @RequestMapping(value = "/", method = RequestMethod.GET)
-    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
-    public ResponseEntity<?> getServices() {
+    public ResponseEntity<?> getServices(@RequestParam(required = true) String sliceId, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         log.info("Request for get services");
-        List<SdkService> response = serviceManager.getServices();
-        return new ResponseEntity<List<SdkService>>(response, HttpStatus.OK);
+        try {
+            List<SdkService> response = serviceManager.getServices(sliceId);
+            log.debug("Service entities retrived");
+            return new ResponseEntity<List<SdkService>>(response, HttpStatus.OK);
+        } catch (NotExistingEntityException e){
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }catch (NotAuthorizedOperationException e){
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
+        }
     }
 
     /**
@@ -78,12 +88,13 @@ public class ServiceController {
      */
     @ApiOperation(value = "Search a SDK Service with ID", response = SdkService.class)
     @ApiResponses(value = {
+        @ApiResponse(code = 403, message = "User not allowed to access the resource"),
+        @ApiResponse(code = 401, message = "User not authenticated"),
         @ApiResponse(code = 400, message = "Query without parameter serviceId"),
         @ApiResponse(code = 404, message = "SdkService not found in database"),
         @ApiResponse(code = 200, message = "OK")})
     @RequestMapping(value = "/{serviceId}", method = RequestMethod.GET)
-    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
-    public ResponseEntity<?> getService(@PathVariable Long serviceId) {
+    public ResponseEntity<?> getService(@PathVariable Long serviceId, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         log.info("Request for get specific service with ID " + serviceId);
         if (serviceId == null) {
             log.error("Query without parameter serviceId");
@@ -91,10 +102,16 @@ public class ServiceController {
         } else {
             try {
                 SdkService response = serviceManager.getServiceById(serviceId);
+                log.debug("Service entity retrived");
                 return new ResponseEntity<SdkService>(response, HttpStatus.OK);
             } catch (NotExistingEntityException e) {
-                log.error(e.toString());
+                log.debug(null, e);
+                log.error(e.getMessage());
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }catch (NotAuthorizedOperationException e){
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
             }
         }
     }
@@ -105,32 +122,48 @@ public class ServiceController {
      */
     @ApiOperation(value = "Create a new SDK Service")
     @ApiResponses(value = {
-        @ApiResponse(code = 400, message = "SDK Service already present in database or service cannot be validated"),
+        @ApiResponse(code = 403, message = "User not allowed to access the resource"),
+        @ApiResponse(code = 401, message = "User not authenticated"),
+        @ApiResponse(code = 400, message = "SDK Service already present in database"),
+        @ApiResponse(code = 404, message = "SDK Service cannot be validated (some component is missing) or slice not found"),
         @ApiResponse(code = 201, message = "SDK Service created")})
     @RequestMapping(value = "/", method = RequestMethod.POST)
-    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
-    public ResponseEntity<?> createService(@RequestBody SdkService request) {
+    public ResponseEntity<?> createService(@RequestBody SdkService request, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         log.info("Request for creation of a new service");
 
         try {
             serviceManager.createService(request);
             log.debug("Service entity created");
             return new ResponseEntity<>(request.getId(), HttpStatus.CREATED);
-        } catch (MalformedElementException | AlreadyExistingEntityException | NotExistingEntityException e) {
-            log.error(e.toString());
+        } catch (AlreadyExistingEntityException e) {
+            log.debug(null, e);
+            log.error(e.getMessage());
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }catch (MalformedElementException e){
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<String>("Malformed SdkService - " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }catch (NotExistingEntityException e){
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<String>("Malformed SdkService - " + e.getMessage(), HttpStatus.NOT_FOUND);
+        }catch (NotAuthorizedOperationException e){
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
         }
     }
 
     @ApiOperation(value = "Modify an existing SDK Service")
     @ApiResponses(value = {
+        @ApiResponse(code = 403, message = "User not allowed to access the resource"),
+        @ApiResponse(code = 401, message = "User not authenticated"),
         @ApiResponse(code = 400, message = "SDK Service cannot be validated"),
-        @ApiResponse(code = 404, message = "SDK Service not present in database"),
-        @ApiResponse(code = 403, message = "SDK Service cannot be updated"),
+        @ApiResponse(code = 404, message = "SDK Service not present in database or slice not found"),
+        @ApiResponse(code = 409, message = "SDK Service cannot be updated"),
         @ApiResponse(code = 204, message = "SDK Service updated")})
     @RequestMapping(value = "/", method = RequestMethod.PUT)
-    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
-    public ResponseEntity<?> updateService(@RequestBody SdkService request) {
+    public ResponseEntity<?> updateService(@RequestBody SdkService request, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         log.info("Request for update of a service");
 
         try {
@@ -138,26 +171,34 @@ public class ServiceController {
             log.debug("Service entity updated");
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } catch (NotExistingEntityException e) {
-            log.error(e.toString());
+            log.debug(null, e);
+            log.error(e.getMessage());
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (MalformedElementException e) {
-            log.error(e.toString());
-            return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<String>("Malformed SdkService - " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }catch (NotPermittedOperationException e){
-            log.error(e.toString());
-            return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<String>(e.getMessage(), HttpStatus.CONFLICT);
+        }catch (NotAuthorizedOperationException e){
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
         }
     }
 
     @ApiOperation(value = "Delete a SDK Service from database")
     @ApiResponses(value = {
+        @ApiResponse(code = 403, message = "User not allowed to access the resource"),
+        @ApiResponse(code = 401, message = "User not authenticated"),
         @ApiResponse(code = 204, message = "SDK Service deleted"),
         @ApiResponse(code = 404, message = "SDK Service not present in database"),
-        @ApiResponse(code = 403, message = "SDK Service cannot be deleted"),
+        @ApiResponse(code = 409, message = "SDK Service cannot be deleted"),
         @ApiResponse(code = 400, message = "Deletion request without parameter serviceId")})
     @RequestMapping(value = "/{serviceId}", method = RequestMethod.DELETE)
-    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
-    public ResponseEntity<?> deleteService(@PathVariable Long serviceId) {
+    public ResponseEntity<?> deleteService(@PathVariable Long serviceId, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         log.info("Request for deletion of a service with id: " + serviceId);
         if (serviceId == null) {
             log.error("Deletion request without parameter serviceId");
@@ -165,25 +206,33 @@ public class ServiceController {
         } else {
             try {
                 serviceManager.deleteService(serviceId);
+                log.debug("Service entity deleted");
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             } catch (NotExistingEntityException e) {
-                log.error(e.toString());
+                log.debug(null, e);
+                log.error(e.getMessage());
                 return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
             }catch (NotPermittedOperationException e){
-                log.error(e.toString());
-                return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<String>(e.getMessage(), HttpStatus.CONFLICT);
+            }catch (NotAuthorizedOperationException e){
+                log.debug(null, e);
+                log.error(e.getMessage());
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
             }
         }
     }
 
     @ApiOperation(value = "Create descriptor for SDK Service")
     @ApiResponses(value = {
+        @ApiResponse(code = 403, message = "User not allowed to access the resource"),
+        @ApiResponse(code = 401, message = "User not authenticated"),
         @ApiResponse(code = 201, message = "SDK Service Descriptor created"),
         @ApiResponse(code = 404, message = "SDK Service not found"),
         @ApiResponse(code = 400, message = "Create descriptor request without serviceId or provided parameters cannot be validated")})
     @RequestMapping(value = "/{serviceId}/create_descriptor", method = RequestMethod.POST)
-    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
-    public ResponseEntity<?> createDescriptor(@PathVariable Long serviceId, @RequestBody MakeDescriptorRequest makeDescriptorRequest) {
+    public ResponseEntity<?> createDescriptor(@PathVariable Long serviceId, @RequestBody MakeDescriptorRequest makeDescriptorRequest, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         List<BigDecimal> parameterValues = makeDescriptorRequest.parameterValues;
         log.info("Request create descriptor of a service with ID {}, parameters : {}.", serviceId, parameterValues);
         if (serviceId == null) {
@@ -192,25 +241,33 @@ public class ServiceController {
         }
         try {
             String descriptorId = serviceManager.createServiceDescriptor(serviceId, parameterValues);
+            log.debug("Service Descriptor entity created");
             return new ResponseEntity<>(descriptorId, HttpStatus.CREATED);
         } catch (NotExistingEntityException e) {
-            log.error(e.toString());
+            log.debug(null, e);
+            log.error(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (MalformedElementException e) {
-            log.error(e.toString());
+            log.debug(null, e);
+            log.error(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }catch (NotAuthorizedOperationException e){
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
         }
     }
 
     @ApiOperation(value = "Publish SDK Service to Public Catalogue")
     @ApiResponses(value = {
+        @ApiResponse(code = 403, message = "User not allowed to access the resource"),
+        @ApiResponse(code = 401, message = "User not authenticated"),
         @ApiResponse(code = 202, message = "Network Service descriptor created. The descriptor will be published to the Public Catalogue"),
         @ApiResponse(code = 404, message = "SDK Service not present in database"),
-        @ApiResponse(code = 403, message = "Not all components are published to the Public Catalogue"),
+        @ApiResponse(code = 409, message = "Not all components are published to the Public Catalogue"),
         @ApiResponse(code = 400, message = "Publish request without parameter serviceId or provided parameters cannot be validated")})
     @RequestMapping(value = "/service/{serviceId}/publish", method = RequestMethod.POST)
-    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
-    public ResponseEntity<?> publishService(@PathVariable Long serviceId, @RequestBody MakeDescriptorRequest makeDescriptorRequest) {
+    public ResponseEntity<?> publishService(@PathVariable Long serviceId, @RequestBody MakeDescriptorRequest makeDescriptorRequest, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         List<BigDecimal> parameterValues = makeDescriptorRequest.parameterValues;
         log.info("Request publication of a service with ID {}, parameters : {}.", serviceId, parameterValues);
         if (serviceId == null) {
@@ -218,29 +275,38 @@ public class ServiceController {
             return new ResponseEntity<>("Publication request without parameter serviceId", HttpStatus.BAD_REQUEST);
         }
         try {
-            serviceManager.publishService(serviceId, parameterValues);
+            serviceManager.publishService(serviceId, parameterValues, authorization);
+            log.debug("Service entity will be published to the Public Catalogue");
             return new ResponseEntity<>(HttpStatus.ACCEPTED);
         } catch (NotExistingEntityException e) {
-            log.error(e.toString());
+            log.debug(null, e);
+            log.error(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (MalformedElementException e) {
-            log.error(e.toString());
+            log.debug(null, e);
+            log.error(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }catch(NotPermittedOperationException e){
-            log.error(e.toString());
-            return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<String>(e.getMessage(), HttpStatus.CONFLICT);
+        }catch (NotAuthorizedOperationException e){
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
         }
     }
 
     @ApiOperation(value = "Modify an existing list of monitoring parameters related to a SDK Service")
     @ApiResponses(value = {
+        @ApiResponse(code = 403, message = "User not allowed to access the resource"),
+        @ApiResponse(code = 401, message = "User not authenticated"),
         @ApiResponse(code = 400, message = "SDK Service or Monitoring Parameters cannot be validated"),
         @ApiResponse(code = 404, message = "SDK Service or Monitoring Parameters not present in database"),
-        @ApiResponse(code = 403, message = "Monitoring Parameters cannot be updated"),
+        @ApiResponse(code = 409, message = "Monitoring Parameters cannot be updated"),
         @ApiResponse(code = 204, message = "Monitoring Parameters updated")})
     @RequestMapping(value = "/{serviceId}/monitoring_params", method = RequestMethod.PUT)
-    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
-    public ResponseEntity<?> updateMonitoringParametersForService(@PathVariable Long serviceId, @RequestBody MonitoringParameterWrapper monitoringParameters) {
+    public ResponseEntity<?> updateMonitoringParametersForService(@PathVariable Long serviceId, @RequestBody MonitoringParameterWrapper monitoringParameters, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         log.info("Request for update of a monitoringParameter list");
 
         if (serviceId == null) {
@@ -252,25 +318,33 @@ public class ServiceController {
             log.debug("Service entity updated with the requested monitoring parameters");
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } catch (NotExistingEntityException e) {
-            log.error(e.toString());
+            log.debug(null, e);
+            log.error(e.getMessage());
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (MalformedElementException e) {
-            log.error(e.toString());
-            return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<String>("Malformed SdkService - " + e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch(NotPermittedOperationException e){
-            log.error(e.toString());
-            return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<String>(e.getMessage(), HttpStatus.CONFLICT);
+        }catch (NotAuthorizedOperationException e){
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
         }
     }
 
     @ApiOperation(value = "Get the list of  Monitoring Parameters for a SDK Service with ID", response = MonitoringParameterWrapper.class)
     @ApiResponses(value = {
+        @ApiResponse(code = 403, message = "User not allowed to access the resource"),
+        @ApiResponse(code = 401, message = "User not authenticated"),
         @ApiResponse(code = 400, message = "Query without parameter serviceId"),
         @ApiResponse(code = 404, message = "SDK Service or Monitoring Parameters not present in database"),
         @ApiResponse(code = 200, message = "OK")})
     @RequestMapping(value = "/{serviceId}/monitoring_params", method = RequestMethod.GET)
-    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
-    public ResponseEntity<?> getMonitoringParametersForService(@PathVariable Long serviceId) {
+    public ResponseEntity<?> getMonitoringParametersForService(@PathVariable Long serviceId, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         log.info("Request for get list of monitoringParams available on a specific service with ID " + serviceId);
         if (serviceId == null) {
             log.error("Request without parameter serviceId");
@@ -281,20 +355,26 @@ public class ServiceController {
             log.debug("Returning list of monitoringParams related to a specific service with " + serviceId);
             return new ResponseEntity<MonitoringParameterWrapper>(response, HttpStatus.OK);
         }  catch (NotExistingEntityException e) {
-            log.debug(e.toString());
+            log.debug(null, e);
+            log.error(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }catch (NotAuthorizedOperationException e){
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
         }
     }
 
     @ApiOperation(value = "Delete monitoring param from SDK Service")
     @ApiResponses(value = {
+        @ApiResponse(code = 403, message = "User not allowed to access the resource"),
+        @ApiResponse(code = 401, message = "User not authenticated"),
         @ApiResponse(code = 204, message = "Monitoring Parameter deleted"),
         @ApiResponse(code = 404, message = "SDK Service or Monitoring Parameter not present in database"),
-        @ApiResponse(code = 403, message = "Monitoring Parameter cannot be deleted"),
+        @ApiResponse(code = 409, message = "Monitoring Parameter cannot be deleted"),
         @ApiResponse(code = 400, message = "Deletion request without parameter serviceId or service cannot be validated")})
     @RequestMapping(value = "/{serviceId}/monitoring_params/{monitoringParameterId}", method = RequestMethod.DELETE)
-    @ApiImplicitParam(name = "Authorization", value = "Access Token", required = false, allowEmptyValue = true, paramType = "header", dataTypeClass = String.class, example = "Bearer access_token", format = "Bearer ")
-    public ResponseEntity<?> deleteMonitoringParametersForService(@PathVariable Long serviceId, @PathVariable Long monitoringParameterId) {
+    public ResponseEntity<?> deleteMonitoringParametersForService(@PathVariable Long serviceId, @PathVariable Long monitoringParameterId, @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         log.info("Request for deletion of monitoring parameter from service identified by id: " + serviceId);
         if (serviceId == null) {
             log.error("Request without parameter serviceId");
@@ -302,16 +382,24 @@ public class ServiceController {
         }
         try {
             serviceManager.deleteMonitoringParameters(serviceId, monitoringParameterId);
+            log.debug("Monitoring Parameter deleted");
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } catch (NotExistingEntityException e) {
-            log.error(e.toString());
+            log.debug(null, e);
+            log.error(e.getMessage());
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (NotPermittedOperationException e) {
-            log.error(e.toString());
-            return new ResponseEntity<String>(e.getMessage(), HttpStatus.FORBIDDEN);
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<String>(e.getMessage(), HttpStatus.CONFLICT);
         } catch (MalformedElementException e) {
-            log.error(e.toString());
-            return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<String>("Malformed SdkService - " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }catch (NotAuthorizedOperationException e){
+            log.debug(null, e);
+            log.error(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
         }
     }
 }

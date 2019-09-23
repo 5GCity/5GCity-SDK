@@ -20,6 +20,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import it.nextworks.composer.adaptor.interfaces.ServicesAdaptorProviderInterface;
+import it.nextworks.composer.auth.KeycloakUtils;
+import it.nextworks.composer.controller.elements.SliceResource;
 import it.nextworks.composer.executor.interfaces.FunctionManagerProviderInterface;
 import it.nextworks.composer.executor.interfaces.ServiceManagerProviderInterface;
 import it.nextworks.composer.executor.repositories.*;
@@ -27,6 +29,7 @@ import it.nextworks.composer.plugins.catalogue.ArchiveBuilder;
 import it.nextworks.composer.plugins.catalogue.FiveGCataloguePlugin;
 import it.nextworks.nfvmano.libs.common.exceptions.AlreadyExistingEntityException;
 import it.nextworks.nfvmano.libs.common.exceptions.MalformattedElementException;
+import it.nextworks.nfvmano.libs.common.exceptions.NotAuthorizedOperationException;
 import it.nextworks.nfvmano.libs.common.exceptions.NotPermittedOperationException;
 import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
 import it.nextworks.nfvmano.libs.descriptors.templates.Node;
@@ -80,6 +83,9 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     private SdkServiceRepository serviceRepository;
 
     @Autowired
+    private SliceRepository sliceRepository;
+
+    @Autowired
     private SdkServiceDescriptorRepository serviceDescriptorRepository;
 
     @Autowired
@@ -127,14 +133,56 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     @Autowired
     private TaskExecutor executor;
 
+    @Value("${keycloak.enabled:true}")
+    private boolean keycloakEnabled;
+
+    @Autowired
+    private KeycloakUtils keycloakUtils;
+
+    @Value("${admin.user.name:admin}")
+    private String adminUserName;
+
     public ServiceManager() {
 
     }
 
     @Override
-    public List<SdkService> getServices() {
+    public List<SdkService> getServices(String sliceId) throws NotExistingEntityException, NotAuthorizedOperationException {
         log.info("Request for all service stored in database");
+        //check if the slice is present
+        if (sliceId != null) {
+            Optional<SliceResource> sliceOptional = sliceRepository.findBySliceId(sliceId);
+            if (!sliceOptional.isPresent()) {
+                log.error("Slice with sliceId " + sliceId + " does not exist");
+                throw new NotExistingEntityException("Slice with sliceId " + sliceId + " does not exist");
+            }
+            if(keycloakEnabled)
+                keycloakUtils.checkUserSlices(keycloakUtils.getUserNameFromJWT(), sliceId);
+        }
+
         List<SdkService> serviceList = serviceRepository.findAll();
+        Iterator<SdkService> serviceIterator = serviceList.iterator();
+        for (; serviceIterator.hasNext() ;) {
+            SdkService service = serviceIterator.next();
+            //filter services per slice
+            if (sliceId != null && !service.getSliceId().equals(sliceId))
+                serviceIterator.remove();
+            /*
+                Filter services if Keycloak is enabled
+                User can view a service if:
+                    - visibility is public or user is the owner if the visibility is private
+                    - user accessLevel <= service accessLevel
+                    - user belongs to the slice
+            */
+            else if (keycloakEnabled && !keycloakUtils.getUserNameFromJWT().equals(adminUserName)){
+                if(keycloakUtils.getAccessLevelFromJWT().compareTo(service.getAccessLevel()) > 0)
+                    serviceIterator.remove();
+                else if (service.getVisibility().equals(Visibility.PRIVATE) &&
+                    !keycloakUtils.getUserNameFromJWT().equals(service.getOwnerId())){
+                    serviceIterator.remove();
+                }
+            }
+        }
         if (serviceList.size() == 0) {
             log.debug("No services are available");
         } else
@@ -163,68 +211,68 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     */
 
     @Override
-    public String createService(SdkService service)
-            throws NotExistingEntityException, MalformedElementException, AlreadyExistingEntityException {
+    public String createService(SdkService service) throws NotExistingEntityException, MalformedElementException, AlreadyExistingEntityException, NotAuthorizedOperationException {
 
         log.info("Storing into database a new service");
 
         if(service.getId() != null){
-            log.error("Service ID cannot be specified in service creation");
+            //log.error("Service ID cannot be specified in service creation");
             throw new MalformedElementException("Service ID cannot be specified in service creation");
         }
-        if (!service.isValid()) {
-            log.error("Malformed SdkService");
-            throw new MalformedElementException("Malformed SdkService");
-        }
+
+        service.isValid();
         log.debug("Service is valid");
+
+        if(keycloakEnabled)
+            authSecurityChecks(service, 0);
 
         checkAndResolveService(service);
 
         for(SdkServiceComponent component : service.getComponents()){
             if (component.getId() != null) {
-                log.error("Component ID cannot be specified in service creation");
+                //log.error("Component ID cannot be specified in service creation");
                 throw new MalformedElementException("Component ID cannot be specified in service creation");
             }
         }
         for(MonitoringParameter mp : service.getExtMonitoringParameters()){
             if (mp.getId() != null) {
-                log.error("Monitoring parameter ID cannot be specified in service creation");
+                //log.error("Monitoring parameter ID cannot be specified in service creation");
                 throw new MalformedElementException("Monitoring parameter ID cannot be specified in service creation");
             }
         }
         for(MonitoringParameter mp : service.getIntMonitoringParameters()){
             if (mp.getId() != null) {
-                log.error("Monitoring parameter ID cannot be specified in function creation");
+                //log.error("Monitoring parameter ID cannot be specified in function creation");
                 throw new MalformedElementException("Monitoring parameter ID cannot be specified in function creation");
             }
         }
         for(ConnectionPoint cp : service.getConnectionPoint()){
             if (cp.getId() != null) {
-                log.error("Connection point ID cannot be specified in service creation");
+                //log.error("Connection point ID cannot be specified in service creation");
                 throw new MalformedElementException("Connection point ID cannot be specified in service creation");
             }
         }
         for(Link link : service.getLink()){
             if (link.getId() != null) {
-                log.error("Link ID cannot be specified in service creation");
+                //log.error("Link ID cannot be specified in service creation");
                 throw new MalformedElementException("Link ID cannot be specified in service creation");
             }
         }
         for(L3Connectivity lc : service.getL3Connectivity()){
             if (lc.getId() != null) {
-                log.error("L3 connectivity ID cannot be specified in service creation");
+                //log.error("L3 connectivity ID cannot be specified in service creation");
                 throw new MalformedElementException("L3 connectivity ID cannot be specified in service creation");
             }
         }
         for(ServiceAction sa : service.getActions()){
             if (sa.getId() != null) {
-                log.error("Service action ID cannot be specified in service creation");
+                //log.error("Service action ID cannot be specified in service creation");
                 throw new MalformedElementException("Service action ID cannot be specified in service creation");
             }
         }
         for(ServiceActionRule rule : service.getActionRules()){
             if (rule.getId() != null) {
-                log.error("Service action rule ID cannot be specified in service creation");
+                //log.error("Service action rule ID cannot be specified in service creation");
                 throw new MalformedElementException("Service action rule ID cannot be specified in service creation");
             }
         }
@@ -236,32 +284,32 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     }
 
     @Override
-    public String updateService(SdkService service) throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException {
-        log.info("Updating an existing service with ID " + service.getId());
+    public String updateService(SdkService service) throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException, NotAuthorizedOperationException {
+		log.info("Updating an existing service with ID " + service.getId());
         if(service.getId() == null){
-            log.error("Service ID needs to be specified");
+            //log.error("Service ID needs to be specified");
             throw new MalformedElementException("Service ID needs to be specified");
         }
 
-        if (!service.isValid()) {
-            log.error("Service id " + service.getId() + " is malformed");
-            throw new MalformedElementException("Service id " + service.getId() + " is malformed");
-        }
-        log.debug("Service is valid");
+        service.isValid();
+		log.debug("Service is valid");
 
-        // Check if service exists
-        Optional<SdkService> srv = serviceRepository.findById(service.getId());
-        if (!srv.isPresent()) {
-            log.error("Service with ID " + service.getId() + " not present in database");
-            throw new NotExistingEntityException("Service with ID " + service.getId() + " not present in database");
-        }
-        log.debug("Service found on db");
+		// Check if service exists
+		Optional<SdkService> srv = serviceRepository.findById(service.getId());
+		if (!srv.isPresent()) {
+			//log.error("Service with ID " + service.getId() + " not present in database");
+			throw new NotExistingEntityException("Service with ID " + service.getId() + " not present in database");
+		}
+		log.debug("Service found on db");
+
+        if(keycloakEnabled)
+            authSecurityChecks(srv.get(), 0);
 
         //update not allowed if the service has at least one descriptor
         List<SdkServiceDescriptor> descriptors = serviceDescriptorRepository.findByTemplateId(service.getId());
         if(descriptors.size() != 0){
             List<Long> descriptorIds = descriptors.stream().map(SdkServiceDescriptor::getId).collect(Collectors.toList());
-            log.error("Service with ID " + service.getId() + " has descriptors with IDs " + descriptorIds.toString() + ". Please delete them before updating");
+            //log.error("Service with ID " + service.getId() + " has descriptors with IDs " + descriptorIds.toString() + ". Please delete them before updating");
             throw  new NotPermittedOperationException("Service with ID " + service.getId() + " has descriptors with IDs " + descriptorIds.toString() + ". Please delete them before updating");
         }
 
@@ -269,7 +317,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         List<SubService> subServices = subServiceRepository.findByComponentId(service.getId());
         if(subServices.size() != 0){
             List<Long> serviceIds = subServices.stream().map(SubService::getOuterService).map(SdkService::getId).collect(Collectors.toList());
-            log.error("Service with ID " + service.getId() + " used by services with IDs " + serviceIds.toString());
+            //log.error("Service with ID " + service.getId() + " used by services with IDs " + serviceIds.toString());
             throw  new NotPermittedOperationException("Service with ID " + service.getId() + " used by services with IDs " + serviceIds.toString());
         }
 
@@ -278,18 +326,18 @@ public class ServiceManager implements ServiceManagerProviderInterface {
                 Optional<SubFunction> subFunction = subFunctionRepository.findById(component.getId());
                 Optional<SubService> subService = subServiceRepository.findById(component.getId());
                 if (!subFunction.isPresent() && !subService.isPresent()) {
-                    log.error("Component with ID " + component.getId() + " is not present in database");
+                    //log.error("Component with ID " + component.getId() + " is not present in database");
                     throw new NotExistingEntityException("Component with ID " + component.getId() + " is not present in database");
                 }
                 if(subFunction.isPresent()){
                     if ((subFunction.get().getOuterService() == null) || (!subFunction.get().getOuterService().getId().equals(service.getId()))) {
-                        log.error("Component with ID " + component.getId() + " does not belong to service with ID " + service.getId());
+                        //log.error("Component with ID " + component.getId() + " does not belong to service with ID " + service.getId());
                         throw new NotPermittedOperationException("Component with ID " + component.getId() + " does not belong to service with ID " + service.getId());
                     }
                 }
                 if(subService.isPresent()){
                     if ((subService.get().getOuterService() == null) || (!subService.get().getOuterService().getId().equals(service.getId()))) {
-                        log.error("Component with ID " + component.getId() + " does not belong to service with ID " + service.getId());
+                        //log.error("Component with ID " + component.getId() + " does not belong to service with ID " + service.getId());
                         throw new NotPermittedOperationException("Component with ID " + component.getId() + " does not belong to service with ID " + service.getId());
                     }
                 }
@@ -302,14 +350,14 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             if (param.getId() != null) {
                 Optional<MonitoringParameter> mp = monitoringParamRepository.findById(param.getId());
                 if (!mp.isPresent()) {
-                    log.error("Monitoring parameter with ID " + param.getId() + " is not present in database");
+                    //log.error("Monitoring parameter with ID " + param.getId() + " is not present in database");
                     throw new NotExistingEntityException("Monitoring parameter with ID " + param.getId() + " is not present in database");
                 }
                 if ((mp.get().getSdkFunction() != null)
                         || ((mp.get().getSdkServiceExt() != null) && (!mp.get().getSdkServiceExt().getId().equals(service.getId())))
                         || ((mp.get().getSdkServiceInt() != null) && (!mp.get().getSdkServiceInt().getId().equals(service.getId())))
                 ){
-                    log.error("Monitoring parameter with ID " + param.getId() + " does not belong to service with ID " + service.getId());
+                    //log.error("Monitoring parameter with ID " + param.getId() + " does not belong to service with ID " + service.getId());
                     throw new NotPermittedOperationException("Monitoring parameter with ID " + param.getId() + " does not belong to service with ID " + service.getId());
                 }
             }
@@ -318,11 +366,11 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             if (param.getId() != null) {
                 Optional<ConnectionPoint> cp = cpRepository.findById(param.getId());
                 if (!cp.isPresent()) {
-                    log.error("Connection point with ID " + param.getId() + " is not present in database");
+                    //log.error("Connection point with ID " + param.getId() + " is not present in database");
                     throw new NotExistingEntityException("Connection point with ID " + param.getId() + " is not present in database");
                 }
                 if ((cp.get().getSdkService() == null) || (!cp.get().getSdkService().getId().equals(service.getId()))) {
-                    log.error("Connection point with ID " + param.getId() + " does not belong to service with ID " + service.getId());
+                    //log.error("Connection point with ID " + param.getId() + " does not belong to service with ID " + service.getId());
                     throw new NotPermittedOperationException("Connection point with ID " + param.getId() + " does not belong to service with ID " + service.getId());
                 }
             }
@@ -331,11 +379,11 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             if (link.getId() != null) {
                 Optional<Link> rp = linkRepository.findById(link.getId());
                 if (!rp.isPresent()) {
-                    log.error("Link with ID " + link.getId() + " is not present in database");
+                    //log.error("Link with ID " + link.getId() + " is not present in database");
                     throw new NotExistingEntityException("Link with ID " + link.getId() + " is not present in database");
                 }
                 if ((rp.get().getService() == null) || (!rp.get().getService().getId().equals(service.getId()))) {
-                    log.error("Link with ID " + link.getId() + " does not belong to service with ID " + service.getId());
+                    //log.error("Link with ID " + link.getId() + " does not belong to service with ID " + service.getId());
                     throw new NotPermittedOperationException("Link with ID " + link.getId() + " does not belong to service with ID " + service.getId());
                 }
             }
@@ -344,11 +392,11 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             if (lc.getId() != null) {
                 Optional<L3Connectivity> rp = l3ConnectivityRepository.findById(lc.getId());
                 if (!rp.isPresent()) {
-                    log.error("L3 connectivity with ID " + lc.getId() + " is not present in database");
+                    //log.error("L3 connectivity with ID " + lc.getId() + " is not present in database");
                     throw new NotExistingEntityException("L3 connectivity with ID " + lc.getId() + " is not present in database");
                 }
                 if ((rp.get().getService() == null) || (!rp.get().getService().getId().equals(service.getId()))) {
-                    log.error("L3 connectivity with ID " + lc.getId() + " does not belong to service with ID " + service.getId());
+                    //log.error("L3 connectivity with ID " + lc.getId() + " does not belong to service with ID " + service.getId());
                     throw new NotPermittedOperationException("L3 connectivity with ID " + lc.getId() + " does not belong to service with ID " + service.getId());
                 }
             }
@@ -357,11 +405,11 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             if (sa.getId() != null) {
                 Optional<ServiceAction> rp = serviceActionRepository.findById(sa.getId());
                 if (!rp.isPresent()) {
-                    log.error("Service action with ID " + sa.getId() + " is not present in database");
+                    //log.error("Service action with ID " + sa.getId() + " is not present in database");
                     throw new NotExistingEntityException("Service action with ID " + sa.getId() + " is not present in database");
                 }
                 if ((rp.get().getSdkService() == null) || (!rp.get().getSdkService().getId().equals(service.getId()))) {
-                    log.error("Service action with ID " + sa.getId() + " does not belong to service with ID " + service.getId());
+                    //log.error("Service action with ID " + sa.getId() + " does not belong to service with ID " + service.getId());
                     throw new NotPermittedOperationException("Service action with ID " + sa.getId() + " does not belong to service with ID " + service.getId());
                 }
             }
@@ -370,11 +418,11 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             if (ar.getId() != null) {
                 Optional<ServiceActionRule> rp = serviceActionRuleRepository.findById(ar.getId());
                 if (!rp.isPresent()) {
-                    log.error("Service action rule with ID " + ar.getId() + " is not present in database");
+                    //log.error("Service action rule with ID " + ar.getId() + " is not present in database");
                     throw new NotExistingEntityException("Service action rule with ID " + ar.getId() + " is not present in database");
                 }
                 if ((rp.get().getSdkService() == null) || (!rp.get().getSdkService().getId().equals(service.getId()))) {
-                    log.error("Service action rule with ID " + ar.getId() + " does not belong to service with ID " + service.getId());
+                    //log.error("Service action rule with ID " + ar.getId() + " does not belong to service with ID " + service.getId());
                     throw new NotPermittedOperationException("Service action rule with ID " + ar.getId() + " does not belong to service with ID " + service.getId());
                 }
             }
@@ -386,8 +434,10 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             //exception cannot be raised in this case
         }
 
-        log.debug("Updating into database service with id: " + service.getId());
+        if(keycloakEnabled)
+            authSecurityChecks(service, 0);
 
+		log.debug("Updating into database service with id: " + service.getId());
         cleanOldRelations(srv.get());
         // Update service on DB
         serviceRepository.saveAndFlush(service);
@@ -395,32 +445,37 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     }
 
     @Override
-    public SdkService getServiceById(Long id) throws NotExistingEntityException {
+    public SdkService getServiceById(Long id) throws NotExistingEntityException, NotAuthorizedOperationException {
         log.info("Request for service with ID " + id);
         Optional<SdkService> service = serviceRepository.findById(id);
         if (service.isPresent()) {
+            if(keycloakEnabled)
+                authSecurityChecks(service.get(), 1);
             return service.get();
         } else {
-            log.error("Service with ID " + id + " not found");
+            //log.error("Service with ID " + id + " not found");
             throw new NotExistingEntityException("Service with ID " + id + " not found");
         }
     }
 
     @Override
-    public void deleteService(Long serviceId) throws NotExistingEntityException, NotPermittedOperationException {
+    public void deleteService(Long serviceId) throws NotExistingEntityException, NotPermittedOperationException, NotAuthorizedOperationException {
         log.info("Request for deletion of service with ID " + serviceId);
         // No deletion required: all that depends on the service will cascade.
         Optional<SdkService> service = serviceRepository.findById(serviceId);
         SdkService s = service.orElseThrow(() -> {
-            log.error("Service with ID " + serviceId + " not found");
+            //log.error("Service with ID " + serviceId + " not found");
             return new NotExistingEntityException("Service with ID " + serviceId + " not found");
         });
+
+        if(keycloakEnabled)
+            authSecurityChecks(s, 0);
 
         //delete not allowed if the service has at least one descriptor
         List<SdkServiceDescriptor> descriptors = serviceDescriptorRepository.findByTemplateId(serviceId);
         if(descriptors.size() != 0){
             List<Long> descriptorIds = descriptors.stream().map(SdkServiceDescriptor::getId).collect(Collectors.toList());
-            log.error("Service with ID " + serviceId + " has descriptors with IDs " + descriptorIds.toString() + ". Please delete them before updating");
+            //log.error("Service with ID " + serviceId + " has descriptors with IDs " + descriptorIds.toString() + ". Please delete them before updating");
             throw  new NotPermittedOperationException("Service with ID " + serviceId + " has descriptors with IDs " + descriptorIds.toString() + ". Please delete them before updating");
         }
 
@@ -428,7 +483,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         List<SubService> subServices = subServiceRepository.findByComponentId(serviceId);
         if(subServices.size() != 0){
             List<Long> serviceIds = subServices.stream().map(SubService::getOuterService).map(SdkService::getId).collect(Collectors.toList());
-            log.error("Service with ID " + serviceId + " used by services with IDs " + serviceIds.toString());
+            //log.error("Service with ID " + serviceId + " used by services with IDs " + serviceIds.toString());
             throw  new NotPermittedOperationException("Service with ID " + serviceId + " used by services with IDs " + serviceIds.toString());
         }
 
@@ -437,27 +492,27 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
     @Override
     public void updateMonitoringParameters(Long serviceId, Set<MonitoringParameter> extMonitoringParameters, Set<MonitoringParameter> intMonitoringParameters)
-            throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException {
+        throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException, NotAuthorizedOperationException {
         log.info("Request to update list of scalingAspects for a specific SDK Service " + serviceId);
         Set<MonitoringParameter> monitoringParameters = new HashSet<>();
         monitoringParameters.addAll(extMonitoringParameters);
         monitoringParameters.addAll(intMonitoringParameters);
         for(MonitoringParameter param : monitoringParameters) {
             if (!param.isValid()) {
-                log.error("Monitoring param list provided cannot be validated");
+                //log.error("Monitoring param list provided cannot be validated");
                 throw new MalformedElementException("Monitoring param list provided cannot be validated");
             }
             if (param.getId() != null) {
                 Optional<MonitoringParameter> mp = monitoringParamRepository.findById(param.getId());
                 if (!mp.isPresent()) {
-                    log.error("Monitoring parameter with ID " + param.getId() + " is not present in database");
+                    //log.error("Monitoring parameter with ID " + param.getId() + " is not present in database");
                     throw new NotExistingEntityException("Monitoring parameter with ID " + param.getId() + " is not present in database");
                 }
                 if ((mp.get().getSdkFunction() != null)
                         || ((mp.get().getSdkServiceExt() != null) && (!mp.get().getSdkServiceExt().getId().equals(serviceId)))
                         || ((mp.get().getSdkServiceInt() != null) && (!mp.get().getSdkServiceInt().getId().equals(serviceId)))
                 ){
-                    log.error("Monitoring parameter with ID " + param.getId() + " does not belong to service with ID " + serviceId);
+                    //log.error("Monitoring parameter with ID " + param.getId() + " does not belong to service with ID " + serviceId);
                     throw new NotPermittedOperationException("Monitoring parameter with ID " + param.getId() + " does not belong to service with ID " + serviceId);
                 }
             }
@@ -465,15 +520,18 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
         Optional<SdkService> service = serviceRepository.findById(serviceId);
         if (!service.isPresent()) {
-            log.error("Service with ID " + serviceId + " is not present in database");
+            //log.error("Service with ID " + serviceId + " is not present in database");
             throw new NotExistingEntityException("Service with ID " + serviceId + " is not present in database");
         }
+
+        if(keycloakEnabled)
+            authSecurityChecks(service.get(), 0);
 
         //update not allowed if the service has at least one descriptor
         List<SdkServiceDescriptor> descriptors = serviceDescriptorRepository.findByTemplateId(serviceId);
         if(descriptors.size() != 0){
             List<Long> descriptorIds = descriptors.stream().map(SdkServiceDescriptor::getId).collect(Collectors.toList());
-            log.error("Service with ID " + serviceId + " has descriptors with IDs " + descriptorIds.toString() + ". Please delete them before updating");
+            //log.error("Service with ID " + serviceId + " has descriptors with IDs " + descriptorIds.toString() + ". Please delete them before updating");
             throw  new NotPermittedOperationException("Service with ID " + serviceId + " has descriptors with IDs " + descriptorIds.toString() + ". Please delete them before updating");
         }
 
@@ -481,7 +539,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         List<SubService> subServices = subServiceRepository.findByComponentId(serviceId);
         if(subServices.size() != 0){
             List<Long> serviceIds = subServices.stream().map(SubService::getOuterService).map(SdkService::getId).collect(Collectors.toList());
-            log.error("Service with ID " + serviceId + " used by services with IDs " + serviceIds.toString());
+            //log.error("Service with ID " + serviceId + " used by services with IDs " + serviceIds.toString());
             throw  new NotPermittedOperationException("Service with ID " + serviceId + " used by services with IDs " + serviceIds.toString());
         }
 
@@ -500,36 +558,36 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             //exception cannot be raised in this case
         }
 
-        if (!service.get().isValid()) {
-            log.error("Malformed SdkService");
-            throw new MalformedElementException("Malformed SdkService");
-        }
+        service.get().isValid();
+
         log.debug("Updating list of monitoring parameters on database");
         serviceRepository.saveAndFlush(service.get());
     }
 
     @Override
     public void deleteMonitoringParameters(Long serviceId, Long monitoringParameterId)
-            throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException {
-
+        throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException, NotAuthorizedOperationException {
         log.info("Request to delete a monitoring parameter with ID " + monitoringParameterId + " for a specific SDK Service " + serviceId);
         Optional<MonitoringParameter> mp = monitoringParamRepository.findById(monitoringParameterId);
         if (!mp.isPresent()) {
-            log.error("Monitoring parameter with ID " + monitoringParameterId + " is not present in database");
+            //log.error("Monitoring parameter with ID " + monitoringParameterId + " is not present in database");
             throw new NotExistingEntityException("Monitoring parameter with ID " + monitoringParameterId + " is not present in database");
         }
 
         Optional<SdkService> service = serviceRepository.findById(serviceId);
         if (!service.isPresent()) {
-            log.error("Service with ID " + serviceId + " is not present in database");
+            //log.error("Service with ID " + serviceId + " is not present in database");
             throw new NotExistingEntityException("Service with ID " + serviceId + " is not present in database");
         }
+
+        if(keycloakEnabled)
+            authSecurityChecks(service.get(), 0);
 
         if ((mp.get().getSdkFunction() != null)
                 || ((mp.get().getSdkServiceExt() != null) && (!mp.get().getSdkServiceExt().getId().equals(serviceId)))
                 || ((mp.get().getSdkServiceInt() != null) && (!mp.get().getSdkServiceInt().getId().equals(serviceId)))
         ){
-            log.error("Monitoring parameter with ID " + monitoringParameterId + " does not belong to service with ID " + serviceId);
+            //log.error("Monitoring parameter with ID " + monitoringParameterId + " does not belong to service with ID " + serviceId);
             throw new NotPermittedOperationException("Monitoring parameter with ID " + monitoringParameterId + " does not belong to service with ID " + serviceId);
         }
 
@@ -537,7 +595,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         List<SdkServiceDescriptor> descriptors = serviceDescriptorRepository.findByTemplateId(serviceId);
         if(descriptors.size() != 0){
             List<Long> descriptorIds = descriptors.stream().map(SdkServiceDescriptor::getId).collect(Collectors.toList());
-            log.error("Service with ID " + serviceId + " has descriptors with IDs " + descriptorIds.toString() + ". Please delete them before updating");
+            //log.error("Service with ID " + serviceId + " has descriptors with IDs " + descriptorIds.toString() + ". Please delete them before updating");
             throw  new NotPermittedOperationException("Service with ID " + serviceId + " has descriptors with IDs " + descriptorIds.toString() + ". Please delete them before updating");
         }
 
@@ -545,7 +603,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         List<SubService> subServices = subServiceRepository.findByComponentId(serviceId);
         if(subServices.size() != 0){
             List<Long> serviceIds = subServices.stream().map(SubService::getOuterService).map(SdkService::getId).collect(Collectors.toList());
-            log.error("Service with ID " + serviceId + " used by services with IDs " + serviceIds.toString());
+            //log.error("Service with ID " + serviceId + " used by services with IDs " + serviceIds.toString());
             throw  new NotPermittedOperationException("Service with ID " + serviceId + " used by services with IDs " + serviceIds.toString());
         }
 
@@ -576,43 +634,45 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             //exception cannot be raised in this case
         }
 
-        if (!service.get().isValid()) {
-            log.error("Malformed SdkService");
-            throw new MalformedElementException("Malformed SdkService");
-        }
+        service.get().isValid();
 
         serviceRepository.saveAndFlush(service.get());
         log.debug("Monitoring parameter has been deleted.");
     }
 
     @Override
-    public MonitoringParameterWrapper getMonitoringParameters(Long serviceId) throws NotExistingEntityException {
+    public MonitoringParameterWrapper getMonitoringParameters(Long serviceId) throws NotExistingEntityException, NotAuthorizedOperationException {
         log.info("Request to get the list of monitoring parameters for a specific SDK Service " + serviceId);
         Optional<SdkService> service = serviceRepository.findById(serviceId);
         if (!service.isPresent()) {
-            log.error("Service with ID " + serviceId + " is not present in database");
+            //log.error("Service with ID " + serviceId + " is not present in database");
             throw new NotExistingEntityException("Service with ID " + serviceId + " is not present in database");
         }
+        if(keycloakEnabled)
+            authSecurityChecks(service.get(), 1);
         return new MonitoringParameterWrapper(service.get().getExtMonitoringParameters(), service.get().getIntMonitoringParameters());
     }
 
     @Override
-    public String publishService(Long serviceId, List<BigDecimal> parameterValues)
-            throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException {
+    public String publishService(Long serviceId, List<BigDecimal> parameterValues, String authorization)
+        throws NotExistingEntityException, MalformedElementException, NotPermittedOperationException, NotAuthorizedOperationException {
         log.info("Request for publication of service with ID " + serviceId);
         // Check if service exists
         Optional<SdkService> optService = serviceRepository.findById(serviceId);
 
         SdkService service = optService.orElseThrow(() -> {
-            log.error("Service with ID " + serviceId + " is not present in database");
+            //log.error("Service with ID " + serviceId + " is not present in database");
             return new NotExistingEntityException("Service with ID " + serviceId + " is not present in database");
         });
+
+        if(keycloakEnabled)
+            authSecurityChecks(service, 1);
 
         SdkServiceDescriptor descriptor;
         try {
             descriptor = adapter.createServiceDescriptor(service, parameterValues);
-        } catch (IllegalArgumentException e) {
-            log.error("Malformed create-descriptor request: {}", e.getMessage());
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            //log.error("Malformed create-descriptor request: {}", e.getMessage());
             throw new MalformedElementException(e.getMessage(), e);
         }
 
@@ -624,7 +684,15 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
         String serviceDescriptorId = descriptor.getId().toString();
 
-        DescriptorTemplate nsd = adapter.generateNetworkServiceDescriptor(descriptor);
+        DescriptorTemplate nsd;
+        try {
+            nsd = adapter.generateNetworkServiceDescriptor(descriptor);
+        }catch(IllegalStateException e){
+            descriptor.setStatus(SdkServiceStatus.SAVED);
+            serviceDescriptorRepository.saveAndFlush(descriptor);
+            throw new MalformedElementException(e.getMessage(), e);
+        }
+
         Set<MonitoringParameter> monitoringParameters = new HashSet<>();
         monitoringParameters.addAll(service.getExtMonitoringParameters());
         monitoringParameters.addAll(service.getIntMonitoringParameters());
@@ -633,42 +701,47 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         // A thread will be created to handle this request in order to perform it
         // asynchronously.
         dispatchPublishRequest(
-                servicePackagePath,
-                nsInfoId -> {
-                    if (nsInfoId != null) {
-                        log.info("Service descriptor with ID {} successfully published", serviceDescriptorId);
-                        descriptor.setStatus(SdkServiceStatus.COMMITTED);
-                        descriptor.setNsInfoId(nsInfoId);
-                        serviceDescriptorRepository.saveAndFlush(descriptor);
-                    } else {
-                        descriptor.setStatus(SdkServiceStatus.SAVED);
-                        serviceDescriptorRepository.saveAndFlush(descriptor);
-                        log.error("Error while publishing service descriptor with ID {}", serviceDescriptorId);
-                    }
+            servicePackagePath,
+            service.getSliceId(),
+            authorization,
+            nsInfoId -> {
+                if (nsInfoId != null) {
+                    log.info("Service descriptor with ID {} successfully published to project {}", serviceDescriptorId, service.getSliceId());
+                    descriptor.setStatus(SdkServiceStatus.COMMITTED);
+                    descriptor.setNsInfoId(nsInfoId);
+                    serviceDescriptorRepository.saveAndFlush(descriptor);
+                } else {
+                    descriptor.setStatus(SdkServiceStatus.SAVED);
+                    serviceDescriptorRepository.saveAndFlush(descriptor);
+                    log.error("Error while publishing service descriptor with ID {} to project {}", serviceDescriptorId, service.getSliceId());
                 }
+            }
         );
         return serviceDescriptorId;
     }
 
     @Override
     public String createServiceDescriptor(Long serviceId, List<BigDecimal> parameterValues)
-            throws NotExistingEntityException, MalformedElementException {
+        throws NotExistingEntityException, MalformedElementException, NotAuthorizedOperationException {
         log.info("Request create-descriptor of service with ID " + serviceId);
 
         // Check if service exists
         Optional<SdkService> optService = serviceRepository.findById(serviceId);
 
         SdkService service = optService.orElseThrow(() -> {
-            log.error("Service with ID " + serviceId + " is not present in database");
+            //log.error("Service with ID " + serviceId + " is not present in database");
             return new NotExistingEntityException("Service with ID " + serviceId + " is not present in database");
         });
+
+        if(keycloakEnabled)
+            authSecurityChecks(service, 1);
 
         SdkServiceDescriptor descriptor;
         try {
             descriptor = adapter.createServiceDescriptor(service, parameterValues);
-        } catch (IllegalArgumentException exc) {
-            log.error("Malformed create-descriptor request: {}", exc.getMessage());
-            throw new MalformedElementException(exc.getMessage(), exc);
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            //log.error("Malformed create-descriptor request: {}", e.getMessage());
+            throw new MalformedElementException(e.getMessage(), e);
         }
         descriptor.setStatus(SdkServiceStatus.SAVED);
         serviceDescriptorRepository.saveAndFlush(descriptor);
@@ -677,9 +750,41 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     }
 
     @Override
-    public List<SdkServiceDescriptor> getAllDescriptors() {
+    public List<SdkServiceDescriptor> getAllDescriptors(String sliceId) throws NotExistingEntityException, NotAuthorizedOperationException {
         log.info("Request for all service descriptors stored in database");
+        //check if the slice is present
+        if (sliceId != null) {
+            Optional<SliceResource> sliceOptional = sliceRepository.findBySliceId(sliceId);
+            if (!sliceOptional.isPresent()) {
+                log.error("Slice with sliceId " + sliceId + " does not exist");
+                throw new NotExistingEntityException("Slice with sliceId " + sliceId + " does not exist");
+            }
+            if(keycloakEnabled)
+                keycloakUtils.checkUserSlices(keycloakUtils.getUserNameFromJWT(), sliceId);
+        }
         List<SdkServiceDescriptor> descriptors = serviceDescriptorRepository.findAll();
+        Iterator<SdkServiceDescriptor> descriptorIterator = descriptors.iterator();
+        for (; descriptorIterator.hasNext() ;) {
+            //filters descriptors per slice
+            SdkServiceDescriptor descriptor = descriptorIterator.next();
+            if (sliceId != null && !descriptor.getSliceId().equals(sliceId))
+                descriptorIterator.remove();
+            /*
+                Filter descriptors if Keycloak is enabled
+                User can view a descriptors if:
+                    - visibility of the corresponding service is public or user is the owner if the visibility is private
+                    - user accessLevel <= service accessLevel
+                    - user belongs to the slice
+            */
+            else if (keycloakEnabled && !keycloakUtils.getUserNameFromJWT().equals(adminUserName)){
+                if(keycloakUtils.getAccessLevelFromJWT().compareTo(descriptor.getTemplate().getAccessLevel()) > 0)
+                    descriptorIterator.remove();
+                else if (descriptor.getTemplate().getVisibility().equals(Visibility.PRIVATE) &&
+                    !keycloakUtils.getUserNameFromJWT().equals(descriptor.getTemplate().getOwnerId())){
+                    descriptorIterator.remove();
+                }
+            }
+        }
         if(descriptors.size() == 0){
             log.debug("No service descriptors are available");
         } else
@@ -689,45 +794,56 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
     @Override
     public SdkServiceDescriptor getServiceDescriptor(Long descriptorId)
-            throws NotExistingEntityException {
+        throws NotExistingEntityException, NotAuthorizedOperationException {
         log.info("Request for service descriptor with ID {}", descriptorId);
         Optional<SdkServiceDescriptor> byId = serviceDescriptorRepository.findById(descriptorId);
+        //check if user can access the slice
+        if(byId.isPresent()){
+            if(keycloakEnabled)
+                authSecurityChecks(byId.get().getTemplate(), 1);
+        }
         return byId.orElseThrow(() -> {
-            log.error("Descriptor with ID {} not found", descriptorId);
+            //log.error("Descriptor with ID {} not found", descriptorId);
             return new NotExistingEntityException(String.format("Descriptor with ID %d not found", descriptorId));
         });
     }
 
     @Override
-    public void deleteServiceDescriptor(Long descriptorId) throws NotExistingEntityException, NotPermittedOperationException {
+    public void deleteServiceDescriptor(Long descriptorId) throws NotExistingEntityException, NotPermittedOperationException, NotAuthorizedOperationException {
         log.info("Request for deletion of service descriptor with ID {}", descriptorId);
         Optional<SdkServiceDescriptor> optDescriptor = serviceDescriptorRepository.findById(descriptorId);
         SdkServiceDescriptor descriptor = optDescriptor.orElseThrow(() -> {
-            log.error("Descriptor with ID {} not found", descriptorId);
+            //log.error("Descriptor with ID {} not found", descriptorId);
             return new NotExistingEntityException(String.format("Descriptor with ID %d not found", descriptorId));
         });
 
+        if(keycloakEnabled)
+            authSecurityChecks(descriptor.getTemplate(), 0);
+
         //delete not allowed if the service is published to catalogue
         if(descriptor.getStatus().equals(SdkServiceStatus.COMMITTED)){
-            log.error("Service with ID " + descriptor.getTemplate().getId() + " published to the catalogue. Please unpublish it before deleting the descriptor");
+            //log.error("Service with ID " + descriptor.getTemplate().getId() + " published to the catalogue. Please unpublish it before deleting the descriptor");
             throw  new NotPermittedOperationException("Service with ID " + descriptor.getTemplate().getId() + " published to the catalogue. Please unpublish it before deleting the descriptor");
         }
         serviceDescriptorRepository.delete(descriptor);
     }
 
     @Override
-    public void publishService(Long serviceDescriptorId)
-            throws NotExistingEntityException, AlreadyPublishedServiceException, NotPermittedOperationException {
+    public void publishService(Long serviceDescriptorId, String authorization)
+        throws NotExistingEntityException, AlreadyPublishedServiceException, NotPermittedOperationException, MalformedElementException, NotAuthorizedOperationException {
         Optional<SdkServiceDescriptor> optDescriptor = serviceDescriptorRepository.findById(serviceDescriptorId);
 
         SdkServiceDescriptor descriptor = optDescriptor.orElseThrow(() -> {
-            log.error("Service descriptor with ID {} is not present in database", serviceDescriptorId);
+            //log.error("Service descriptor with ID {} is not present in database", serviceDescriptorId);
             return new NotExistingEntityException(String.format("Service descriptor with ID %s is not present in database", serviceDescriptorId));
         });
 
+        if(keycloakEnabled)
+            authSecurityChecks(descriptor.getTemplate(), 1);
+
         synchronized (this) { // To avoid multiple simultaneous calls
             if (!descriptor.getStatus().equals(SdkServiceStatus.SAVED)) {
-                log.error("Service descriptor with ID {} is not in status SAVED.", serviceDescriptorId);
+                //log.error("Service descriptor with ID {} is not in status SAVED.", serviceDescriptorId);
                 throw new AlreadyPublishedServiceException(String.format("Service descriptor with ID %s is not in status SAVED", serviceDescriptorId));
             }
             descriptor.setStatus(SdkServiceStatus.CHANGING);
@@ -735,16 +851,20 @@ public class ServiceManager implements ServiceManagerProviderInterface {
             // After setting the status, no one can operate on this anymore (except us)
         }
 
-        //check if all subfunctions are COMMITTED, if not ask to commit them
+        DescriptorTemplate nsd;
         try {
+            //check if all subfunctions are COMMITTED, if not ask to commit them
             checkFunctionStatus(descriptor.getSubDescriptors());
+            nsd = adapter.generateNetworkServiceDescriptor(descriptor);
         }catch (NotPermittedOperationException e){
             descriptor.setStatus(SdkServiceStatus.SAVED);
             serviceDescriptorRepository.saveAndFlush(descriptor);
-            throw  new NotPermittedOperationException(e.getMessage());
+            throw  new NotPermittedOperationException(e.getMessage(), e);
+        }catch(IllegalStateException e){
+            descriptor.setStatus(SdkServiceStatus.SAVED);
+            serviceDescriptorRepository.saveAndFlush(descriptor);
+            throw new MalformedElementException(e.getMessage(), e);
         }
-
-        DescriptorTemplate nsd = adapter.generateNetworkServiceDescriptor(descriptor);
 
         Set<MonitoringParameter> monitoringParameters = new HashSet<>();
         monitoringParameters.addAll(descriptor.getTemplate().getExtMonitoringParameters());
@@ -753,37 +873,42 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         String servicePackagePath = ArchiveBuilder.createNSCSAR(nsd, monitoringParameters, descriptor.getTemplate().getActions(), descriptor.getTemplate().getActionRules());
 
         dispatchPublishRequest(
-                servicePackagePath,
-                nsInfoId -> {
-                    if (nsInfoId != null) {
-                        log.info("Service descriptor with ID {} successfully published", serviceDescriptorId);
-                        descriptor.setStatus(SdkServiceStatus.COMMITTED);
-                        descriptor.setNsInfoId(nsInfoId);
-                        serviceDescriptorRepository.save(descriptor);
-                    } else {
-                        descriptor.setStatus(SdkServiceStatus.SAVED);
-                        serviceDescriptorRepository.save(descriptor);
-                        log.error("Error while publishing service descriptor with ID {}", serviceDescriptorId);
-                    }
+            servicePackagePath,
+            descriptor.getSliceId(),
+            authorization,
+            nsInfoId -> {
+                if (nsInfoId != null) {
+                    log.info("Service descriptor with ID {} successfully published to project {}", serviceDescriptorId, descriptor.getSliceId());
+                    descriptor.setStatus(SdkServiceStatus.COMMITTED);
+                    descriptor.setNsInfoId(nsInfoId);
+                    serviceDescriptorRepository.save(descriptor);
+                } else {
+                    descriptor.setStatus(SdkServiceStatus.SAVED);
+                    serviceDescriptorRepository.save(descriptor);
+                    log.error("Error while publishing service descriptor with ID {} to project {}", serviceDescriptorId, descriptor.getSliceId());
                 }
+            }
         );
     }
 
     @Override
-    public void unPublishService(Long serviceDescriptorId)
-            throws NotExistingEntityException, NotPublishedServiceException {
+    public void unPublishService(Long serviceDescriptorId, String authorization)
+        throws NotExistingEntityException, NotPublishedServiceException, NotAuthorizedOperationException {
         log.info("Requested deletion of the publication of the service descriptor with ID {}", serviceDescriptorId);
 
         Optional<SdkServiceDescriptor> optDescriptor = serviceDescriptorRepository.findById(serviceDescriptorId);
         SdkServiceDescriptor descriptor = optDescriptor.orElseThrow(() -> {
-            log.error("Service descriptor with ID {} is not present in database", serviceDescriptorId);
+            //log.error("Service descriptor with ID {} is not present in database", serviceDescriptorId);
             return new NotExistingEntityException(String.format("Service descriptor with ID %s is not present in database", serviceDescriptorId));
         });
+
+        if(keycloakEnabled)
+            authSecurityChecks(descriptor.getTemplate(), 0);
 
         synchronized (this) { // To avoid multiple simultaneous calls
             // Check if is already published
             if (!descriptor.getStatus().equals(SdkServiceStatus.COMMITTED)) {
-                log.error("Service descriptor with ID {} is not in status COMMITTED.", serviceDescriptorId);
+                //log.error("Service descriptor with ID {} is not in status COMMITTED.", serviceDescriptorId);
                 throw new NotPublishedServiceException(String.format("Service descriptor with ID %s is not in status COMMITTED", serviceDescriptorId));
             }
             descriptor.setStatus(SdkServiceStatus.CHANGING);
@@ -792,32 +917,44 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         }
 
         dispatchUnPublishRequest(
-                descriptor.getNsInfoId(),
-                successful -> {
-                    if (successful) {
-                        descriptor.setStatus(SdkServiceStatus.SAVED);
-                        descriptor.setNsInfoId(null);
-                        serviceDescriptorRepository.saveAndFlush(descriptor);
-                        log.info("Successfully un-published descriptor {}", serviceDescriptorId);
-                    } else {
-                        descriptor.setStatus(SdkServiceStatus.COMMITTED);
-                        serviceDescriptorRepository.saveAndFlush(descriptor);
-                        log.error("Error while un-publishing descriptor {}", serviceDescriptorId);
-                    }
+            descriptor.getNsInfoId(),
+            authorization,
+            successful -> {
+                if (successful) {
+                    descriptor.setStatus(SdkServiceStatus.SAVED);
+                    descriptor.setNsInfoId(null);
+                    serviceDescriptorRepository.saveAndFlush(descriptor);
+                    log.info("Successfully un-published descriptor {}", serviceDescriptorId);
+                } else {
+                    descriptor.setStatus(SdkServiceStatus.COMMITTED);
+                    serviceDescriptorRepository.saveAndFlush(descriptor);
+                    log.error("Error while un-publishing descriptor {}", serviceDescriptorId);
                 }
+            }
         );
     }
 
     @Override
     public DescriptorTemplate generateTemplate(Long serviceDescriptorId)
-            throws NotExistingEntityException {
+        throws NotExistingEntityException, MalformedElementException, NotAuthorizedOperationException {
         Optional<SdkServiceDescriptor> optDescriptor = serviceDescriptorRepository.findById(serviceDescriptorId);
 
         SdkServiceDescriptor descriptor = optDescriptor.orElseThrow(() -> {
-            log.error("Service descriptor with ID {} is not present in database", serviceDescriptorId);
+            //log.error("Service descriptor with ID {} is not present in database", serviceDescriptorId);
             return new NotExistingEntityException(String.format("Service descriptor with ID %s is not present in database", serviceDescriptorId));
         });
-        return adapter.generateNetworkServiceDescriptor(descriptor);
+
+        if(keycloakEnabled)
+            authSecurityChecks(descriptor.getTemplate(), 1);
+
+        DescriptorTemplate nsd;
+        try {
+            nsd = adapter.generateNetworkServiceDescriptor(descriptor);
+        }catch(IllegalStateException e){
+            throw new MalformedElementException(e.getMessage(), e);
+        }
+
+        return nsd;
     }
 
     private static Stream<Long> getSubFunctionIds(SdkService service) {
@@ -832,17 +969,23 @@ public class ServiceManager implements ServiceManagerProviderInterface {
                 .map(SdkServiceComponent::getComponentId);
     }
 
-    private void checkAndResolveService(SdkService service) throws NotExistingEntityException, MalformedElementException, AlreadyExistingEntityException{
+    private void checkAndResolveService(SdkService service) throws NotExistingEntityException, MalformedElementException, AlreadyExistingEntityException, NotAuthorizedOperationException{
         //In case of new service, check if a service with the same name and version is present
         if(service.getId() == null) {
             Optional<SdkService> serviceOptional = serviceRepository.findByNameAndVersion(service.getName(), service.getVersion());
             if (serviceOptional.isPresent()) {
-                log.error("Service with name " + service.getName() + " and version " + service.getVersion() + " is already present with ID " + serviceOptional.get().getId());
+                //log.error("Service with name " + service.getName() + " and version " + service.getVersion() + " is already present with ID " + serviceOptional.get().getId());
                 throw new AlreadyExistingEntityException("Service with name " + service.getName() + " and version " + service.getVersion() + " is already present with ID " + serviceOptional.get().getId());
             }
         }
+
+        //check if slice is present in database and also check user if keycloak is enabled
+        Optional<SliceResource> sliceOptional = sliceRepository.findBySliceId(service.getSliceId());
+        if(!sliceOptional.isPresent())
+            throw new NotExistingEntityException("Slice with sliceId " + service.getSliceId() + " is not present in database");
+
         log.debug("Checking functions availability");
-        List<SdkFunction> availableF = functionManager.getFunctions();
+        List<SdkFunction> availableF = functionManager.getFunctions(service.getSliceId());
         Set<Long> availableFIds = availableF.stream()
                 .map(SdkFunction::getId)
                 .collect(Collectors.toSet());
@@ -851,10 +994,10 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         // Check if the functions are available
         if (!availableFIds.containsAll(requiredFIds)) {
             requiredFIds.removeAll(availableFIds);
-            throw new MalformedElementException(String.format("Malformed service: functions %s are not available", requiredFIds));
+            throw new MalformedElementException(String.format("Functions %s are not available", requiredFIds));
         }
         log.debug("Checking sub-services availability");
-        List<SdkService> availableS = this.getServices();
+        List<SdkService> availableS = this.getServices(service.getSliceId());
         Set<Long> availableSIds = availableS.stream()
                 .map(SdkService::getId)
                 .collect(Collectors.toSet());
@@ -862,16 +1005,15 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         // Check if the services are available
         if (!availableSIds.containsAll(requiredSIds)) {
             requiredSIds.removeAll(availableSIds);
-            throw new MalformedElementException(String.format("Malformed service: functions %s are not available", requiredSIds));
+            throw new MalformedElementException(String.format("Functions %s are not available", requiredSIds));
         }
         validateImportedMonitoringParameter(service);
         validateInternalConnectionPoint(service);
         log.debug("Resolving service components");
         try {
             service.resolveComponents(new HashSet<>(availableF), new HashSet<>(availableS));
-        } catch (Exception e) {
-            throw new MalformedElementException(
-                    String.format("Error while resolving service: %s", e.getMessage()), e);
+        } catch (IllegalStateException | IllegalArgumentException | NullPointerException e) {
+            throw new MalformedElementException(e.getMessage(), e);
         }
     }
 
@@ -893,24 +1035,24 @@ public class ServiceManager implements ServiceManagerProviderInterface {
                         componentFound = true;
                         if(target.get().getSdkFunction() != null){
                             if (!target.get().getSdkFunction().getId().equals(component.getComponentId())) {
-                                log.error("Monitoring parameter with ID " + target.get().getId() + " does not belong to component with componentIndex " + component.getComponentIndex());
+                                //log.error("Monitoring parameter with ID " + target.get().getId() + " does not belong to component with componentIndex " + component.getComponentIndex());
                                 throw new MalformedElementException("Monitoring parameter with ID " + target.get().getId() + " does not belong to component with componentIndex " + component.getComponentIndex());
                             }
                         }else if(target.get().getSdkServiceExt() != null){
                             if (!target.get().getSdkServiceExt().getId().equals(component.getComponentId())) {
-                                log.error("Monitoring parameter with ID " + target.get().getId() + " does not belong to component with componentIndex " + component.getId());
+                                //log.error("Monitoring parameter with ID " + target.get().getId() + " does not belong to component with componentIndex " + component.getId());
                                 throw new MalformedElementException("Monitoring parameter with ID " + target.get().getId() + " does not belong to component with componentIndex " + component.getComponentIndex());
                             }
                         }else if(target.get().getSdkServiceInt() != null){
                             if (!target.get().getSdkServiceInt().getId().equals(component.getComponentId())) {
-                                log.error("Monitoring parameter with ID " + target.get().getId() + " does not belong to component with componentIndex " + component.getId());
+                                //log.error("Monitoring parameter with ID " + target.get().getId() + " does not belong to component with componentIndex " + component.getId());
                                 throw new MalformedElementException("Monitoring parameter with ID " + target.get().getId() + " does not belong to component with componentIndex " + component.getComponentIndex());
                             }
                         }
                     }
                 }
                 if(!componentFound){
-                    log.error("Component with componentIndex " + componentIndex + " not found");
+                    //log.error("Component with componentIndex " + componentIndex + " not found");
                     throw new MalformedElementException("Component with componentIndex " + componentIndex + " not found");
                 }
             }
@@ -932,21 +1074,65 @@ public class ServiceManager implements ServiceManagerProviderInterface {
                         componentFound = true;
                         if(target.get().getSdkFunction() != null){
                             if (!target.get().getSdkFunction().getId().equals(component.getComponentId())) {
-                                log.error("Connection point with ID " + target.get().getId() + " does not belong to component with componentIndex " + component.getComponentIndex());
+                                //log.error("Connection point with ID " + target.get().getId() + " does not belong to component with componentIndex " + component.getComponentIndex());
                                 throw new MalformedElementException("Connection point with ID " + target.get().getId() + " does not belong to component with componentIndex " + component.getComponentIndex());
                             }
                         }else if(target.get().getSdkService() != null){
                             if (!target.get().getSdkService().getId().equals(component.getComponentId())) {
-                                log.error("Connection point with ID " + target.get().getId() + " does not belong to component with componentIndex " + component.getComponentIndex());
+                                //log.error("Connection point with ID " + target.get().getId() + " does not belong to component with componentIndex " + component.getComponentIndex());
                                 throw new MalformedElementException("Connection point with ID " + target.get().getId() + " does not belong to component with componentIndex " + component.getComponentIndex());
                             }
                         }
                     }
                 }
                 if(!componentFound){
-                    log.error("Component with componentIndex " + componentIndex + " not found");
+                    //log.error("Component with componentIndex " + componentIndex + " not found");
                     throw new MalformedElementException("Component with componentIndex " + componentIndex + " not found");
                 }
+            }
+        }
+    }
+
+    private void dispatchPublishRequest(String servicePackagePath, String project, String authorization, Consumer<String> callback) {
+        // TODO: dispatch publish operation to driver, then return immediately
+        executor.execute(() -> {
+                try {
+                    String nsInfoId = cataloguePlugin.uploadNetworkService(servicePackagePath, project, "multipart/form-data", null, authorization);
+                    callback.accept(nsInfoId);
+                } catch (Exception e) {
+                    log.error("Could not push service package. Cause: {}", e.getMessage());
+                    log.debug(null, e);
+                    callback.accept(null);
+                }
+            }
+        );
+    }
+
+    private void dispatchUnPublishRequest(String nsInfoId, String authorization, Consumer<Boolean> callback) {
+        // TODO: dispatch unpublish operation to driver, then return immediately
+        executor.execute(() -> {
+                try {
+                    cataloguePlugin.deleteNetworkService(nsInfoId, null, authorization);
+                    callback.accept(true);
+                } catch (Exception e) {
+                    log.error("Could not delete service package. Cause: {}", e.getMessage());
+                    log.debug(null, e);
+                    callback.accept(false);
+                }
+            }
+        );
+    }
+
+    private void checkFunctionStatus(Set<SdkComponentInstance> subDescriptors) throws NotPermittedOperationException {
+        for(SdkComponentInstance subDescriptor : subDescriptors){
+            if(subDescriptor.getType().equals(SdkServiceComponentType.SDK_FUNCTION)){
+                SdkFunction function = ((SdkFunctionDescriptor)subDescriptor).getTemplate();
+                if(function.getStatus().equals(SdkFunctionStatus.SAVED)){
+                    //log.error("Function with ID " + function.getId() + " not published to Public Catalogue. Please publish it before publishing the service");
+                    throw  new NotPermittedOperationException("Function with ID " + function.getId() + " not published to Public Catalogue. Please publish it before publishing the service");
+                }
+            }else{
+                checkFunctionStatus(((SdkServiceDescriptor)subDescriptor).getSubDescriptors());
             }
         }
     }
@@ -985,54 +1171,51 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         }
     }
 
-    private void dispatchPublishRequest(String servicePackagePath, Consumer<String> callback) {
-        // TODO: dispatch publish operation to driver, then return immediately
-        executor.execute(() -> {
-                    try {
-                        String nsInfoId = cataloguePlugin.uploadNetworkService(servicePackagePath, "multipart/form-data", null);
-                        callback.accept(nsInfoId);
-                    } catch (Exception exc) {
-                        log.error(
-                                "Could not push service package. Cause: {}",
-                                exc.getMessage()
-                        );
-                        log.debug("Details: ", exc);
-                        callback.accept(null);
-                    }
-                }
-        );
-    }
+    private void authSecurityChecks(SdkService service, int checkToPerform) throws NotAuthorizedOperationException{
+        log.debug("Checking if the user can access the resource");
 
-    private void dispatchUnPublishRequest(String nsInfoId, Consumer<Boolean> callback) {
-        // TODO: dispatch unpublish operation to driver, then return immediately
-        executor.execute(() -> {
-                    try {
-                        cataloguePlugin.deleteNetworkService(nsInfoId);
-                        callback.accept(true);
-                    } catch (Exception exc) {
-                        log.error(
-                                "Could not delete service package. Cause: {}",
-                                exc.getMessage()
-                        );
-                        log.debug("Details: ", exc);
-                        callback.accept(false);
-                    }
-                }
-        );
-    }
+        // The admin can access all the resources
+        if(keycloakUtils.getUserNameFromJWT().equals(adminUserName))
+            return;
 
-    private void checkFunctionStatus(Set<SdkComponentInstance> subDescriptors) throws NotPermittedOperationException {
-        for(SdkComponentInstance subDescriptor : subDescriptors){
-            if(subDescriptor.getType().equals(SdkServiceComponentType.SDK_FUNCTION)){
-                SdkFunction function = ((SdkFunctionDescriptor)subDescriptor).getTemplate();
-                if(function.getStatus().equals(SdkFunctionStatus.SAVED)){
-                    log.error("Function with ID " + function.getId() + " not published to Public Catalogue. Please publish it before publishing the service");
-                    throw  new NotPermittedOperationException("Function with ID " + function.getId() + " not published to Public Catalogue. Please publish it before publishing the service");
-                }
-            }else{
-                checkFunctionStatus(((SdkServiceDescriptor)subDescriptor).getSubDescriptors());
-            }
+        /*
+            foreach service in (slice==sliceId) {
+		        if(user.userName != admin.userName) {
+			        if (slice.users not contains user.userName): 	User cannot do anything
+			        if (user.accessLevel > service.accessLevel): 	User cannot do anything
+			        if (user.userName != service.ownerId) {
+				        if (resource.visibility==PRIVATE):  		User cannot do anything
+				        if (resource.visibility==PUBLIC):   		User can read, publish, create_descriptors and use in a service; User cannot update nor delete nor unpublish
+			        }
+		        }
+		        User can create, read, update, delete, create_descriptors, publish, unpublish and use in a service
+	        }
+
+            0 : Create, Update, Delete and Unpublish
+                Is possible if:
+                    - user is the owner
+                    - user accessLevel <= service accessLevel
+                    - user belongs to the slice
+            1 : Publish and Read and Create Descriptor
+                Is possible if:
+                    - visibility is public or user is the owner if the visibility is private
+                    - user accessLevel <= service accessLevel
+                    - user belongs to the slice
+        */
+
+        switch (checkToPerform) {
+            case 0:
+                keycloakUtils.checkUserSlices(keycloakUtils.getUserNameFromJWT(), service.getSliceId());
+                keycloakUtils.checkUserAccessLevel(keycloakUtils.getAccessLevelFromJWT(), service.getAccessLevel());
+                keycloakUtils.checkUserId(keycloakUtils.getUserNameFromJWT(), service.getOwnerId());
+                break;
+            case 1:
+                keycloakUtils.checkUserSlices(keycloakUtils.getUserNameFromJWT(), service.getSliceId());
+                keycloakUtils.checkUserAccessLevel(keycloakUtils.getAccessLevelFromJWT(), service.getAccessLevel());
+                if(service.getVisibility().equals(Visibility.PRIVATE))
+                    keycloakUtils.checkUserId(keycloakUtils.getUserNameFromJWT(), service.getOwnerId());
         }
+        log.debug("User can access the resource");
     }
 }
 

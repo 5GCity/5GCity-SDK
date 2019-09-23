@@ -15,7 +15,8 @@ import java.util.Set;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-    "connectionPointId",
+    "id",
+    "connectionPointName",
     "l3Rules"
 })
 @Entity
@@ -59,12 +60,12 @@ public class L3Connectivity {
         this.id = id;
     }
 
-    @JsonProperty("connectionPointId")
+    @JsonProperty("connectionPointName")
     public String getConnectionPointName() {
         return connectionPointName;
     }
 
-    @JsonProperty("connectionPointId")
+    @JsonProperty("connectionPointName")
     public void setConnectionPointName(String connectionPointName) {
         this.connectionPointName = connectionPointName;
     }
@@ -86,7 +87,7 @@ public class L3Connectivity {
 
     @JsonIgnore
     public void setConnectionPoint(ConnectionPoint connectionPoint) {
-        Objects.requireNonNull(connectionPoint, "Invalid connection point: null");
+        Objects.requireNonNull(connectionPoint, "Invalid connection point name provided: not found");
         if (!connectionPointName.equals(connectionPoint.getName())) {
             throw new IllegalArgumentException(String.format(
                 "Invalid connection point, not matching: expected %s, got: %s",

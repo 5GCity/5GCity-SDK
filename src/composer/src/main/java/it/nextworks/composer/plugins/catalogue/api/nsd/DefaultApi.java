@@ -44,7 +44,7 @@ public class DefaultApi {
         this.apiClient = apiClient;
     }
 
-    public NsdInfo createNsdInfo(CreateNsdInfoRequest body) throws RestClientException {
+    public NsdInfo createNsdInfo(CreateNsdInfoRequest body, String project, String authorization) throws RestClientException {
         Object postBody = body;
 
         // verify the required parameter 'body' is set
@@ -56,7 +56,11 @@ public class DefaultApi {
         String path = UriComponentsBuilder.fromPath("/nsd/v1/ns_descriptors").build().toUriString();
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        if(project != null)
+            queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
+        //adding fake Authorization header for bypassing security check on catalogue
+        headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] accepts = {"application/json", "application/yaml"};
@@ -72,7 +76,7 @@ public class DefaultApi {
                 contentType, authNames, returnType);
     }
 
-    public PnfdInfo createPNFDInfo(CreatePnfdInfoRequest body) throws RestClientException {
+    public PnfdInfo createPNFDInfo(CreatePnfdInfoRequest body, String project, String authorization) throws RestClientException {
         Object postBody = body;
 
         // verify the required parameter 'body' is set
@@ -84,7 +88,11 @@ public class DefaultApi {
         String path = UriComponentsBuilder.fromPath("/nsd/v1/pnf_descriptors").build().toUriString();
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        if(project != null)
+            queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
+        //adding fake Authorization header for bypassing security check on catalogue
+        headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] accepts = {"application/json", "application/yaml"};
@@ -100,7 +108,7 @@ public class DefaultApi {
                 contentType, authNames, returnType);
     }
 
-    public void deleteNSDInfo(String nsdInfoId) throws RestClientException {
+    public void deleteNSDInfo(String nsdInfoId, String project, String authorization) throws RestClientException {
         Object postBody = null;
 
         // verify the required parameter 'nsdInfoId' is set
@@ -116,7 +124,11 @@ public class DefaultApi {
                 .toUriString();
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        if(project != null)
+            queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
+        //adding fake Authorization header for bypassing security check on catalogue
+        headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] accepts = {"application/json", "application/yaml"};
@@ -132,7 +144,7 @@ public class DefaultApi {
                 contentType, authNames, returnType);
     }
 
-    public void deletePNFDInfo(String pnfdInfoId) throws RestClientException {
+    public void deletePNFDInfo(String pnfdInfoId, String project, String authorization) throws RestClientException {
         Object postBody = null;
 
         // verify the required parameter 'pnfdInfoId' is set
@@ -148,7 +160,11 @@ public class DefaultApi {
                 .toUriString();
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        if(project != null)
+            queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
+        //adding fake Authorization header for bypassing security check on catalogue
+        headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] accepts = {"application/json", "application/yaml"};
@@ -164,7 +180,7 @@ public class DefaultApi {
                 contentType, authNames, returnType);
     }
 
-    public Object getNSD(String nsdInfoId, String range) throws RestClientException {
+    public Object getNSD(String nsdInfoId, String project, String range, String authorization) throws RestClientException {
         Object postBody = null;
 
         // verify the required parameter 'nsdInfoId' is set
@@ -180,7 +196,11 @@ public class DefaultApi {
                 .buildAndExpand(uriVariables).toUriString();
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        if(project != null)
+            queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
+        //adding fake Authorization header for bypassing security check on catalogue
+        headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         if (range != null)
@@ -199,7 +219,7 @@ public class DefaultApi {
                 contentType, authNames, returnType);
     }
 
-    public NsdInfo getNSDInfo(String nsdInfoId) throws RestClientException {
+    public NsdInfo getNSDInfo(String nsdInfoId, String project, String authorization) throws RestClientException {
         Object postBody = null;
 
         // verify the required parameter 'nsdInfoId' is set
@@ -215,7 +235,11 @@ public class DefaultApi {
                 .toUriString();
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        if(project != null)
+            queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
+        //adding fake Authorization header for bypassing security check on catalogue
+        headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] accepts = {"application/json", "application/yaml"};
@@ -231,13 +255,17 @@ public class DefaultApi {
                 contentType, authNames, returnType);
     }
 
-    public List<NsdInfo> getNSDsInfo() throws RestClientException {
+    public List<NsdInfo> getNSDsInfo(String project, String authorization) throws RestClientException {
         Object postBody = null;
 
         String path = UriComponentsBuilder.fromPath("/nsd/v1/ns_descriptors").build().toUriString();
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        if(project != null)
+            queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
+        //adding fake Authorization header for bypassing security check on catalogue
+        headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] accepts = {"application/json", "application/yaml"};
@@ -253,7 +281,7 @@ public class DefaultApi {
                 contentType, authNames, returnType);
     }
 
-    public Object getPNFD(String pnfdInfoId) throws RestClientException {
+    public Object getPNFD(String pnfdInfoId, String project, String authorization) throws RestClientException {
         Object postBody = null;
 
         // verify the required parameter 'pnfdInfoId' is set
@@ -269,7 +297,11 @@ public class DefaultApi {
                 .buildAndExpand(uriVariables).toUriString();
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        if(project != null)
+            queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
+        //adding fake Authorization header for bypassing security check on catalogue
+        headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] accepts = {"text/plain", "application/yaml", "application/json"}; //{"application/json", "application/yaml", "application/zip"};
@@ -285,7 +317,7 @@ public class DefaultApi {
                 contentType, authNames, returnType);
     }
 
-    public PnfdInfo getPNFDInfo(String pnfdInfoId) throws RestClientException {
+    public PnfdInfo getPNFDInfo(String pnfdInfoId, String project, String authorization) throws RestClientException {
         Object postBody = null;
 
         // verify the required parameter 'pnfdInfoId' is set
@@ -301,7 +333,11 @@ public class DefaultApi {
                 .toUriString();
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        if(project != null)
+            queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
+        //adding fake Authorization header for bypassing security check on catalogue
+        headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] accepts = {"application/json", "application/yaml"};
@@ -317,13 +353,17 @@ public class DefaultApi {
                 contentType, authNames, returnType);
     }
 
-    public List<PnfdInfo> getPNFDsInfo() throws RestClientException {
+    public List<PnfdInfo> getPNFDsInfo(String project, String authorization) throws RestClientException {
         Object postBody = null;
 
         String path = UriComponentsBuilder.fromPath("/nsd/v1/pnf_descriptors").build().toUriString();
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        if(project != null)
+            queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
+        //adding fake Authorization header for bypassing security check on catalogue
+        headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] accepts = {"application/json", "application/yaml"};
@@ -339,7 +379,7 @@ public class DefaultApi {
                 contentType, authNames, returnType);
     }
 
-    public NsdInfoModifications updateNSDInfo(String nsdInfoId, NsdInfoModifications body) throws RestClientException {
+    public NsdInfoModifications updateNSDInfo(String nsdInfoId, String project, NsdInfoModifications body, String authorization) throws RestClientException {
         Object postBody = body;
 
         // verify the required parameter 'nsdInfoId' is set
@@ -361,7 +401,11 @@ public class DefaultApi {
                 .toUriString();
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        if(project != null)
+            queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
+        //adding fake Authorization header for bypassing security check on catalogue
+        headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] accepts = {"application/json", "application/yaml"};
@@ -380,7 +424,7 @@ public class DefaultApi {
                 contentType, authNames, returnType);
     }
 
-    public PnfdInfoModifications updatePNFDInfo(String pnfdInfoId, PnfdInfoModifications body)
+    public PnfdInfoModifications updatePNFDInfo(String pnfdInfoId, String project, PnfdInfoModifications body, String authorization)
             throws RestClientException {
         Object postBody = body;
 
@@ -403,7 +447,11 @@ public class DefaultApi {
                 .toUriString();
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        if(project != null)
+            queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
+        //adding fake Authorization header for bypassing security check on catalogue
+        headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] accepts = {"application/json", "application/yaml"};
@@ -419,7 +467,7 @@ public class DefaultApi {
                 contentType, authNames, returnType);
     }
 
-    public Object uploadNSD(String nsdInfoId, Object body, String contentType) throws RestClientException {
+    public Object uploadNSD(String nsdInfoId, String project, Object body, String contentType, String authorization) throws RestClientException {
         Object postBody = body;
 
         // verify the required parameter 'nsdInfoId' is set
@@ -441,7 +489,11 @@ public class DefaultApi {
                 .buildAndExpand(uriVariables).toUriString();
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        if(project != null)
+            queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
+        //adding fake Authorization header for bypassing security check on catalogue
+        headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         if (contentType != null)
@@ -458,14 +510,14 @@ public class DefaultApi {
         };
         if (contentType.equalsIgnoreCase("multipart/form-data")) {
             log.debug("executing modified invoker");
-            return apiClient.invokeApi(path, HttpMethod.PUT, body);
+            return apiClient.invokeApi(path, HttpMethod.PUT, body, authorization);
         } else {
             return apiClient.invokeAPI(path, HttpMethod.PUT, queryParams, postBody, headerParams, formParams, accept,
                     finalContentType, authNames, returnType);
         }
     }
 
-    public Object uploadPNFD(String pnfdInfoId, Object body, String contentType) throws RestClientException {
+    public Object uploadPNFD(String pnfdInfoId, String project, Object body, String contentType, String authorization) throws RestClientException {
         Object postBody = body;
 
         // verify the required parameter 'pnfdInfoId' is set
@@ -487,7 +539,11 @@ public class DefaultApi {
                 .buildAndExpand(uriVariables).toUriString();
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        if(project != null)
+            queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
+        //adding fake Authorization header for bypassing security check on catalogue
+        headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         if (contentType != null)
@@ -504,7 +560,7 @@ public class DefaultApi {
         };
         if (contentType.equalsIgnoreCase("multipart/form-data")) {
             log.debug("executing modified invoker");
-            return apiClient.invokeApi(path, HttpMethod.PUT, body);
+            return apiClient.invokeApi(path, HttpMethod.PUT, body, authorization);
         } else {
             return apiClient.invokeAPI(path, HttpMethod.PUT, queryParams, postBody, headerParams, formParams, accept,
                     finalContentType, authNames, returnType);

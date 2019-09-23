@@ -6,6 +6,7 @@ import org.keycloak.adapters.springsecurity.authentication.KeycloakAuthenticatio
 import org.keycloak.adapters.springsecurity.client.KeycloakClientRequestFactory;
 import org.keycloak.adapters.springsecurity.client.KeycloakRestTemplate;
 import org.keycloak.adapters.springsecurity.config.KeycloakWebSecurityConfigurerAdapter;
+import org.keycloak.adapters.springsecurity.filter.KeycloakPreAuthActionsFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -16,6 +17,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.authority.mapping.SimpleAuthorityMapper;
 import org.springframework.security.core.session.SessionRegistryImpl;
@@ -56,20 +58,28 @@ public class SecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
     }
 
     @Override
+    public void configure(WebSecurity web) throws Exception {
+        web.ignoring().antMatchers("/v2/api-docs", "/configuration/ui", "/swagger-resources/**", "/configuration/**", "/swagger-ui.html", "/webjars/**");
+    }
+
+    @Override
     protected void configure(HttpSecurity http) throws Exception {
         super.configure(http);
         http
                 .csrf().disable()
                 .cors().and()
+                .addFilterBefore(new AuthorizationFilter(), KeycloakPreAuthActionsFilter.class)
+                .exceptionHandling().accessDeniedHandler(accessDeniedHandler()).and()
                 .authorizeRequests()
-                .antMatchers("/sdk/services/*").hasAnyRole("Administrator", "Designer", "Composer")
-                .antMatchers("/sdk/services_descriptor/*").hasAnyRole("Administrator", "Designer", "Composer")
-                .antMatchers(HttpMethod.GET, "/sdk/functions/*").hasAnyRole("Administrator", "Designer", "Composer")
+                .antMatchers("/sdk/services/**").hasAnyRole("Administrator", "Designer", "Composer")
+                .antMatchers("/sdk/services_descriptor/**").hasAnyRole("Administrator", "Designer", "Composer")
+                .antMatchers(HttpMethod.GET, "/sdk/functions/**").hasAnyRole("Administrator", "Designer", "Composer")
                 .antMatchers(HttpMethod.POST, "/sdk/functions/{functionId}/publish").hasAnyRole("Administrator", "Designer", "Composer")
                 .antMatchers(HttpMethod.POST, "/sdk/functions/{functionId}/unpublish").hasAnyRole("Administrator", "Designer", "Composer")
-                .antMatchers( "/sdk/functions/*").hasAnyRole("Administrator", "Designer")
-                .anyRequest().permitAll().and()
-                .exceptionHandling().accessDeniedHandler(accessDeniedHandler());
+                .antMatchers( "/sdk/functions/**").hasAnyRole("Administrator", "Designer")
+                .antMatchers(HttpMethod.GET, "/sdk/sliceManagement/**").hasAnyRole("Administrator", "Designer", "Composer")
+                .antMatchers("/sdk/sliceManagement/**").hasAnyRole("Administrator")
+               .anyRequest().permitAll();
     }
 
     @Bean

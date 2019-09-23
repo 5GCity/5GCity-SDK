@@ -1,6 +1,6 @@
 {
     "status": "SAVED",
-    "ownerId": "NXW",
+    "ownerId": "designer1",
     "name": "vPlate-server",
     "description": "VNF descriptor: vPlate-server. Generated with 5GCity SDK",
     "vendor": "NXW",
@@ -24,7 +24,6 @@
         "name": "cpu_utilization"
       }
     ],
-    "groupId": "NXW",
     "accessLevel": 4,
     "swImageData": {
       "imgName": "cirros",
@@ -39,5 +38,6 @@
     },
     "minInstancesCount": 1,
     "maxInstancesCount": 2,
-    "requiredPorts": []
+    "requiredPorts": [],
+    "sliceId": "test"
   }

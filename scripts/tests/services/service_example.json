@@ -1,0 +1,176 @@
+{
+	"name": "service_test",
+	"version": "1.0",
+	"sliceId": "slice_test",
+	"ownerId": "NXW",
+	"designer": "NXW",
+	"visibility": "PUBLIC",
+	"accessLevel": 0,
+	"parameters": [
+	  "param1",
+	  "param2"
+	],
+	"metadata": {
+	  "use.spam": "egg"
+	},
+	"license": {
+	  "type": "PUBLIC",
+	  "url": "http://example.org"
+	},
+	"component": [
+	  {
+		"componentId": 1,
+		"componentType": "SDK_FUNCTION",
+		"mappingExpressions": [
+		  "FLOOR(param1/1000)",
+		  "param2"
+		],
+		"componentIndex": 0
+	  },
+	  {
+		"componentId": 8,
+		"componentType": "SDK_FUNCTION",
+		"mappingExpressions": [],
+		"componentIndex": 1
+	  },
+	  {
+		"componentId": 5,
+		"componentType": "SDK_FUNCTION",
+		"mappingExpressions": [],
+		"componentIndex": 2
+	  }
+	],
+	"connectionPoints": [
+	  {
+		"name": "service_ext_cp",
+		"cpType": "EXTERNAL",
+		"requiredPort": []
+	  },
+	  {
+		"name": "fw_miniweb_cp",
+		"cpType": "INTERNAL",
+		"internalCpId": 12,
+		"requiredPort": [],
+		"componentIndex": 1
+	  },
+	  {
+		"name": "miniweb_fw_cp",
+		"cpType": "INTERNAL",
+		"internalCpId": 2,
+		"requiredPort": [80,443],
+		"componentIndex": 0
+	  },
+	  {
+		"name": "vPlate_fw_cp",
+		"cpType": "INTERNAL",
+		"internalCpId": 6,
+		"requiredPort": [],
+		"componentIndex": 2
+	  },
+	  {
+		"name": "fw_ext_cp",
+		"cpType": "INTERNAL",
+		"internalCpId": 9,
+		"requiredPort": [],
+		"componentIndex": 1
+	  },
+	  {
+		"name": "fw_vPlate_cp",
+		"cpType": "INTERNAL",
+		"internalCpId": 10,
+		"requiredPort": [],
+		"componentIndex": 1
+	  }
+	],
+	"link": [
+	  {
+		"name": "vPlate_net",
+		"connectionPointNames": [
+		  "fw_vPlate_cp",
+		  "vPlate_fw_cp"
+		]
+	  },
+	  {
+		"name": "ext_net",
+		"connectionPointNames": [
+		  "fw_ext_cp",
+		  "service_ext_cp"
+		]
+	  },
+	  {
+		"name": "miniweb_net",
+		"connectionPointNames": [
+		  "fw_miniweb_cp",
+		  "miniweb_fw_cp"
+		]
+	  }
+	],
+	"l3Connectivity": [
+	  {
+		"connectionPointName": "service_ext_cp",
+		"l3Rules": [
+		  {
+			"protocol": "TCP",
+			"srcIp": "0.0.0.0",
+			"srcPort": 8000,
+			"dstIp": "10.0.0.42",
+			"dstPort": 8998
+		  }
+		]
+	  }
+	],
+	"extMonitoringParameters": [
+	  {
+		"componentIndex": 2,
+		"importedParameterId": "7",
+		"parameterType": "IMPORTED",
+		"name": "vPlate_cpu_utilization"
+	  }
+	],
+	"intMonitoringParameters": [
+	  {
+		"componentIndex": 1,
+		"importedParameterId": "14",
+		"parameterType": "IMPORTED",
+		"name": "fw_cpu_utilization"
+	  },
+	  {
+		"transform": "AVG_OVER_TIME",
+		"argumentList": [],
+		"targetParameterName": "fw_cpu_utilization",
+		"parameterType": "TRANSFORMED",
+		"name": "fw_cpu_utilization_avg"
+	  },
+	  {
+		"aggregatorFunc": "max",
+		"parametersName": ["fw_cpu_utilization", "vPlate_cpu_utilization"],
+		"parameterType": "AGGREGATED",
+		"name": "max_cpu_utilization"
+	  }
+	],
+	"actions": [
+	  {
+		"componentIndex": "1",
+		"step": 1,
+		"min": 2,
+		"actionType": "SCALE_IN",
+		"name": "scale_in"
+	  }
+	],
+	"actionRules": [
+	  {
+		"actionsName": [
+		  "scale_in"
+		],
+		"conditions": [
+		  {
+			"parameterName": "fw_cpu_utilization",
+			"value": 90,
+			"comparator": "geq"
+		  }
+		],
+		"operator": "and"
+	  }
+	]
+}  
+

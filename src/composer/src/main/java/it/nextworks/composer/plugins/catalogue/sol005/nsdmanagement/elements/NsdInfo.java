@@ -86,6 +86,9 @@ public class NsdInfo {
     @JsonProperty("c2cOnboardingState")
     private C2COnboardingStateType c2cOnboardingState;
 
+    @JsonProperty("projectId")
+    private String projectId;
+
     public NsdInfo id(UUID id) {
         this.id = id;
         return this;
@@ -457,6 +460,14 @@ public class NsdInfo {
         this.c2cOnboardingState = c2cOnboardingState;
     }
 
+    public String getProjectId() {
+        return projectId;
+    }
+
+    public void setProjectId(String projectId) {
+        this.projectId = projectId;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -478,12 +489,13 @@ public class NsdInfo {
                 && Objects.equals(this.nsdOperationalState, nsdInfo.nsdOperationalState)
                 && Objects.equals(this.nsdUsageState, nsdInfo.nsdUsageState)
                 && Objects.equals(this.userDefinedData, nsdInfo.userDefinedData)
+                && Objects.equals(this.projectId, nsdInfo.projectId)
                 && Objects.equals(this.links, nsdInfo.links);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, nsdId, nsdName, nsdVersion, nsdDesigner, nsdInvariantId, vnfPkgIds, pnfdInfoIds,
+        return Objects.hash(projectId, id, nsdId, nsdName, nsdVersion, nsdDesigner, nsdInvariantId, vnfPkgIds, pnfdInfoIds,
                 nestedNsdInfoIds, nsdOnboardingState, onboardingFailureDetails, nsdOperationalState, nsdUsageState,
                 userDefinedData, links);
     }
@@ -508,6 +520,7 @@ public class NsdInfo {
         sb.append("    nsdUsageState: ").append(toIndentedString(nsdUsageState)).append("\n");
         sb.append("    userDefinedData: ").append(toIndentedString(userDefinedData)).append("\n");
         sb.append("    links: ").append(toIndentedString(links)).append("\n");
+        sb.append("    projectId: ").append(toIndentedString(projectId)).append("\n");
         sb.append("}");
         return sb.toString();
     }

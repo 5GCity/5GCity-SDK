@@ -1,6 +1,7 @@
 package it.nextworks.composer.executor.repositories;
 
 import it.nextworks.sdk.SdkServiceDescriptor;
+import it.nextworks.sdk.SubFunction;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -16,4 +17,6 @@ public interface SdkServiceDescriptorRepository extends JpaRepository<SdkService
     Optional<SdkServiceDescriptor> findById(Long id);
 
     List<SdkServiceDescriptor> findByTemplateId(Long id);
+
+    List<SdkServiceDescriptor> findBySliceId(String sliceId);
 }
