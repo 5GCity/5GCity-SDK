@@ -156,14 +156,27 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
         for(VnfPkgInfo vnfPkgInfo : vnfPackageInfoList){
             try {
-                log.info("Retrieving VNF Pkg with ID " + vnfPkgInfo.getId().toString());
-                MultipartFile vnfPkg = cataloguePlugin.getVnfPkgContent(vnfPkgInfo.getId().toString(), null,null, storagePath, "Bearer " + authorization);
+                log.info("Retrieving VNF Pkg with ID " + vnfPkgInfo.getId().toString() + " from project " + vnfPkgInfo.getProjectId());
+                //check if project exists as slice, if not create it
+                Optional<SliceResource> sliceOptional = sliceRepository.findBySliceId(vnfPkgInfo.getProjectId());
+                SliceResource slice;
+                if(!sliceOptional.isPresent()) {
+                    log.info("Slice with id " + vnfPkgInfo.getProjectId() + " doesn't exist");
+                    //get project information from catalogue
+                    ProjectResource projectResource = cataloguePlugin.getProject(vnfPkgInfo.getProjectId(), authorization);
+                    slice = new SliceResource(vnfPkgInfo.getProjectId(), vnfPkgInfo.getProjectId(), projectResource.getUsers());
+                    if(!projectResource.getUsers().contains(adminUserName))
+                        slice.addUser(adminUserName);
+                    sliceRepository.saveAndFlush(slice);
+                    log.info("Created slice with id " + vnfPkgInfo.getProjectId());
+                }
+                MultipartFile vnfPkg = cataloguePlugin.getVnfPkgContent(vnfPkgInfo.getId().toString(), vnfPkgInfo.getProjectId(),null, storagePath, "Bearer " + authorization);
                 csarInfo = ArchiveParser.archiveToMainDescriptor(vnfPkg);
                 csarInfo.setPackageFilename(vnfPkgInfo.getId().toString());
                 dt = csarInfo.getMst();
                 mf = archiveParser.getMFContent();
 
-                Optional<SdkFunction> functionOptional = functionRepository.findByVnfdIdAndVersion(dt.getMetadata().getDescriptorId(), dt.getMetadata().getVersion());
+                Optional<SdkFunction> functionOptional = functionRepository.findByVnfdIdAndVersionAndSliceId(dt.getMetadata().getDescriptorId(), dt.getMetadata().getVersion(), vnfPkgInfo.getProjectId());
                 if (functionOptional.isPresent()) {
                     log.info("Function with vnfdID " + dt.getMetadata().getDescriptorId() + " and version " + dt.getMetadata().getVersion() + " already present");
                     functionOptional.get().setEpoch(Instant.now().getEpochSecond());
@@ -738,7 +751,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
     private void checkAndResolveFunction(SdkFunction function) throws AlreadyExistingEntityException, NotExistingEntityException {
         //In case of new function, check if a function with the same vnfdId and version is present
         if(function.getId() == null) {
-            Optional<SdkFunction> functionOptional = functionRepository.findByVnfdIdAndVersion(function.getVnfdId(), function.getVersion());
+            Optional<SdkFunction> functionOptional = functionRepository.findByVnfdIdAndVersionAndSliceId(function.getVnfdId(), function.getVersion(), function.getSliceId());
             if (functionOptional.isPresent()) {
                 //log.error("Function with vnfdID " + function.getVnfdId() + " and version " + function.getVersion() + " is already present with ID " + functionOptional.get().getId());
                 throw new AlreadyExistingEntityException("Function with vnfdID " + function.getVnfdId() + " and version " + function.getVersion() + " is already present with ID " + functionOptional.get().getId());
@@ -814,30 +827,22 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         DescriptorTemplate dt = csarInfo.getMst();
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        //TODO check null pointer exception?
         try {
+            if(dt.getMetadata() == null)
+                throw new MalformedElementException("TOSCA Descriptor Template without metadata");
             sdkFunction.setVnfdId(dt.getMetadata().getDescriptorId());
             sdkFunction.setVersion(dt.getMetadata().getVersion());
             sdkFunction.setDescription(dt.getDescription());
             sdkFunction.setVendor(dt.getMetadata().getVendor());
             //For the moment consider only one VNFNode
+            if(dt.getTopologyTemplate().getVNFNodes() == null)
+                throw new MalformedElementException("TOSCA Descriptor Template without VNF nodes");
             VNFNode vnfNode = dt.getTopologyTemplate().getVNFNodes().values().iterator().next();
-            sdkFunction.setName(vnfNode.getProperties().getProductName());
+            if(vnfNode.getProperties().getProductName() != null)
+                sdkFunction.setName(vnfNode.getProperties().getProductName());
+            else
+                sdkFunction.setName(dt.getTopologyTemplate().getVNFNodes().keySet().iterator().next());
             //sdkFunction.setVnfdProvider(vnfNode.getProperties().getProvider());
-
-            //check if project exists as slice, if not create it
-            Optional<SliceResource> sliceOptional = sliceRepository.findBySliceId(projectId);
-            SliceResource slice;
-            if(!sliceOptional.isPresent()) {
-                log.info("Slice with id " + projectId + " doesn't exist");
-                //get project information from catalogue
-                ProjectResource projectResource = cataloguePlugin.getProject(projectId, authorization);
-                slice = new SliceResource(projectId, projectId, projectResource.getUsers());
-                if(!projectResource.getUsers().contains(adminUserName))
-                    slice.addUser(adminUserName);
-                sliceRepository.saveAndFlush(slice);
-                log.info("Created slice with id " + projectId);
-            }
 
             sdkFunction.setSliceId(projectId);
             //check if is correct assigning ownership to the provider
@@ -847,8 +852,15 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             sdkFunction.setAccessLevel(4);
 
             Set<ConnectionPoint> connectionPoints = new HashSet<>();
+            if(dt.getTopologyTemplate() == null)
+                throw new MalformedElementException("TOSCA Descriptor Template without topology template");
+            if(dt.getTopologyTemplate().getSubstituitionMappings() == null || dt.getTopologyTemplate().getSubstituitionMappings().getRequirements() == null
+                || dt.getTopologyTemplate().getSubstituitionMappings().getRequirements().getVirtualLink() == null)
+                throw new MalformedElementException("TOSCA Descriptor Template without virtual link in substitution mappings requirements");
             List<VirtualLinkPair> virtualLinkPairs = dt.getTopologyTemplate().getSubstituitionMappings().getRequirements().getVirtualLink();
             Map<String, VnfExtCpNode> cpNodes = dt.getTopologyTemplate().getVnfExtCpNodes();
+            if(cpNodes == null)
+                throw new MalformedElementException("TOSCA Descriptor Template without external connection points");
             for (Map.Entry<String, VnfExtCpNode> cpNode : cpNodes.entrySet()) {
                 ConnectionPoint cp = new ConnectionPoint();
                 cp.setName(cpNode.getKey());
@@ -865,19 +877,43 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             sdkFunction.setConnectionPoint(connectionPoints);
 
             //For the moment consider only one VDU
+            if(dt.getTopologyTemplate().getVDUComputeNodes() == null)
+                throw new MalformedElementException("TOSCA Descriptor Template without VDU compute nodes");
             VDUComputeNode vduNode = dt.getTopologyTemplate().getVDUComputeNodes().values().iterator().next();
-            sdkFunction.setMaxInstancesCount(vduNode.getProperties().getVduProfile().getMaxNumberOfInstances());
-            sdkFunction.setMinInstancesCount(vduNode.getProperties().getVduProfile().getMinNumberOfInstances());
+            if(vduNode.getProperties() == null)
+                throw new MalformedElementException("TOSCA Descriptor Template without VDU compute node properties");
+            if(vduNode.getProperties().getVduProfile() == null)
+                throw new MalformedElementException("TOSCA Descriptor Template without VDU compute node profile");
+            if(vduNode.getProperties().getVduProfile().getMaxNumberOfInstances() != null)
+                sdkFunction.setMaxInstancesCount(vduNode.getProperties().getVduProfile().getMaxNumberOfInstances());
+            else
+                sdkFunction.setMaxInstancesCount(1);
+            if(vduNode.getProperties().getVduProfile().getMinNumberOfInstances() != null)
+                sdkFunction.setMinInstancesCount(vduNode.getProperties().getVduProfile().getMinNumberOfInstances());
+            else
+                sdkFunction.setMinInstancesCount(1);
 
             SwImageData imageData = new SwImageData();
+            //For the moment consider only one VDU block storage node
+            if(dt.getTopologyTemplate().getVDUBlockStorageNodes() == null)
+                throw new MalformedElementException("TOSCA Descriptor Template without VDU block storage nodes");
             VDUVirtualBlockStorageNode storageNode = dt.getTopologyTemplate().getVDUBlockStorageNodes().values().iterator().next();
+            if(storageNode.getProperties() == null || storageNode.getProperties().getSwImageData() == null)
+                throw new MalformedElementException("TOSCA Descriptor Template without VDU software image data");
             imageData.setImgName(storageNode.getProperties().getSwImageData().getImageName());
             imageData.setImgVersion(storageNode.getProperties().getSwImageData().getVersion());
             imageData.setChecksum(storageNode.getProperties().getSwImageData().getChecksum());
-            imageData.setContainerFormat(storageNode.getProperties().getSwImageData().getContainerFormat().toString());
-            imageData.setDiskFormat(storageNode.getProperties().getSwImageData().getDiskFormat().toString());
+            if(storageNode.getProperties().getSwImageData().getContainerFormat() != null)
+                imageData.setContainerFormat(storageNode.getProperties().getSwImageData().getContainerFormat().toString());
+            if(storageNode.getProperties().getSwImageData().getDiskFormat() != null)
+                imageData.setDiskFormat(storageNode.getProperties().getSwImageData().getDiskFormat().toString());
             imageData.setSize(storageNode.getProperties().getSwImageData().getSize());
+            if(storageNode.getProperties().getVirtualBlockStorageData() == null)
+                throw new MalformedElementException("TOSCA Descriptor Template without VDU block storage data");
             imageData.setMinDisk(storageNode.getProperties().getVirtualBlockStorageData().getSizeOfStorage());
+            if(vduNode.getCapabilities() == null || vduNode.getCapabilities().getVirtualCompute() == null || vduNode.getCapabilities().getVirtualCompute().getProperties() == null
+                || vduNode.getCapabilities().getVirtualCompute().getProperties().getVirtualMemory() == null || vduNode.getCapabilities().getVirtualCompute().getProperties().getVirtualCpu() == null)
+                throw new MalformedElementException("TOSCA Descriptor Template without VDU virtual compute data");
             imageData.setMinRam(vduNode.getCapabilities().getVirtualCompute().getProperties().getVirtualMemory().getVirtualMemSize());
             imageData.setMinCpu(vduNode.getCapabilities().getVirtualCompute().getProperties().getVirtualCpu().getNumVirtualCpu());
             sdkFunction.setSwImageData(imageData);
@@ -913,7 +949,8 @@ public class FunctionManager implements FunctionManagerProviderInterface {
             //package filename is the vnfPkgInfo ID
             sdkFunction.setVnfInfoId(csarInfo.getPackageFilename());
             functionRepository.saveAndFlush(sdkFunction);
-        }catch(MalformedElementException | AlreadyExistingEntityException e){
+        }catch(NullPointerException | MalformedElementException | AlreadyExistingEntityException e){
+            log.debug(null, e);
             log.error(e.getMessage());
             throw new FailedOperationException(e.getMessage());
         }

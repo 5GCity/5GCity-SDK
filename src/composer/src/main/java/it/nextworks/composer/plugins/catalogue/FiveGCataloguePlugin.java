@@ -15,6 +15,7 @@ import it.nextworks.composer.plugins.catalogue.sol005.vnfpackagemanagement.eleme
 import it.nextworks.composer.plugins.catalogue.sol005.vnfpackagemanagement.elements.VnfPkgInfo;
 import it.nextworks.composer.plugins.catalogue.sol005.vnfpackagemanagement.elements.VnfPkgInfoModifications;
 import it.nextworks.nfvmano.libs.common.exceptions.FailedOperationException;
+import org.apache.commons.fileupload.disk.DiskFileItem;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import it.nextworks.composer.plugins.catalogue.api.nsd.DefaultApi;
 import it.nextworks.composer.plugins.catalogue.invoker.nsd.ApiClient;
 import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
 
 public class FiveGCataloguePlugin extends CataloguePlugin {
@@ -79,13 +81,13 @@ public class FiveGCataloguePlugin extends CataloguePlugin {
 			
 		//log.debug("Creating MultipartFile from file");
         File servicePackage = new File(servicePackagePath);
-		MultipartFile multipartFile = this.createMultiPartFromFile(servicePackage, contentType);
 		try {
+            MultipartFile multipartFile = this.createMultiPartFromFile(servicePackage);
 			log.debug("Trying to push data to catalogue");
 			nsdApi.uploadNSD(nsInfo.getId().toString(), project,  multipartFile, contentType, authorization);
 			log.debug("Data has been pushed correctly");
 //			nsdApi.uploadNSD(nsInfo.getId().toString(), fileDescriptor, contentType);
-		} catch(RestClientException e) {
+		} catch(FailedOperationException | RestClientException e) {
 			log.error("Something went wrong pushing the descriptor content on the catalogue: " + e.getMessage());
 			nsdApi.deleteNSDInfo(nsInfo.getId().toString(), project, authorization);
 			throw new RestClientException("Something went wrong pushing the descriptor content on the catalogue: " + e.getMessage(), e);
@@ -197,11 +199,11 @@ public class FiveGCataloguePlugin extends CataloguePlugin {
 
             IOUtils.closeQuietly(inputStream);
 
-            MultipartFile multipartFile = createMultiPartFromFile(targetFile, "multipart/form-data");
+            MultipartFile multipartFile = createMultiPartFromFile(targetFile);
 
             return multipartFile;
 
-		} catch(RestClientException e) {
+		} catch(FailedOperationException | RestClientException e) {
 			log.error("RestClientException when trying to get vnfPkg  " + vnfPkgId + ". Error: " + e.getMessage());
 			throw new RestClientException("RestClientException when trying to get vnfPkg  " + vnfPkgId + ". Error: " + e.getMessage(), e);
 		} catch (IOException e) {
@@ -230,12 +232,12 @@ public class FiveGCataloguePlugin extends CataloguePlugin {
         }
 
         File functionPackage = new File(functionPackagePath);
-        MultipartFile multipartFile = this.createMultiPartFromFile(functionPackage, contentType);
         try {
+            MultipartFile multipartFile = this.createMultiPartFromFile(functionPackage);
             log.debug("Trying to push data to catalogue");
             vnfApi.uploadVNFPkg(vnfPkgInfo.getId().toString(), project, multipartFile, contentType, authorization);
             log.debug("Data has been pushed correctly");
-        } catch(RestClientException e) {
+        } catch(FailedOperationException | RestClientException e) {
             log.error("Something went wrong pushing the descriptor content on the catalogue: " + e.getMessage());
             vnfApi.deleteVNFPkgInfo(vnfPkgInfo.getId().toString(), project, authorization);
             throw new RestClientException("Something went wrong pushing the descriptor content on the catalogue: " + e.getMessage(), e);
@@ -315,7 +317,8 @@ public class FiveGCataloguePlugin extends CataloguePlugin {
         }
     }
 
-	private MultipartFile createMultiPartFromFile(File file, String contentType) throws IOException {
+	private MultipartFile createMultiPartFromFile(File file) throws FailedOperationException {
+	    /*
 	    byte[] content = null;
 		try {
 		    content = Files.readAllBytes(file.toPath());
@@ -325,7 +328,28 @@ public class FiveGCataloguePlugin extends CataloguePlugin {
 		                     file.getName(), contentType, content);
 
 		return multipartFile;
+        */
 
+        DiskFileItem fileItem;
+        try {
+            fileItem = new DiskFileItem("file",  Files.probeContentType(file.toPath()), false, file.getName(), (int) file.length() , file.getParentFile());
+            InputStream input =  new FileInputStream(file);
+            OutputStream os = fileItem.getOutputStream();
+            int ret = input.read();
+            while ( ret != -1 )
+            {
+                os.write(ret);
+                ret = input.read();
+            }
+            os.flush();
+        } catch (Exception e) {
+            throw new FailedOperationException("Unable  to create Multipart file");
+        }
+
+
+        MultipartFile multipartFile = new CommonsMultipartFile(fileItem);
+
+        return multipartFile;
 	}
 	
 	private File convertToFile(MultipartFile multipart) throws Exception {

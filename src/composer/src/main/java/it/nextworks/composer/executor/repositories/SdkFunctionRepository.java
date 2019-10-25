@@ -25,9 +25,7 @@ public interface SdkFunctionRepository extends JpaRepository<SdkFunction, Long> 
 
     Optional<SdkFunction> findById(Long id);
 
-    Optional<SdkFunction> findByName(String name);
-
-    Optional<SdkFunction> findByVnfdIdAndVersion(String vnfdId, String version);
+    Optional<SdkFunction> findByVnfdIdAndVersionAndSliceId(String vnfdId, String version, String sliceId);
 
     List<SdkFunction> findBySliceId(String sliceId);
 }

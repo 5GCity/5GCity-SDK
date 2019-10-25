@@ -543,7 +543,7 @@ public class ApiClient {
         }
     }
 
-    public Object invokeApi(String path, HttpMethod method, Object body, String authorization) throws RestClientException {
+    public Object invokeApi(String path, HttpMethod method, MultiValueMap<String, String> queryParams, Object body, String authorization) throws RestClientException {
         File tempFile = null;
         MultipartFile multipartFile = (MultipartFile) body;
         try {
@@ -562,6 +562,9 @@ public class ApiClient {
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
         headers.add("Authorization", authorization);
         final UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(basePath).path(path);
+        if (queryParams != null) {
+            builder.queryParams(queryParams);
+        }
         HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
         Document document = null;
         try {

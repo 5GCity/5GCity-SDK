@@ -975,7 +975,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     private void checkAndResolveService(SdkService service) throws NotExistingEntityException, MalformedElementException, AlreadyExistingEntityException, NotAuthorizedOperationException{
         //In case of new service, check if a service with the same name and version is present
         if(service.getId() == null) {
-            Optional<SdkService> serviceOptional = serviceRepository.findByNameAndVersion(service.getName(), service.getVersion());
+            Optional<SdkService> serviceOptional = serviceRepository.findByNameAndVersionAndSliceId(service.getName(), service.getVersion(), service.getSliceId());
             if (serviceOptional.isPresent()) {
                 //log.error("Service with name " + service.getName() + " and version " + service.getVersion() + " is already present with ID " + serviceOptional.get().getId());
                 throw new AlreadyExistingEntityException("Service with name " + service.getName() + " and version " + service.getVersion() + " is already present with ID " + serviceOptional.get().getId());
