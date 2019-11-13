@@ -146,7 +146,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
         List<VnfPkgInfo> vnfPackageInfoList;
         try {
-            vnfPackageInfoList = cataloguePlugin.getVnfPackageInfoList(null, "Bearer " + authorization);
+            vnfPackageInfoList = cataloguePlugin.getVnfPackageInfoList("*", "Bearer " + authorization);
         }catch (RestClientException e){
             log.debug(null, e);
             return;

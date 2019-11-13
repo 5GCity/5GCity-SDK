@@ -63,14 +63,12 @@ public class SdkServiceTest {
     private static Set<ServiceActionRule> makeActionRules(){
         Set<ServiceActionRule> actionRules = new HashSet<>();
         ServiceActionRule rule1 = new ServiceActionRule();
-        ServiceActionRule rule2 = new ServiceActionRule();
         List<String> actionsId = new ArrayList<>();
         actionsId.add("action2");
         rule1.setActionsId(actionsId);
-        rule2.setActionsId(actionsId);
         Set<RuleCondition> rc = new HashSet<>();
         RuleCondition cond1 = new RuleCondition();
-        cond1.setComparator(RuleCondition.Comparator.DIFF);
+        cond1.setComparator(RuleCondition.Comparator.GEQ);
         cond1.setParameterId("monparam3");
         cond1.setValue(Double.valueOf(100));
         rc.add(cond1);
@@ -81,9 +79,10 @@ public class SdkServiceTest {
         cond2.setValue(Double.valueOf(200));
         rc2.add(cond2);
         rule1.setConditions(rc);
-        rule2.setConditions(rc2);
+        rule1.setName("name");
+        rule1.setDuration("duration");
+        rule1.setSeverity("severity");
         actionRules.add(rule1);
-        actionRules.add(rule2);
         return actionRules;
     }
 
@@ -227,7 +226,6 @@ public class SdkServiceTest {
         ScaleInAction action2 = new ScaleInAction();
         action2.setName("action2");
         action2.setComponentIndex("0");
-        action2.setMin(10);
         action2.setStep(3);
         action2.setActionType(ServiceActionType.SCALE_IN);
         service.setActions(new HashSet<>(Arrays.asList(action2)));

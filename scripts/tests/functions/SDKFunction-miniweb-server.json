@@ -31,13 +31,6 @@
         "metricType": "SYSTEM",
         "parameterType": "FUNCTION",
         "name": "cpu_utilization"
-      },
-      {
-        "transform": "MAX_OVER_TIME",
-        "argumentList": [],
-        "targetParameterName": "cpu_utilization",
-        "parameterType": "TRANSFORMED",
-        "name": "max_cpu_utilization"
       }
     ],
     "accessLevel": 4,
@@ -55,5 +48,5 @@
     "minInstancesCount": 3,
     "maxInstancesCount": 5,
     "requiredPorts": [],
-    "sliceId": "test2"
+    "sliceId": "admin"
 }

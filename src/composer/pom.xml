@@ -98,19 +98,7 @@
 			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
 		</dependency>
-
-        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat -->
-		<dependency>
-	        <groupId>com.fasterxml.jackson.dataformat</groupId>
-	        <artifactId>jackson-dataformat-yaml</artifactId>
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core -->
-	    <dependency>
-	        <groupId>com.fasterxml.jackson.core</groupId>
-	        <artifactId>jackson-databind</artifactId>
-        </dependency>
-
+        
 	    <!-- https://mvnrepository.com/artifact/joda-time/joda-time -->
         <dependency>
             <groupId>joda-time</groupId>

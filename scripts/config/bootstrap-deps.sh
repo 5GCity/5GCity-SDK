@@ -33,7 +33,6 @@ sudo apt install postgresql postgresql-contrib -y
 ## installing nfv-sol-libs
 git clone https://github.com/nextworks-it/nfv-sol-libs/
 cd  nfv-sol-libs
-git checkout v3.0
 chmod +x install_nfv_sol_libs.sh
 ./install_nfv_sol_libs.sh
 

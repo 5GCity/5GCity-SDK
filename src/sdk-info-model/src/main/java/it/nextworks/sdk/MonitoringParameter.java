@@ -110,8 +110,8 @@ public abstract class MonitoringParameter {
     public void setSdkFunction(SdkFunction sdkFunction) { this.sdkFunction = sdkFunction; }
 
     @JsonIgnore
-    public boolean isValid() {
-        return parameterType != null
+    public boolean isValid() {//TODO remove check on parameterType
+        return parameterType != null && (parameterType.equals(MonitoringParameterType.FUNCTION) || parameterType.equals(MonitoringParameterType.IMPORTED))
             && name != null && name.length() > 0;
     }
 

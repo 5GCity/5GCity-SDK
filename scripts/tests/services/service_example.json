@@ -162,6 +162,9 @@
 		"actionsName": [
 		  "scale_in"
 		],
+                "name": "testRule3",
+                "duration": "1m",
+                "severity": "major",
 		"conditions": [
 		  {
 			"parameterName": "fw_cpu_utilization",

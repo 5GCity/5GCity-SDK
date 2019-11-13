@@ -21,6 +21,7 @@ import java.util.Set;
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
+    "componentIndex",
     "actionId",
     "actionType"
 })
@@ -34,6 +35,8 @@ public abstract  class ServiceAction {
     private ServiceActionType actionType;
 
     private String name;
+
+    private String componentIndex;
 
     @ManyToOne
     private SdkService sdkService;
@@ -73,6 +76,16 @@ public abstract  class ServiceAction {
     @JsonProperty("actionType")
     public void setActionType(ServiceActionType actionType) {
         this.actionType = actionType;
+    }
+
+    @JsonProperty("componentIndex")
+    public String getComponentIndex() {
+        return componentIndex;
+    }
+
+    @JsonProperty("componentIndex")
+    public void setComponentIndex(String componentIndex) {
+        this.componentIndex = componentIndex;
     }
 
     @JsonIgnore
@@ -115,6 +128,7 @@ public abstract  class ServiceAction {
         result = ((result* 31)+((this.id == null)? 0 :this.id.hashCode()));
         result = ((result* 31)+((this.actionType == null)? 0 :this.actionType.hashCode()));
         result = ((result* 31)+((this.name == null)? 0 :this.name.hashCode()));
+        result = ((result* 31)+((this.componentIndex == null)? 0 :this.componentIndex.hashCode()));
         return result;
     }
 
@@ -129,12 +143,14 @@ public abstract  class ServiceAction {
         ServiceAction rhs = ((ServiceAction) other);
         return (((this.id == rhs.id)||((this.id!= null)&&this.id.equals(rhs.id)))
             &&((this.name == rhs.name)||((this.name!= null)&&this.name.equals(rhs.name)))
-            &&((this.actionType == rhs.actionType)||((this.actionType!= null)&&this.actionType.equals(rhs.actionType))));
+            &&((this.actionType == rhs.actionType)||((this.actionType!= null)&&this.actionType.equals(rhs.actionType)))
+            &&((this.componentIndex == rhs.componentIndex)||((this.componentIndex!= null)&&this.componentIndex.equals(rhs.componentIndex))));
     }
 
     @JsonIgnore
     public boolean isValid() {
         return actionType != null
-            && name != null && name.length() > 0;
+            && name != null && name.length() > 0
+            && componentIndex != null;
     }
 }

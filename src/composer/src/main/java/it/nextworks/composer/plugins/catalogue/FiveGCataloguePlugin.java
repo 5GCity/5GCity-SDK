@@ -4,10 +4,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.zip.ZipInputStream;
 
-import com.openshift.internal.restclient.model.Project;
-import it.nextworks.composer.controller.elements.SliceResource;
 import it.nextworks.composer.plugins.catalogue.api.management.ProjectResource;
 import it.nextworks.composer.plugins.catalogue.sol005.nsdmanagement.elements.*;
 import it.nextworks.composer.plugins.catalogue.sol005.vnfpackagemanagement.elements.CreateVnfPkgInfoRequest;
@@ -22,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.Resource;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.databind.ObjectMapper;
