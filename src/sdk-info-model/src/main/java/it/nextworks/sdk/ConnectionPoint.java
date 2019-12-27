@@ -67,6 +67,8 @@ public class ConnectionPoint {
 
     private String internalLink;
 
+    private boolean isManagement;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @Fetch(FetchMode.SELECT)
     @Cascade(org.hibernate.annotations.CascadeType.ALL)
@@ -144,6 +146,16 @@ public class ConnectionPoint {
     @JsonProperty("componentIndex")
     public void setComponentIndex(Integer componentIndex) {
         this.componentIndex = componentIndex;
+    }
+
+    @JsonProperty("isManagement")
+    public boolean isManagement() {
+        return isManagement;
+    }
+
+    @JsonProperty("isManagement")
+    public void setManagement(boolean management) {
+        isManagement = management;
     }
 
     @JsonIgnore

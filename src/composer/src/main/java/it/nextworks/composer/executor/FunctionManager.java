@@ -763,9 +763,8 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         if(!sliceOptional.isPresent())
             throw new NotExistingEntityException("Slice with sliceId " + function.getSliceId() + " is not present in database");
 
-        int i = 0;
         for(ConnectionPoint cp : function.getConnectionPoint()){
-            cp.setInternalLink("link_" + ++i);
+            cp.setInternalLink(cp.getName());
         }
 
         function.setEpoch(Instant.now().getEpochSecond());
@@ -871,6 +870,11 @@ public class FunctionManager implements FunctionManagerProviderInterface {
                         break;
                     }
                 }
+
+                if(!cpNode.getValue().getProperties().getVirtualNetworkInterfaceRequirements().isEmpty()
+                    && cpNode.getValue().getProperties().getVirtualNetworkInterfaceRequirements().get(0).getNetworkInterfaceRequirements().containsKey("isManagement")
+                    && cpNode.getValue().getProperties().getVirtualNetworkInterfaceRequirements().get(0).getNetworkInterfaceRequirements().get("isManagement").equalsIgnoreCase("true"))
+                    cp.setManagement(true);
                 connectionPoints.add(cp);
             }
 

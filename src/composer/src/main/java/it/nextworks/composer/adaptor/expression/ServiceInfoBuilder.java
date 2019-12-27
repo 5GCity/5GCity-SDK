@@ -201,6 +201,8 @@ class ServiceInfoBuilder {
                 }
             }
         }
+
+        /*
         for (ConnectionPoint connectionPoint : service2Cp.get(lastService)) {
             if (connectionPoint.getType().equals(ConnectionPointType.EXTERNAL)) {
                 // Mark containing link as needing a SAP (i.e. _mgmt)
@@ -215,8 +217,10 @@ class ServiceInfoBuilder {
                 }
             }
         }
+         */
     }
 
+    /*
     private Link findFirstAttachedLink(ConnectionPoint cp) {
         if (cp.getLink() != null) {
             return cp.getLink();
@@ -250,6 +254,7 @@ class ServiceInfoBuilder {
             ));
         }
     }
+     */
 
     ServiceInformation build() {
         makeAdapterLinks();

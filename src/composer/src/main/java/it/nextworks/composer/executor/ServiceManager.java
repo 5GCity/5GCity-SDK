@@ -15,8 +15,6 @@
  */
 package it.nextworks.composer.executor;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import it.nextworks.composer.adaptor.interfaces.ServicesAdaptorProviderInterface;
 import it.nextworks.composer.auth.KeycloakUtils;
 import it.nextworks.composer.controller.elements.SliceResource;

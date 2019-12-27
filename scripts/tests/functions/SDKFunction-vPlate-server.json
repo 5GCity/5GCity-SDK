@@ -13,6 +13,7 @@
       {
         "name": "eth0",
         "cpType": "EXTERNAL",
+        "isManagement": true,
         "requiredPort": []
       }
     ],

@@ -729,7 +729,8 @@ public class SdkFunction implements InstantiableCandidate {
             && connectionPoint.stream()
                             .map(ConnectionPoint::getName)
                             .distinct()
-                            .count() == connectionPoint.size();  // I.e. cp names are unique in the service
+                            .count() == connectionPoint.size()  // I.e. cp names are unique in the service
+            && connectionPoint.stream().map(ConnectionPoint::isManagement).filter(x -> x).count() == 1; //one management connection point
     }
 
     private boolean validateExpressions() {

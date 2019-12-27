@@ -19,6 +19,7 @@
       {
         "name": "cp-eth0",
         "cpType": "EXTERNAL",
+        "isManagement": true,
         "requiredPort": [
           80,
           443

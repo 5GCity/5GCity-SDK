@@ -393,6 +393,12 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
     private VnfExtCpNode makeCpNode(ConnectionPoint cp){
         List<LayerProtocol> layerProtocols = new ArrayList<>();
         layerProtocols.add(LayerProtocol.IPV4);
+        List<VirtualNetworkInterfaceRequirements> virtualNetworkInterfaceRequirements = new ArrayList<>();
+        HashMap<String, String> interfaceRequirements = new HashMap<>();
+        if(cp.isManagement())
+            interfaceRequirements.put("isManagement", "true");
+        VirtualNetworkInterfaceRequirements virtualNetworkInterfaceRequirement = new VirtualNetworkInterfaceRequirements(null, null, false, interfaceRequirements, null);
+        virtualNetworkInterfaceRequirements.add(virtualNetworkInterfaceRequirement);
         VnfExtCpProperties properties = new VnfExtCpProperties(
             null,
             layerProtocols,
@@ -400,7 +406,7 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
             cp.getName(),
             null,
             false,
-            null
+            virtualNetworkInterfaceRequirements
         );
 
         //TODO requirements? externalVirtualLinks? 

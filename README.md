@@ -96,6 +96,7 @@ The term Slice in the context of 5GCity SDK represents the concept of Project.
 		  {
 			"name": "cp-eth0",
 			"cpType": "EXTERNAL",
+                        "isManagement": true,
 			"requiredPort": [80,443]
 		  }
 		],
