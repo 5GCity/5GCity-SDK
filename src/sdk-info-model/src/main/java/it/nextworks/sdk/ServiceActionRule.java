@@ -35,6 +35,11 @@ public class ServiceActionRule {
     @OrderColumn
     private List<String> actionsId = new ArrayList<String>();
 
+    //Prometheus AlertingRule mapping
+    private String name;
+    private String duration;
+    private String severity;
+
     @OneToMany(mappedBy = "serviceActionRule", cascade = CascadeType.ALL, orphanRemoval=true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @LazyCollection(LazyCollectionOption.FALSE)
@@ -67,6 +72,36 @@ public class ServiceActionRule {
     @JsonProperty("actionsName")
     public void setActionsId(List<String> actionsId) {
         this.actionsId = actionsId;
+    }
+
+    @JsonProperty("name")
+    public String getName() {
+        return name;
+    }
+
+    @JsonProperty("name")
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @JsonProperty("duration")
+    public String getDuration() {
+        return duration;
+    }
+
+    @JsonProperty("duration")
+    public void setDuration(String duration) {
+        this.duration = duration;
+    }
+
+    @JsonProperty("severity")
+    public String getSeverity() {
+        return severity;
+    }
+
+    @JsonProperty("severity")
+    public void setSeverity(String severity) {
+        this.severity = severity;
     }
 
     @JsonProperty("conditions")
@@ -107,32 +142,25 @@ public class ServiceActionRule {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(ServiceActionRule.class.getName()).append('@').append(Integer.toHexString(System.identityHashCode(this))).append('[');
-        sb.append("actionsId");
-        sb.append('=');
-        sb.append(((this.actionsId == null)?"<null>":this.actionsId));
-        sb.append(',');
-        sb.append("conditions");
-        sb.append('=');
-        sb.append(((this.conditions == null)?"<null>":this.conditions));
-        sb.append(',');
-        sb.append("operator");
-        sb.append('=');
-        sb.append(((this.operator == null)?"<null>":this.operator));
-        sb.append(',');
-        if (sb.charAt((sb.length()- 1)) == ',') {
-            sb.setCharAt((sb.length()- 1), ']');
-        } else {
-            sb.append(']');
-        }
-        return sb.toString();
+        return "ServiceActionRule{" +
+            "id=" + id +
+            ", actionsId=" + actionsId +
+            ", name='" + name + '\'' +
+            ", duration='" + duration + '\'' +
+            ", severity='" + severity + '\'' +
+            ", conditions=" + conditions +
+            ", operator=" + operator +
+            ", sdkService=" + sdkService +
+            '}';
     }
 
     @Override
     public int hashCode() {
         int result = 1;
         result = ((result* 31)+((this.actionsId == null)? 0 :this.actionsId.hashCode()));
+        result = ((result* 31)+((this.name == null)? 0 :this.name.hashCode()));
+        result = ((result* 31)+((this.duration == null)? 0 :this.duration.hashCode()));
+        result = ((result* 31)+((this.severity == null)? 0 :this.severity.hashCode()));
         result = ((result* 31)+((this.conditions == null)? 0 :this.conditions.hashCode()));
         result = ((result* 31)+((this.operator == null)? 0 :this.operator.hashCode()));
         return result;
@@ -147,7 +175,12 @@ public class ServiceActionRule {
             return false;
         }
         ServiceActionRule rhs = ((ServiceActionRule) other);
-        return ((((this.actionsId == rhs.actionsId)||((this.actionsId!= null)&&this.actionsId.equals(rhs.actionsId)))&&((this.conditions == rhs.conditions)||((this.conditions!= null)&&this.conditions.equals(rhs.conditions))))&&((this.operator == rhs.operator)||((this.operator!= null)&&this.operator.equals(rhs.operator))));
+        return ((((((((this.actionsId == rhs.actionsId)||((this.actionsId!= null)&&this.actionsId.equals(rhs.actionsId)))
+            &&((this.name == rhs.name)||((this.name!= null)&&this.name.equals(rhs.name))))
+            &&((this.duration == rhs.duration)||((this.duration!= null)&&this.duration.equals(rhs.duration))))
+            &&((this.severity == rhs.severity)||((this.severity!= null)&&this.severity.equals(rhs.severity))))
+            &&((this.conditions == rhs.conditions)||((this.conditions!= null)&&this.conditions.equals(rhs.conditions))))
+            &&((this.operator == rhs.operator)||((this.operator!= null)&&this.operator.equals(rhs.operator)))));
     }
 
     public enum Operator {
@@ -193,6 +226,13 @@ public class ServiceActionRule {
     public boolean isValid() {
         return actionsId != null
             && actionsId.size() > 0
+            && name != null
+            && name.length() > 0
+            && duration != null
+            && duration.length() > 0
+            && duration.endsWith("m")
+            && severity != null
+            && severity.length() > 0
             && conditions != null
             && conditions.size() > 0
             && conditions.stream().allMatch(RuleCondition::isValid);

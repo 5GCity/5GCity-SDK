@@ -510,7 +510,7 @@ public class DefaultApi {
         };
         if (contentType.equalsIgnoreCase("multipart/form-data")) {
             log.debug("executing modified invoker");
-            return apiClient.invokeApi(path, HttpMethod.PUT, body, authorization);
+            return apiClient.invokeApi(path, HttpMethod.PUT, queryParams, body, authorization);
         } else {
             return apiClient.invokeAPI(path, HttpMethod.PUT, queryParams, postBody, headerParams, formParams, accept,
                     finalContentType, authNames, returnType);
@@ -560,7 +560,7 @@ public class DefaultApi {
         };
         if (contentType.equalsIgnoreCase("multipart/form-data")) {
             log.debug("executing modified invoker");
-            return apiClient.invokeApi(path, HttpMethod.PUT, body, authorization);
+            return apiClient.invokeApi(path, HttpMethod.PUT, queryParams, body, authorization);
         } else {
             return apiClient.invokeAPI(path, HttpMethod.PUT, queryParams, postBody, headerParams, formParams, accept,
                     finalContentType, authNames, returnType);

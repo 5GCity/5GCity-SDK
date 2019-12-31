@@ -239,14 +239,12 @@ public class SwImageData {
             throw new MalformedElementException("Please provide valid image name");
         if(imgVersion == null || imgVersion.length() == 0)
             throw new MalformedElementException("Please provide valid image version");
-        if(this.minDisk < 0)
+        if(this.minDisk == null || this.minDisk < 0)
             throw new MalformedElementException("Please provide valid image disk size in GB (>0)");
-        if(this.minRam < 0)
+        if(this.minRam == null || this.minRam < 0)
             throw new MalformedElementException("Please provide valid image memory size in MB (>0)");
-        if(this.minCpu < 0)
+        if(this.minCpu == null || this.minCpu < 0)
             throw new MalformedElementException("Please provide valid image cpu number (>0)");
-        if(this.size < 0)
-            throw new MalformedElementException("Please provide valid image size in GB (>0)");
         if(!validateContainerFormat())
             throw new MalformedElementException("Please provide valid image container format (aki, ami, ari, bare, docker, ova, ovf)");
         if(!validateDiskFormat())

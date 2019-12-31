@@ -65,7 +65,6 @@ A physical or virtual machine running ubuntu 16.04, with the following software:
     ```sh
     $ git clone https://github.com/nextworks-it/nfv-sol-libs/
     $ cd  nfv-sol-libs
-    $ git checkout v3.0
     $ chmod +x install_nfv_sol_libs.sh
     $ ./install_nfv_sol_libs.sh
     
@@ -77,7 +76,6 @@ The script [bootstrap-deps.sh] can be run in order to meet the prerequisites.
     ```sh
     $ git clone https://github.com/5GCity/5GCity-SDK
     $ cd 5GCity-SDK
-    $ git checkout v0.8
     $ cd scripts/config/
     $ chmod +x bootstrap.sh
     $ ./bootstrap.sh -h catalogue_host 

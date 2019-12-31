@@ -339,32 +339,26 @@ public class DefaultApi {
 
     public Object uploadVNFPkg(String vnfPkgId, String project, Object body, String contentType, String authorization) throws RestClientException {
         Object postBody = body;
-
         // verify the required parameter 'vnfPkgId' is set
         if (vnfPkgId == null) {
             throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Missing the required parameter 'vnfPkgId' when calling uploadVNFPkg");
         }
-
         // verify the required parameter 'body' is set
         if (body == null) {
             throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Missing the required parameter 'body' when calling uploadVNFPkg");
         }
-
         // create path and map variables
         final Map<String, Object> uriVariables = new HashMap<String, Object>();
         uriVariables.put("vnfPkgId", vnfPkgId);
         String path = UriComponentsBuilder.fromPath("/vnfpkgm/v1/vnf_packages/{vnfPkgId}/package_content").buildAndExpand(uriVariables).toUriString();
-
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
         if(project != null)
             queryParams.add("project", project);
         final HttpHeaders headerParams = new HttpHeaders();
         headerParams.add("Authorization", authorization);
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
-
         if (contentType != null)
             headerParams.add("Content-Type", apiClient.parameterToString(contentType));
-
         final String[] accepts = {
                 "application/json", "application/yaml"
         };
@@ -373,14 +367,13 @@ public class DefaultApi {
                 "application/zip"
         };
         final MediaType finalContentType = apiClient.selectHeaderContentType(contentTypes);
-
         String[] authNames = new String[]{};
 
         ParameterizedTypeReference<Object> returnType = new ParameterizedTypeReference<Object>() {
         };
         if (contentType.equalsIgnoreCase("multipart/form-data")) {
             log.debug("executing modified invoker");
-            return apiClient.invokeApi(path, HttpMethod.PUT, body, authorization);
+            return apiClient.invokeApi(path, HttpMethod.PUT, queryParams, body, authorization);
         } else {
             return apiClient.invokeAPI(path, HttpMethod.PUT, queryParams, postBody, headerParams, formParams, accept,
                     finalContentType, authNames, returnType);

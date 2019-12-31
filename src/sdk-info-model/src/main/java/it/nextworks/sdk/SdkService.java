@@ -764,10 +764,15 @@ public class SdkService implements InstantiableCandidate {
         boolean validActions = true;
         final Set<String> actionNames = new HashSet<String>();
         for(ServiceAction ac : actions){
-            if(!ac.isValid() || !actionNames.add(ac.getName()))
+            if(!ac.isValid() || !actionNames.add(ac.getName())) {
                 validActions = false;
                 break;
+            }
         }
+
+        final Set<String> monitoringParametersNames = new HashSet<>();
+        for(MonitoringParameter monitorigParameter : extMonitoringParameters)
+            monitoringParametersNames.add(monitorigParameter.getName());
 
         if(actionRules != null) {
             for(ServiceActionRule ar : actionRules){
@@ -775,10 +780,18 @@ public class SdkService implements InstantiableCandidate {
                     validActions = false;
                     break;
                 }
+                for(RuleCondition condition : ar.getConditions()){
+                    if(!monitoringParametersNames.contains(condition.getParameterId())) {
+                        validActions = false;
+                        break;
+                    }
+                }
+                /*
                 for(RuleCondition rc : ar.getConditions()){
                     validActions = validActions && (intMonitoringParameters.stream().map(MonitoringParameter::getName).collect(Collectors.toSet()).contains(rc.getParameterId())
                     || extMonitoringParameters.stream().map(MonitoringParameter::getName).collect(Collectors.toSet()).contains(rc.getParameterId()));
                 }
+                 */
             }
         }
 

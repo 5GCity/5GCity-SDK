@@ -13,6 +13,7 @@
       {
         "name": "eth0",
         "cpType": "EXTERNAL",
+        "isManagement": true,
         "requiredPort": []
       }
     ],
@@ -39,5 +40,5 @@
     "minInstancesCount": 1,
     "maxInstancesCount": 2,
     "requiredPorts": [],
-    "sliceId": "test"
+    "sliceId": "admin"
   }

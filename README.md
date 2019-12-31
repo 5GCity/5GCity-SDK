@@ -96,6 +96,7 @@ The term Slice in the context of 5GCity SDK represents the concept of Project.
 		  {
 			"name": "cp-eth0",
 			"cpType": "EXTERNAL",
+                        "isManagement": true,
 			"requiredPort": [80,443]
 		  }
 		],
@@ -320,7 +321,6 @@ The term Slice in the context of 5GCity SDK represents the concept of Project.
 		  {
 			"componentIndex": "1",
 			"step": 1,
-			"min": 2,
 			"actionType": "SCALE_IN",
 			"name": "scale_in"
 		  }
@@ -330,6 +330,9 @@ The term Slice in the context of 5GCity SDK represents the concept of Project.
 			"actionsName": [
 			  "scale_in"
 			],
+                        "name": "testRule3",
+                        "duration": "1m",
+                        "severity": "major",
 			"conditions": [
 			  {
 				"parameterName": "fw_cpu_utilization",

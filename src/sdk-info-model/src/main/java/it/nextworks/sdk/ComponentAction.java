@@ -22,23 +22,10 @@ import javax.persistence.Entity;
 })
 public class ComponentAction extends ServiceAction{
 
-
-    private String componentIndex;
-
     private String componentActionId;
 
     public ComponentAction(){
         //JPA only
-    }
-
-    @JsonProperty("componentIndex")
-    public String getComponentIndex() {
-        return componentIndex;
-    }
-
-    @JsonProperty("componentIndex")
-    public void setComponentIndex(String componentIndex) {
-        this.componentIndex = componentIndex;
     }
 
     @JsonProperty("componentActionId")
@@ -55,10 +42,6 @@ public class ComponentAction extends ServiceAction{
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(ComponentAction.class.getName()).append('@').append(Integer.toHexString(System.identityHashCode(this))).append('[');
-        sb.append("componentIndex");
-        sb.append('=');
-        sb.append(((this.componentIndex == null)?"<null>":this.componentIndex));
-        sb.append(',');
         sb.append("componentActionId");
         sb.append('=');
         sb.append(((this.componentActionId == null)?"<null>":this.componentActionId));
@@ -75,7 +58,6 @@ public class ComponentAction extends ServiceAction{
     public int hashCode() {
         int result = 1;
         result = super.hashCode();
-        result = ((result* 31)+((this.componentIndex == null)? 0 :this.componentIndex.hashCode()));
         result = ((result* 31)+((this.componentActionId == null)? 0 :this.componentActionId.hashCode()));
         return result;
     }
@@ -89,14 +71,13 @@ public class ComponentAction extends ServiceAction{
             return false;
         }
         ComponentAction rhs = ((ComponentAction) other);
-        return super.equals(other) && (((this.componentIndex == rhs.componentIndex)||((this.componentIndex!= null)&&this.componentIndex.equals(rhs.componentIndex)))&&((this.componentActionId == rhs.componentActionId)||((this.componentActionId!= null)&&this.componentActionId.equals(rhs.componentActionId))));
+        return super.equals(other) &&((this.componentActionId == rhs.componentActionId)||((this.componentActionId!= null)&&this.componentActionId.equals(rhs.componentActionId)));
     }
 
     @JsonIgnore
     @Override
     public boolean isValid() {
         return super.isValid()
-            && componentIndex != null
             && componentActionId != null;
     }
 

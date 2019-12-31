@@ -1,10 +1,12 @@
 package it.nextworks.composer.plugins.catalogue;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
 import it.nextworks.nfvmano.libs.descriptors.templates.Node;
+import it.nextworks.sdk.ActionWrapper;
 import it.nextworks.sdk.MonitoringParameter;
 import it.nextworks.sdk.ServiceAction;
 import it.nextworks.sdk.ServiceActionRule;
@@ -20,7 +22,7 @@ import java.util.zip.ZipOutputStream;
 public class ArchiveBuilder {
 
     public static String createNSCSAR(DescriptorTemplate template, Set<MonitoringParameter> monitoringParameters,
-                              Set<ServiceAction> actions, Set<ServiceActionRule> actionRules){
+                              ActionWrapper wrapper){
 
         String serviceName = "descriptor";
         String servicePackagePath;
@@ -56,8 +58,9 @@ public class ArchiveBuilder {
             if(monitoringParameters.size() != 0) {
                 strings.add("\nmonitoring:");
                 strings.add("\tmain_monitoring_descriptor:");
-                strings.add("\t\tSource: Files/Monitoring/monitoringParameters.json");
+                strings.add("\t\tSource: Files/Monitoring/monitoring.json");
             }
+            /*
             if(actions.size() != 0) {
                 strings.add("\nactions:");
                 strings.add("\tmain_actions_descriptor:");
@@ -68,6 +71,7 @@ public class ArchiveBuilder {
                 strings.add("\tmain_action_rules_descriptor:");
                 strings.add("\t\tSource: Files/Monitoring/actionRules.json");
             }
+             */
             Files.write(manifest.toPath(), strings);
             strings.clear();
             File license = new File(licenses, "LICENSE");
@@ -91,19 +95,31 @@ public class ArchiveBuilder {
             ObjectMapper mapper = new ObjectMapper();
             mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
             File monitoringParamsFile;
-            File actionsFile;
-            File actionRulesFile;
             if(monitoringParameters.size() != 0) {
-                monitoringParamsFile = new File(monitoring, "monitoringParameters.json");
-                mapper.writeValue(monitoringParamsFile, monitoringParameters);
-            }
-            if(actions.size() != 0) {
-                actionsFile = new File(monitoring, "actions.json");
-                mapper.writeValue(actionsFile, actions);
-            }
-            if(actionRules.size() != 0) {
-                actionRulesFile = new File(monitoring, "actionRules.json");
-                mapper.writeValue(actionRulesFile, actionRules);
+                monitoringParamsFile = new File(monitoring, "monitoring.json");
+                FileOutputStream fos = new FileOutputStream(monitoringParamsFile);
+                JsonGenerator g = mapper.getFactory().createGenerator(fos);
+                if(wrapper.getActionRules().size() != 0 && wrapper.getActions().size() != 0)
+                    mapper.writeValue(g, wrapper);
+                /*
+                String separator = "#MONITORINGPARAMETERS#\n";
+                byte b[] = separator.getBytes();
+                fos.write(b);
+                mapper.writeValue(g, monitoringParameters);
+                if(actions.size() != 0) {
+                    separator = "\n#ACTIONS#\n";
+                    b = separator.getBytes();
+                    fos.write(b);
+                    mapper.writeValue(g, actions);
+                }
+                if(actionRules.size() != 0) {
+                    separator = "\n#ACTIONRULES#\n";
+                    b = separator.getBytes();
+                    fos.write(b);
+                    mapper.writeValue(g, actionRules);
+                }*/
+                g.close();
+                fos.close();
             }
             mapper = new ObjectMapper(new YAMLFactory());
             mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
@@ -140,7 +156,7 @@ public class ArchiveBuilder {
             File definitions = makeSubFolder(root, "Definitions");
             File files = makeSubFolder(root, "Files");
             File licenses = makeSubFolder(files, "Licences");
-            File monitoring = makeSubFolder(files, "Monitoring");
+            //File monitoring = makeSubFolder(files, "Monitoring");
             File scripts = makeSubFolder(files, "Scripts");
             File tests = makeSubFolder(files, "Tests");
             File metadata = makeSubFolder(root, "TOSCA-Metadata");
@@ -152,11 +168,13 @@ public class ArchiveBuilder {
             strings.add("\tvnf_provider_id: " + template.getMetadata().getVendor());
             strings.add("\tvnf_package_version: " + template.getMetadata().getVersion());
             strings.add(String.format("\tvnf_release_date_time: %1$TD %1$TT", ts));
+            /*
             if(monitoringParameters.size() != 0){
                 strings.add("\nmonitoring:");
                 strings.add("\tmain_monitoring_descriptor:");
-                strings.add("\t\tSource: Files/Monitoring/monitoringParameters.json");
+                strings.add("\t\tSource: Files/Monitoring/monitoring.json");
             }
+            */
             if(cloudInit != null) {
                 strings.add("\nconfiguration:");
                 strings.add("\tcloud_init:");
@@ -179,22 +197,30 @@ public class ArchiveBuilder {
             strings.add("Entry-Definitions: Definitions/"+ functionName + ".yaml");
             Files.write(toscaMetadata.toPath(), strings);
             strings.clear();
-
-            //Create descriptor files
-            File descriptorFile = new File(definitions, functionName + ".yaml");
+            /*
             ObjectMapper mapper = new ObjectMapper();
             mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
             File monitoringParamsFile;
             if(monitoringParameters.size() != 0) {
-                monitoringParamsFile = new File(monitoring, "monitoringParameters.json");
-                mapper.writeValue(monitoringParamsFile, monitoringParameters);
+                monitoringParamsFile = new File(monitoring, "monitoring.json");
+                FileOutputStream fos = new FileOutputStream(monitoringParamsFile);
+                JsonGenerator g = mapper.getFactory().createGenerator(fos);
+                String separator = "#MONITORINGPARAMETERS#\n";
+                byte b[] = separator.getBytes();
+                fos.write(b);
+                mapper.writeValue(g, monitoringParameters);
+                g.close();
+                fos.close();
             }
+            */
             File cloudInitFile;
             if(cloudInit != null){
                 cloudInitFile = new File(scripts, "cloud-init.txt");
                 Files.write(cloudInitFile.toPath(), cloudInit.getBytes());
             }
-            mapper = new ObjectMapper(new YAMLFactory());
+            //Create descriptor files
+            File descriptorFile = new File(definitions, functionName + ".yaml");
+            ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
             mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
             mapper.writeValue(descriptorFile, template);
 

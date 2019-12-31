@@ -15,10 +15,6 @@
  */
 package it.nextworks.composer.executor;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import it.nextworks.composer.adaptor.interfaces.ServicesAdaptorProviderInterface;
 import it.nextworks.composer.auth.KeycloakUtils;
 import it.nextworks.composer.controller.elements.SliceResource;
@@ -28,47 +24,29 @@ import it.nextworks.composer.executor.repositories.*;
 import it.nextworks.composer.plugins.catalogue.ArchiveBuilder;
 import it.nextworks.composer.plugins.catalogue.FiveGCataloguePlugin;
 import it.nextworks.nfvmano.libs.common.exceptions.AlreadyExistingEntityException;
-import it.nextworks.nfvmano.libs.common.exceptions.MalformattedElementException;
 import it.nextworks.nfvmano.libs.common.exceptions.NotAuthorizedOperationException;
 import it.nextworks.nfvmano.libs.common.exceptions.NotPermittedOperationException;
 import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
-import it.nextworks.nfvmano.libs.descriptors.templates.Node;
 import it.nextworks.sdk.*;
 import it.nextworks.sdk.enums.*;
 import it.nextworks.sdk.exceptions.AlreadyPublishedServiceException;
 import it.nextworks.sdk.exceptions.MalformedElementException;
 import it.nextworks.sdk.exceptions.NotExistingEntityException;
 import it.nextworks.sdk.exceptions.NotPublishedServiceException;
-import org.aspectj.weaver.ast.Not;
-import org.hibernate.cfg.NotYetImplementedException;
-import org.mapstruct.Mapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.task.TaskExecutor;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
-import javax.management.Descriptor;
-import javax.swing.*;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.sql.Timestamp;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.zip.GZIPOutputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
+
 
 @Service
 public class ServiceManager implements ServiceManagerProviderInterface {
@@ -211,7 +189,8 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     */
 
     @Override
-    public String createService(SdkService service) throws NotExistingEntityException, MalformedElementException, AlreadyExistingEntityException, NotAuthorizedOperationException {
+    public String createService(SdkService service)
+        throws NotExistingEntityException, MalformedElementException, AlreadyExistingEntityException, NotAuthorizedOperationException{
 
         log.info("Storing into database a new service");
 
@@ -696,7 +675,9 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         Set<MonitoringParameter> monitoringParameters = new HashSet<>();
         monitoringParameters.addAll(service.getExtMonitoringParameters());
         monitoringParameters.addAll(service.getIntMonitoringParameters());
-        String servicePackagePath = ArchiveBuilder.createNSCSAR(nsd, monitoringParameters, service.getActions(), service.getActionRules());
+        ActionWrapper toSend = new ActionWrapper(service.getActions(), service.getActionRules());
+        modifyActionWrapper(service, toSend);
+        String servicePackagePath = ArchiveBuilder.createNSCSAR(nsd, monitoringParameters, toSend);
 
         // A thread will be created to handle this request in order to perform it
         // asynchronously.
@@ -869,8 +850,9 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         Set<MonitoringParameter> monitoringParameters = new HashSet<>();
         monitoringParameters.addAll(descriptor.getTemplate().getExtMonitoringParameters());
         monitoringParameters.addAll(descriptor.getTemplate().getIntMonitoringParameters());
-
-        String servicePackagePath = ArchiveBuilder.createNSCSAR(nsd, monitoringParameters, descriptor.getTemplate().getActions(), descriptor.getTemplate().getActionRules());
+        ActionWrapper toSend = new ActionWrapper(descriptor.getTemplate().getActions(), descriptor.getTemplate().getActionRules());
+        modifyActionWrapper(descriptor.getTemplate(), toSend);
+        String servicePackagePath = ArchiveBuilder.createNSCSAR(nsd, monitoringParameters, toSend);
 
         dispatchPublishRequest(
             servicePackagePath,
@@ -972,7 +954,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
     private void checkAndResolveService(SdkService service) throws NotExistingEntityException, MalformedElementException, AlreadyExistingEntityException, NotAuthorizedOperationException{
         //In case of new service, check if a service with the same name and version is present
         if(service.getId() == null) {
-            Optional<SdkService> serviceOptional = serviceRepository.findByNameAndVersion(service.getName(), service.getVersion());
+            Optional<SdkService> serviceOptional = serviceRepository.findByNameAndVersionAndSliceId(service.getName(), service.getVersion(), service.getSliceId());
             if (serviceOptional.isPresent()) {
                 //log.error("Service with name " + service.getName() + " and version " + service.getVersion() + " is already present with ID " + serviceOptional.get().getId());
                 throw new AlreadyExistingEntityException("Service with name " + service.getName() + " and version " + service.getVersion() + " is already present with ID " + serviceOptional.get().getId());
@@ -1165,9 +1147,11 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         }
         for(ServiceActionRule sa : service.getActionRules()){
             sa.setSdkService(null);
+            /*
             for(RuleCondition rc : sa.getConditions()){
                 rc.setServiceActionRule(null);
             }
+             */
         }
     }
 
@@ -1216,6 +1200,40 @@ public class ServiceManager implements ServiceManagerProviderInterface {
                     keycloakUtils.checkUserId(keycloakUtils.getUserNameFromJWT(), service.getOwnerId());
         }
         log.debug("User can access the resource");
+    }
+
+    private void modifyActionWrapper(SdkService service, ActionWrapper wrapper){
+        Set<SdkServiceComponent> components = new HashSet<>(service.getComponents());
+        Set<MonitoringParameter> exMonitoringParameters = new HashSet<>(service.getExtMonitoringParameters());
+        for(ActionWrapper.ModifiedServiceAction action : wrapper.getActions()) {
+            for (SdkServiceComponent component : components) {
+                if (component.getComponentIndex().toString().equals(action.getVnfdId())) {
+                    if (component.getType().equals(SdkServiceComponentType.SDK_FUNCTION)) {
+                        SdkFunction subFunction = functionRepository.findById(component.getComponentId()).get();
+                        action.setVnfdId(subFunction.getVnfdId());
+                    }//TODO handle subservices
+                }
+            }
+        }
+        for(ActionWrapper.ModifiedServiceActionRule rule : wrapper.getActionRules()){
+            for(ActionWrapper.ModifiedRuleCondition condition : rule.getConditions()) {
+                for(MonitoringParameter monitoringParameter : exMonitoringParameters){
+                    if (condition.getParameterId().equals(monitoringParameter.getName()) && monitoringParameter.getParameterType().equals(MonitoringParameterType.IMPORTED)) {
+                        MonitoringParameter functionParameter = monitoringParamRepository.findById(new Long(((MonParamImported)monitoringParameter).getImportedParameterId())).get();
+                        if(functionParameter.getParameterType().equals(MonitoringParameterType.FUNCTION))
+                            condition.setParameterId(((MonParamFunction)functionParameter).getMetricName().toLowerCase());
+                        for (SdkServiceComponent component : components) {
+                            if (component.getComponentIndex().equals(((MonParamImported) monitoringParameter).getComponentIndex())) {
+                                if (component.getType().equals(SdkServiceComponentType.SDK_FUNCTION)) {
+                                    SdkFunction subFunction = functionRepository.findById(component.getComponentId()).get();
+                                    condition.setVnfdId(subFunction.getVnfdId());
+                                } //TODO handle subservices
+                            }
+                        }
+                    } //TODO handle subservices and other types of monitoring parameter
+                }
+            }
+        }
     }
 }
 
