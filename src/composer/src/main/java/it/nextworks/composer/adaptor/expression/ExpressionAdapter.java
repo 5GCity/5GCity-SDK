@@ -306,6 +306,12 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
     }
 
     private VDUVirtualBlockStorageNode makeStorageNode(SdkFunction function){
+        ContainerFormat containerFormat = null;
+        DiskFormat diskFormat = null;
+        if(function.getSwImageData().getContainerFormat() != null)
+            containerFormat = ContainerFormat.valueOf(function.getSwImageData().getContainerFormat().toUpperCase());
+        if(function.getSwImageData().getDiskFormat() != null)
+            diskFormat = DiskFormat.valueOf(function.getSwImageData().getDiskFormat().toUpperCase());
         VDUVirtualBlockStorageProperties properties = new VDUVirtualBlockStorageProperties(
             new VirtualBlockStorageData(
                 function.getSwImageData().getMinDisk(),
@@ -316,8 +322,8 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
                 function.getSwImageData().getImgName(),
                 function.getSwImageData().getVersion(),
                 function.getSwImageData().getChecksum(),
-                ContainerFormat.valueOf(function.getSwImageData().getContainerFormat().toUpperCase()),
-                DiskFormat.valueOf(function.getSwImageData().getDiskFormat().toUpperCase()),
+                containerFormat,
+                diskFormat,
                 null,
                 null,
                 function.getSwImageData().getSize(),

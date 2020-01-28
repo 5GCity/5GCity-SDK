@@ -717,6 +717,7 @@ public class FunctionManager implements FunctionManagerProviderInterface {
 
         dispatchUnPublishRequest(
             function.getVnfInfoId(),
+            function.getSliceId(),
             authorization,
             successful -> {
                 if (successful) {
@@ -806,11 +807,11 @@ public class FunctionManager implements FunctionManagerProviderInterface {
         );
     }
 
-    private void dispatchUnPublishRequest(String vnfInfoId, String authorization, Consumer<Boolean> callback) {
+    private void dispatchUnPublishRequest(String vnfInfoId, String project, String authorization, Consumer<Boolean> callback) {
         // TODO: dispatch unpublish operation to driver, then return immediately
         executor.execute(() -> {
                 try {
-                    cataloguePlugin.deleteNetworkFunction(vnfInfoId, null, authorization);
+                    cataloguePlugin.deleteNetworkFunction(vnfInfoId, project, authorization);
                     callback.accept(true);
                 } catch (Exception e) {
                     log.error("Could not delete function package. Cause: {}", e.getMessage());

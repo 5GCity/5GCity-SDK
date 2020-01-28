@@ -199,7 +199,7 @@ public class SliceController {
         @ApiResponse(code = 404, message = "Slice not found in database or user not found in Keycloak"),
         @ApiResponse(code = 400, message = "Query without parameter sliceId or userName or user already present in the slice"),
         @ApiResponse(code = 200, message = "OK")})
-    @RequestMapping(value = "/slices/{sliceId}/users/{userName}", method = RequestMethod.PUT)
+    @RequestMapping(value = "/slices/{sliceId}/users/{userName:.+}", method = RequestMethod.PUT)
     public ResponseEntity<?> addUserToSlice (@ApiParam(value = "", required = true)
                                               @PathVariable("sliceId") String sliceId,
                                               @ApiParam(value = "", required = true)
