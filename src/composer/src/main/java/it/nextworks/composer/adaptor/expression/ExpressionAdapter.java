@@ -108,7 +108,7 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
         );
         VNFRequirements vnfRequirements = new VNFRequirements(vnfdData.vLinksAssociation);
         return new VNFNode(
-            "tosca.nodes.nfv.VNF",
+            null,
             null,  // name is ignored
             vnfProperties,
             vnfRequirements,
@@ -129,7 +129,7 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
             new ArrayList<>(info.getServiceLinks())
         );
         return new NSNode(
-            "tosca.nodes.nfv.NS",
+            null,
             nsProperties,
             nsRequirements
         );
@@ -157,7 +157,7 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
             new ArrayList<>()
         );
         return new NsVirtualLinkNode(
-            "tosca.nodes.nfv.NsVirtualLink",
+            null,
             nsVirtualLinkProperties,
             null
         );
@@ -296,7 +296,7 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
         }
 
         return new VNFNode(
-            "tosca.nodes.nfv.VNF",
+            null,
             null,  // name is ignored
             vnfProperties,
             null,
@@ -333,7 +333,7 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
         );
 
         return new VDUVirtualBlockStorageNode(
-            "tosca.nodes.nfv.Vdu.VirtualBlockStorage",
+            null,
             properties
         );
     }
@@ -391,7 +391,7 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
         );
 
         return new VDUComputeNode(
-            "tosca.nodes.nfv.Vdu.Compute",
+            null,
             properties,
             capabilities,
             requirements
@@ -425,7 +425,7 @@ public class ExpressionAdapter implements ServicesAdaptorProviderInterface {
         );
 
         return new VnfExtCpNode(
-            "tosca.nodes.nfv.VnfExtCp",
+            null,
             properties,
             requirements
         );

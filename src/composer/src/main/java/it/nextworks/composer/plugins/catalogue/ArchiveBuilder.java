@@ -1,15 +1,15 @@
 package it.nextworks.composer.plugins.catalogue;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import it.nextworks.nfvmano.libs.common.exceptions.MalformattedElementException;
 import it.nextworks.nfvmano.libs.descriptors.templates.DescriptorTemplate;
 import it.nextworks.nfvmano.libs.descriptors.templates.Node;
 import it.nextworks.sdk.ActionWrapper;
 import it.nextworks.sdk.MonitoringParameter;
-import it.nextworks.sdk.ServiceAction;
-import it.nextworks.sdk.ServiceActionRule;
 
 import java.io.*;
 import java.nio.file.*;
@@ -19,6 +19,8 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.*;
+
 public class ArchiveBuilder {
 
     public static String createNSCSAR(DescriptorTemplate template, Set<MonitoringParameter> monitoringParameters,
@@ -26,11 +28,6 @@ public class ArchiveBuilder {
 
         String serviceName = "descriptor";
         String servicePackagePath;
-        Map<String, Node> nodes = template.getTopologyTemplate().getNodeTemplates();
-        for(Map.Entry<String, Node> node : nodes.entrySet()){
-            if(node.getValue().getType().equals("tosca.nodes.nfv.NS"))
-                serviceName = node.getKey();
-        }
 
         Date date = new Date();
         long time = date.getTime();
@@ -38,6 +35,8 @@ public class ArchiveBuilder {
         List<String> strings = new ArrayList<>();
 
         try{
+            serviceName = template.getTopologyTemplate().getNSNodes().keySet().iterator().next();
+
             //Create directories
             File root = makeFolder(serviceName);
             File definitions = makeSubFolder(root, "Definitions");
@@ -90,8 +89,7 @@ public class ArchiveBuilder {
             Files.write(toscaMetadata.toPath(), strings);
             strings.clear();
 
-            //Create descriptor files
-            File descriptorFile = new File(definitions, serviceName + ".yaml");
+            //Create monitoring files
             ObjectMapper mapper = new ObjectMapper();
             mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
             File monitoringParamsFile;
@@ -121,14 +119,34 @@ public class ArchiveBuilder {
                 g.close();
                 fos.close();
             }
+
+            /*
+            //Create descriptor files
+            File descriptorFile = new File(definitions, serviceName + ".yaml");
             mapper = new ObjectMapper(new YAMLFactory());
             mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+            mapper.writeValue(descriptorFile, template);
+            */
+
+            //Create descriptor files
+            File descriptorFile = new File(definitions, serviceName + ".yaml");
+            final YAMLFactory yamlFactory = new YAMLFactory()
+                    .configure(USE_NATIVE_TYPE_ID, false)
+                    .configure(USE_NATIVE_OBJECT_ID, false)
+                    .configure(WRITE_DOC_START_MARKER, false);
+            mapper = new ObjectMapper(yamlFactory);
+            mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+            mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
             mapper.writeValue(descriptorFile, template);
 
             servicePackagePath = compress(root.toPath().toString());
         } catch (IOException e) {
             throw new IllegalStateException(
                 String.format("Could not write files. Error: %s", e.getMessage(), e)
+            );
+        }catch (MalformattedElementException e) {
+            throw new IllegalStateException(
+                String.format("Could not get service name. Error: %s", e.getMessage(), e)
             );
         }
 
@@ -140,10 +158,6 @@ public class ArchiveBuilder {
         String functionName = "descriptor";
         String functionPackagePath;
         Map<String, Node> nodes = template.getTopologyTemplate().getNodeTemplates();
-        for(Map.Entry<String, Node> node : nodes.entrySet()){
-            if(node.getValue().getType().equals("tosca.nodes.nfv.VNF"))
-                functionName = node.getKey();
-        }
 
         Date date = new Date();
         long time = date.getTime();
@@ -151,6 +165,8 @@ public class ArchiveBuilder {
         List<String> strings = new ArrayList<>();
 
         try{
+            functionName = template.getTopologyTemplate().getVNFNodes().keySet().iterator().next();
+
             //Create directories
             File root = makeFolder(functionName);
             File definitions = makeSubFolder(root, "Definitions");
@@ -218,16 +234,34 @@ public class ArchiveBuilder {
                 cloudInitFile = new File(scripts, "cloud-init.txt");
                 Files.write(cloudInitFile.toPath(), cloudInit.getBytes());
             }
+
+            /*
             //Create descriptor files
             File descriptorFile = new File(definitions, functionName + ".yaml");
             ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
             mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+            mapper.writeValue(descriptorFile, template);
+            */
+
+            //Create descriptor files
+            File descriptorFile = new File(definitions, functionName + ".yaml");
+            final YAMLFactory yamlFactory = new YAMLFactory()
+                    .configure(USE_NATIVE_TYPE_ID, false)
+                    .configure(USE_NATIVE_OBJECT_ID, false)
+                    .configure(WRITE_DOC_START_MARKER, false);
+            ObjectMapper mapper = new ObjectMapper(yamlFactory);
+            mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+            mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
             mapper.writeValue(descriptorFile, template);
 
             functionPackagePath = compress(root.toPath().toString());
         } catch (IOException e) {
             throw new IllegalStateException(
                 String.format("Could not write files. Error: %s", e.getMessage(), e)
+            );
+        }catch (MalformattedElementException e) {
+            throw new IllegalStateException(
+                String.format("Could not get function name. Error: %s", e.getMessage(), e)
             );
         }
 
