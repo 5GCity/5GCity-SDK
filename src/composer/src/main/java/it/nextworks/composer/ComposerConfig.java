@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Nextworks s.r.l.
+ * Copyright 2020 Nextworks s.r.l.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class ComposerConfig extends WebMvcConfigurationSupport {
         return new ApiInfoBuilder()
             .title("5GCity SDK REST API ")
             .description("REST API for the 5GCity's SDK")
-            .version("0.8")
+            .version("1.0")
             .license("Apache License Version 2.0")
             .licenseUrl("https://www.apache.org/licenses/LICENSE-2.0\"")
             .contact(new Contact("Nextworks S.r.l.", "http://www.nextworks.it", "info@nextworks.it"))

@@ -1,7 +1,7 @@
 swagger: '2.0'
 info:
   description: REST API for the 5GCity's SDK
-  version: '0.8'
+  version: '1.0'
   title: '5GCity SDK REST API '
   contact:
     name: Nextworks S.r.l.
