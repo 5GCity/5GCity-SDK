@@ -8,6 +8,7 @@ The 5GCity SDK allows the vertical user to compose services and functions, and p
 For a full deployment of the 5GCity SDK, please follow the instruction at: [Full Deployment guide-line]
 
 # API Usage
+For the swagger documentation of the 5GCity SDK, please refer to: [Swagger documentation]
 ## SDK Slice
 The term Slice in the context of 5GCity SDK represents the concept of Project.
  
@@ -96,7 +97,7 @@ The term Slice in the context of 5GCity SDK represents the concept of Project.
 		  {
 			"name": "cp-eth0",
 			"cpType": "EXTERNAL",
-                        "isManagement": true,
+            "isManagement": true,
 			"requiredPort": [80,443]
 		  }
 		],
@@ -420,3 +421,4 @@ Please use the GitHub issues for feedback.
 [//]: #
 [Full Deployment guide-line]: doc/README.md
 [Nextworks S.r.l.]: http://www.nextworks.it/
+[Swagger documentation]: doc/model/swagger-2.0.yaml

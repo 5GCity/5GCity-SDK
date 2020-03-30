@@ -1,12 +1,11 @@
 # Full Deployment of 5GCity SDK
 
-Disclaimer: This guide is still being reviewed and all issues and suggestions regarding possible troubles arisen trying to follow the steps will be welcome for further troubleshooting. Please note that this project and some dependencies are in early development stages and should not be deployed in a real production environment.
 This document aims to provide accurate instructions about how to deploy an instance of the 5GCity SDK integrated with the 5G App & Service Catalogue.
 
 # Requirements
-Two physical/virtual machines for **5GCity SDK** and **5G App & Service Catalogue**. 
-An extra physical/VM machine will be needed in case the 5G App & Service Catalogue will be configured with a **MANO Orchestrator (OSM R5)**.
-Network connectivity is requested between **5GCity SDK** and **5G App & Service Catalogue**, as well as between **5G App & Service Catalogue** and **OSM**. 
+Two physical/virtual machines for **5GCity SDK** and **5G Apps & Services Catalogue**. 
+An extra physical/VM machine will be needed in case the 5G Apps & Services Catalogue will be configured with a **MANO Orchestrator (OSM)**.
+Network connectivity is requested between **5GCity SDK** and **5G Apps & Services Catalogue**, as well as between **5G Apps & Services Catalogue** and **OSM**. 
 
 # 5GCity SDK
 ## Prerequisites
@@ -15,13 +14,11 @@ A physical or virtual machine running ubuntu 16.04, with the following software:
     ```sh
     $ sudo apt update
     $ sudo apt upgrade
-    
     ```
 
  - Systemd, git 
     ```sh
    $ sudo apt install systemd git
-   
     ```
 
  - Java 1.8
@@ -29,7 +26,6 @@ A physical or virtual machine running ubuntu 16.04, with the following software:
     $ sudo add-apt-repository ppa:openjdk-r/ppa
     $ sudo apt update
     $ sudo apt install openjdk-8-jdk 
-    
     ```
     
  - Maven 3.3.9
@@ -40,26 +36,22 @@ A physical or virtual machine running ubuntu 16.04, with the following software:
     # mkdir -p /opt/maven/3.3.9
     # mv apache-maven-3.3.9/* /opt/maven/3.3.9/
     # ln -s /opt/maven/3.3.9/ /opt/maven/current
-    
     ```
 
     Add to the ~/.bashrc the following lines
     ```sh
     export MAVEN_HOME=/opt/maven/current
     export PATH=$PATH:$MAVEN_HOME/bin
-    
     ```
 
     Load the new source
     ```sh
     $ source ~/.bashrc
-    
     ```
 
  - Postgres (10.10 or higher)
     ```sh
     $ sudo apt install postgresql postgresql-contrib 
-    
     ```
  - NFV SOL001 LIBS
     ```sh
@@ -67,7 +59,6 @@ A physical or virtual machine running ubuntu 16.04, with the following software:
     $ cd  nfv-sol-libs
     $ chmod +x install_nfv_sol_libs.sh
     $ ./install_nfv_sol_libs.sh
-    
     ```
 The script [bootstrap-deps.sh] can be run in order to meet the prerequisites.
 
@@ -79,7 +70,6 @@ The script [bootstrap-deps.sh] can be run in order to meet the prerequisites.
     $ cd scripts/config/
     $ chmod +x bootstrap.sh
     $ ./bootstrap.sh -h catalogue_host 
-    
     ```
 
     *The bootstrap script will install the required libraries, will package the 5GCity SDK and create a service ready to be launched. The configuration file (application.properties) of the 5GCity SDK will contain the data for database connection and catalogue host.*
@@ -95,20 +85,18 @@ The configuration file of the 5GCity SDK module is located at:
 
   ```sh
   /home/$USER/5GCity-SDK/application.properties
-  
   ```
-Users have the possibility to change few configuration parameteres via configuration file.
+Users have the possibility to change few configuration parameters via configuration file.
 
 Perform a restart of the service in order to apply changes
 
   ```sh
   $ sudo systemctl restart 5gcity-sdk.service
-
   ```
 
 # Authentication and Authorization
 In the 5GCity Platform, authentication and authorization are handled by other sub-module.
-However, authentication and authorization might be enabled directly in the 5GCity SDK modifing the application.properties configuration file:
+However, authentication and authorization might be enabled directly in the 5GCity SDK modifying the application.properties configuration file:
   
   ```
   ### KEYCLOAK ###
@@ -122,7 +110,6 @@ However, authentication and authorization might be enabled directly in the 5GCit
   ## ADMIN USER ###
   admin.user.name=admin_username
   admin.password=admin_password
-  
   ```
 *Please refer to [5GCity-SDK-Information] for more information* 
 

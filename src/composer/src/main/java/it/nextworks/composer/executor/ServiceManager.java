@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Nextworks s.r.l.
+ * Copyright 2020 Nextworks s.r.l.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -900,6 +900,7 @@ public class ServiceManager implements ServiceManagerProviderInterface {
 
         dispatchUnPublishRequest(
             descriptor.getNsInfoId(),
+            descriptor.getSliceId(),
             authorization,
             successful -> {
                 if (successful) {
@@ -1090,11 +1091,11 @@ public class ServiceManager implements ServiceManagerProviderInterface {
         );
     }
 
-    private void dispatchUnPublishRequest(String nsInfoId, String authorization, Consumer<Boolean> callback) {
+    private void dispatchUnPublishRequest(String nsInfoId, String project, String authorization, Consumer<Boolean> callback) {
         // TODO: dispatch unpublish operation to driver, then return immediately
         executor.execute(() -> {
                 try {
-                    cataloguePlugin.deleteNetworkService(nsInfoId, null, authorization);
+                    cataloguePlugin.deleteNetworkService(nsInfoId, project, authorization);
                     callback.accept(true);
                 } catch (Exception e) {
                     log.error("Could not delete service package. Cause: {}", e.getMessage());
