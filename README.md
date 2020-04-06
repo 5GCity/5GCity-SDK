@@ -2,7 +2,7 @@
 The 5GCity SDK is a sub-module of the 5GCity Platform
 
 # Scope
-The 5GCity SDK allows the vertical user to compose services and functions, and perform CRUD operations on these. The vertical user will have the possibility to publish the created services or functions into the 5G App & Service Catalogue, after an internal process of validation and translation into the ETSI TOSCA model. 
+The 5GCity SDK allows the vertical user to compose services and functions, and perform CRUD operations on these. The vertical user will have the possibility to publish the created services or functions into the 5G Apps & Services Catalogue, after an internal process of validation and translation into the ETSI TOSCA model. 
 
 # Full deployment
 For a full deployment of the 5GCity SDK, please follow the instruction at: [Full Deployment guide-line]
@@ -97,7 +97,7 @@ The term Slice in the context of 5GCity SDK represents the concept of Project.
 		  {
 			"name": "cp-eth0",
 			"cpType": "EXTERNAL",
-            "isManagement": true,
+			"isManagement": true,
 			"requiredPort": [80,443]
 		  }
 		],
@@ -403,8 +403,8 @@ Once the server is running, please check the API Swagger documentation visiting 
 
 # Testing
 In order to test the 5GCity SDK the user need to run the service 5gcity-sdk.service created during the deployment phase and access the API Swagger documentation.
-An instance of the 5G App & Service Catalogue is needed in case the publication will be tested.
-By publishing to 5G App & Service Catalogue, the new service (or function) will be present in the 5G App & Service Catalogue and if any MANO plugin is enabled in the 5G App & Service Catalogue, the new NSD (or VNFD) will be pushed into it.
+An instance of the 5G Apps & Services Catalogue is needed in case the publication will be tested.
+By publishing to 5G Apps & Services Catalogue, the new service (or function) will be present in the 5G Apps & Services Catalogue and if any MANO plugin is enabled in the 5G Apps & Services Catalogue, the new NSD (or VNFD) will be pushed into it.
 
 # License
 The 5GCity SDK is published under Apache 2.0 license. Please see the LICENSE file for more details

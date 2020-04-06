@@ -1,11 +1,10 @@
 # Full Deployment of 5GCity SDK
 
-This document aims to provide accurate instructions about how to deploy an instance of the 5GCity SDK integrated with the 5G App & Service Catalogue.
+This document aims to provide accurate instructions about how to deploy an instance of the 5GCity SDK integrated with the 5G Apps & Services Catalogue.
 
 # Requirements
-Two physical/virtual machines for **5GCity SDK** and **5G Apps & Services Catalogue**. 
-An extra physical/VM machine will be needed in case the 5G Apps & Services Catalogue will be configured with a **MANO Orchestrator (OSM)**.
-Network connectivity is requested between **5GCity SDK** and **5G Apps & Services Catalogue**, as well as between **5G Apps & Services Catalogue** and **OSM**. 
+Two physical/virtual machines for **5GCity SDK** and **5G Apps & Services Catalogue**.
+Network connectivity is requested between **5GCity SDK** and **5G Apps & Services Catalogue**.
 
 # 5GCity SDK
 ## Prerequisites
@@ -74,11 +73,8 @@ The script [bootstrap-deps.sh] can be run in order to meet the prerequisites.
 
     *The bootstrap script will install the required libraries, will package the 5GCity SDK and create a service ready to be launched. The configuration file (application.properties) of the 5GCity SDK will contain the data for database connection and catalogue host.*
 
-# 5G App & Service Catalogue
-*Please refer to installation guide of the [5G App & Service Catalogue]*
-
-# OSM Release FIVE (OPTIONAL)
-*Please refer to the installation guide of the [OSM Rel FIVE]*
+# 5G Apps & Services Catalogue
+*Please refer to installation guide of the [5G Apps & Services Catalogue]*
 
 # Deployment
 The configuration file of the 5GCity SDK module is located at: 
@@ -94,7 +90,22 @@ Perform a restart of the service in order to apply changes
   $ sudo systemctl restart 5gcity-sdk.service
   ```
 
-# Authentication and Authorization
+## 5G Apps & Services Catalogue Configuration
+
+The 5G Apps & Services Catalogue can be configured using the application.properties configuration file:
+  
+  ```
+  ### CATALOGUE ###
+  catalogue.host=http://localhost:8083/
+  ```
+
+If the bootstrap.sh script is used for the installation of the 5GCity SDK, use the option -h to pass the 5G Apps and Services Catalogue URL:
+  
+  ```
+  $ ./bootstrap.sh -h http://localhost:8083/
+  ```
+
+## Authentication and Authorization
 In the 5GCity Platform, authentication and authorization are handled by other sub-module.
 However, authentication and authorization might be enabled directly in the 5GCity SDK modifying the application.properties configuration file:
   
@@ -114,7 +125,6 @@ However, authentication and authorization might be enabled directly in the 5GCit
 *Please refer to [5GCity-SDK-Information] for more information* 
 
 [//]: #
-[5G App & Service Catalogue]: https://github.com/nextworks-it/5g-catalogue
-[OSM Rel FIVE]: https://osm.etsi.org/wikipub/index.php/OSM_Release_FIVE#Install_OSM
+[5G Apps & Services Catalogue]: https://github.com/nextworks-it/5g-catalogue
 [bootstrap-deps.sh]: ../scripts/config/bootstrap-deps.sh
 [5GCity-SDK-Information]: 5GCity-SDK-Information.txt
