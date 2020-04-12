@@ -1,8 +1,9 @@
 # 5GCity SDK
-The 5GCity SDK is a sub-module of the 5GCity Platform
+5GCity SDK is a sub-module of the 5GCity Platform
 
 # Scope
-The 5GCity SDK allows the vertical user to compose services and functions, and perform CRUD operations on these. The vertical user will have the possibility to publish the created services or functions into the 5G Apps & Services Catalogue, after an internal process of validation and translation into the ETSI TOSCA model. 
+5GCity SDK allows the vertical user to compose services and functions, and perform CRUD operations on these. The vertical user will have the possibility to publish the created services or functions into the 5G Apps & Services Catalogue, after an internal process of validation and translation into the ETSI NFV TOSCA model. 
+5GCity SDK is a self-contained, stand-alone software module of the 5GCity platform, and it is designed to provide service designers (i.e. application developers and Vertical service operators) with a set of tools which allow to define and compose 5G service functions and 5G network services in a simplified and guided mode. 5GCity SDK highly abstracts the NFV MANO infrastructure and overcomes the complexity of its information models and descriptors for non-network professionals. The SDK produced in 5GCity can be used by Verticals approaching 5G NFV infrastructures to design their services in simplified, NFV-agnostic, way. Applicability of SDK could be in 5G trials, 5G PPP Phase 3 projects dealing with vertical use case validation, training to Network Operators willing to expose a simplified northbound interface to Verticals or non/NFV departments.
 
 # Full deployment
 For a full deployment of the 5GCity SDK, please follow the instruction at: [Full Deployment guide-line]
